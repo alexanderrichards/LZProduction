@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+<head>
+<!-- Add jQuery library using Google CDN (Content Delivery Network)-->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.3/jquery.min.js"></script>
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+
+<!-- Optional theme -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css" integrity="sha384-fLW2N01lMqjakBkx3l/M9EahuwpSfeNvV63J5ezn3uZzapT0u7EYsXMjQV+0En5r" crossorigin="anonymous">
+
+<!-- Latest compiled and minified JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.10.0/css/bootstrap-select.min.css">
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.10.0/js/bootstrap-select.min.js"></script>
+<script>
+$(document).ready(function() {
+
+  $.ajax({url: "/tags",
+          type: "GET",
+          success: function(result) {
+                     $("#tags").html(result);
+                     $("#tags").selectpicker("refresh");
+                   }
+  });
+});
+</script>
+<style>
+  .macro-selection {width: 100%;}
+  .required { color: red;
+              font-weight: bold;
+            }
+</style>
+</head>
+<body>
+  <div class="container">
+    <div class="panel panel-primary">
+      <div class="panel-heading">
+	<h3 class="panel-title">Edit Request Form</h3>
+      </div>
+      <div class="panel-body">
+	<form action="/api" method="POST">
+	  <fieldset>
+	    <legend>Basic Information</legend>
+	    
+	    <label for="requester">Requester Name:</label>
+	    <div class="input-group">
+	      <!--	<span class="input-group-addon">Hello World</span>-->
+	      <input class="form-control" placeholder="Username" type="text" name="requester" required>
+	    </div>
+
+	    <br>
+	    <label for="sim_lead">Sim Lead:</label>
+	    <div class="input-group">
+	      <input class="form-control" placeholder="Sim Lead" type="text" name="sim_lead" required>
+	    </div>
+
+	    <br>
+	    <label for="source">Source type:</label>
+	    <div class="input-group">
+	      <input class="form-control" type="text" name="source" required>
+	    </div>
+
+	    <br>
+	    <label for="detector">Detector components:</label>
+	    <div class="input-group">
+	      <input class="form-control" type="text" name="detector" required>
+	    </div>
+
+	    <br>
+	    <label for="description">Description:</label>
+	    <div>
+	      <textarea class="form-control" name="description" placeholder="Enter a description of the request here." required></textarea>
+	    </div>
+	  </fieldset>
+
+	  <!-- Application Setup -->
+	  <br>
+	  <fieldset>
+	    <legend>Application Setup</legend>	    
+	    <nav>
+	      <!-- Tabs -->
+	      <ul class="nav nav-tabs">
+		<li role="presentation" class="active"><a href="#simulation" role="tab" data-toggle="tab">Simulation</a></li>
+                <li role="presentation"><a href="#reduction" role="tab" data-toggle="tab">Reduction</a></li>
+                </ul>
+
+                <!-- Tab Content -->
+		<!-- Simulation -->
+		<!-- ---------- -->
+		<div class="tab-content">
+		  <div role="tabpanel" class="tab-pane fade in active" id="simulation">
+		    <br>
+		    <div class="row">
+		      <div class="col-xs-6">
+			<label for="luxsim_version">Select Application Type:</label>
+			<div class="input-group">
+			  <select id="app" name="app" class="selectpicker form-control" data-live-search="true" data-live-search-style="startsWith" data-size="10" data-width="150px" data-dropup-auto="false" data-live-search-placeholder="Search..." title="Application" required>
+			    <option>LUXSim</option>
+			    <option>BACCARAT</option>
+			    <option>Reduction Only</option>
+			  </select>
+			</div>
+		      </div>
+		      
+		      <div class="col-xs-6">
+			<label for="app_version">Select Application Version:</label>
+			<div class="input-group">
+			  <select id="app_version" name="app_version" class="selectpicker form-control" data-live-search="true" data-live-search-style="startsWith" data-size="10" data-width="150px" data-dropup-auto="false" data-live-search-placeholder="Search..." title="Version" required disabled>
+			    <option>test</option>
+			  </select>
+			</div>
+		      </div>
+		    </div>
+		  </div>
+
+		  <!-- Reduction -->
+		  <!-- --------- -->
+		  <div role="tabpanel" class="tab-pane fade" id="reduction">
+		    <br>
+		    <div class="row">
+		      <div class="col-xs-6">
+			<label for="request">Select Request</label>
+			<div class="input-group">
+			  <select id="request" name="request" class="selectpicker form-control" data-live-search="true" data-live-search-style="startsWith" data-size="10" data-width="150px" data-dropup-auto="false" data-live-search-placeholder="Search..." title="Request" required disabled>
+			    <option>test</option>
+			  </select>			    
+			</div>
+		      </div>
+		      
+		      <div class="col-xs-6">
+			<label for="reduction_version">Select Reduction Version:</label>
+			<div class="input-group">
+			  <select id="reduction_version" name="reduction_version" class="selectpicker form-control" data-live-search="true" data-live-search-style="startsWith" data-size="10" data-width="150px" data-dropup-auto="false" data-live-search-placeholder="Search..." title="Version" required>
+			    <option>test</option>
+			  </select>			    
+			</div>
+		      </div>
+		    </div>
+		  </div>
+		</div>
+              </nav>
+<!--	      </div>
+	      </div>-->
+	  </fieldset>
+
+	  <!-- Macro Setup-->
+	  <br>
+	  <fieldset>
+	    <legend>Request Macro Information</legend>
+
+	    <br>
+	    <label for="tag"><span class="glyphicon glyphicon-tag"></span> Select Tag:</label>
+            <div class="input-group">
+	      <select id="tags" class="selectpicker form-control" data-live-search="true" data-live-search-style="startsWith" data-size="10" data-width="100px" data-dropup-auto="false" data-live-search-placeholder="Search..." title="Tag" name="tag" required>
+	      </select>
+	    </div>
+
+	    <br>
+	    <label for="macros">Select Macros:</label>	    
+	    <div class="row">
+	      <div class="col-xs-8">
+		<div class="input-group macro-selection">
+		  <!-- having no name attribute means it's not submitted as part of the form -->
+		  <select id="macros" class="form-control macro-selection" size=10 multiple disabled></select>
+		</div>
+	      </div>
+
+	      <div class="col-xs-4">
+		<div class="row">
+		  <div class="col-xs-12">
+		    <label for="njobs">Number of Jobs/Files:</label>
+		    <div class="input-group">
+		      <input id="njobs" class="form-control" type="text">
+		    </div>
+		  </div>
+
+		  <div class="col-xs-12">
+		    <label for="nevents">Beam On Events:</label>
+		    <div class="input-group">
+		      <input id="nevents" class="form-control" type="text">
+		    </div>
+		  </div>
+
+		  <div class="col-xs-12">
+		    <label for="seed">Initial Seed:</label>
+		    <div class="input-group">
+		      <input id="seed" class="form-control" type="text" value="9000000">
+		    </div>
+		  </div>
+		</div>
+	      </div>
+	    </div>
+	    <br>
+	    <div class="row">
+	      
+	      <div class="col-xs-8">
+	      </div>
+	      <div class="col-xs-4">
+		<button id="add" type="button" class="btn btn-default">
+		  <span class="glyphicon glyphicon-plus-sign text-primary"></span> Add
+		</button>
+	      </div>
+	      
+	    </div>
+
+	    <br>
+	    <label for="selected">Selected Macros:</label>
+	    	    
+	    <div class="row">
+	      <div class="col-xs-8">
+		<div class="input-group macro-selection">
+		  <select id="selected" name="selected" class="form-control macro-selection" size=10 multiple disabled></select>
+		</div>
+	      </div>
+	      
+	      <div class="col-xs-4">
+		<button id="remove" type="button" class="btn btn-default">
+		  <span class="glyphicon glyphicon-minus-sign text-danger"></span> Remove
+		</button>
+	      </div>
+	    </div>
+	  </fieldset>
+
+	  <br>
+	  <button type="submit" class="btn btn-primary">
+	    <span class="glyphicon glyphicon-send"></span> Submit
+	  </button>
+
+	</form>	
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html>
+<head>
+<!-- Add jQuery library using Google CDN (Content Delivery Network)-->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.3/jquery.min.js"></script>
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+
+<!-- Optional theme -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css" integrity="sha384-fLW2N01lMqjakBkx3l/M9EahuwpSfeNvV63J5ezn3uZzapT0u7EYsXMjQV+0En5r" crossorigin="anonymous">
+
+<!-- Latest compiled and minified JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.10.0/css/bootstrap-select.min.css">
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.10.0/js/bootstrap-select.min.js"></script>
+<script>
+$(document).ready(function() {
+
+  $.ajax({url: "/tags",
+          type: "GET",
+          success: function(result) {
+                     $("#tags").html(result);
+                     $("#tags").selectpicker("refresh");
+                   }
+  });
+
+  $.ajax({url: "/appversion/TDRAnalysis",
+          type: "GET",
+          success: function(result) {
+                     $("#reduction_version").html(result);
+                     $("#reduction_version").selectpicker("refresh");
+                   }
+  });
+
+  $("#tags").change(function() {
+    $.ajax({url: "/tags/" + $(this).val(),
+            type: "GET",
+            success: function(result) {
+                       $("#macros").html(result);
+                       $("#macros").prop("disabled", false);
+                     }
+            });
+  });
+
+
+  $("#app").change(function() {
+    var app_version = $("#app_version");
+    var request = $("#request");
+    if ($(this).val() == "Reduction Only") {
+      app_version.prop("disabled", true);
+      request.prop("disabled", false);
+    }
+    else {
+      $.ajax({url: "/appversion/" + $("#app option:selected").text(),
+              type: "GET",
+              success: function(result) {
+                         app_version.html(result);
+                         app_version.prop("disabled", false);
+                         app_version.selectpicker("refresh");
+                       }
+      });
+      request.prop("disabled", true);
+    }
+    app_version.selectpicker("refresh");
+    request.selectpicker("refresh");
+
+  });
+
+  $("#add").click(function() {
+    if ($("#macros option:selected").length < 1) {
+      //alert("Must select a macro from the list first.");
+      return false;
+    }					
+    if ($("#njobs").val() == "") {
+      alert("Must specify the number of jobs/files");
+      return false;
+    }
+    if ($("#nevents").val() == "") {
+      alert("Must specify the number of beam on events");
+      return false;
+    }
+    if ($("#seed").val() == "") {
+      alert("Must specify the initial seed");
+      return false;
+    }
+    
+    var sel_list = $("#selected_macros");
+    $("#macros :selected").each(function(i, selected) {
+	var macro_path = [selected.getAttribute("path"), selected.value].join("/");
+        sel_list.append($("<option>", { text: [selected.value, $("#njobs").val(), $("#nevents").val(), $("#seed").val()].join(" "), path: selected.getAttribute("path")}));
+    });
+    sel_list.prop("disabled", false);
+  });
+
+  $("#remove").click(function() {
+    var selected = $("#selected_macros");
+    $("option:selected", selected).remove();
+    if ($("option", selected).length < 1) {
+        selected.prop("disabled", true);
+    }
+  });
+
+  $("form").submit(function(event){
+    // stop form submitting normally
+    // could just let it submit normally if didn't need asynchronous ajax functionality
+    event.preventDefault();
+
+    // switch all options in the selected list to selected so that we
+    // can serialize them
+    $("#selected_macros option").prop("selected", true);
+    $("#selected_macros option").each(function(i, selected) {
+         selected.value = [selected.getAttribute("path"), selected.value].join("/");
+    });
+
+// the below waited to close the fancybox till after the table refreshed and after the ajax call
+// completed. This introduced a noticeable delay
+    parent.$.fancybox.close();
+    $.ajax({url: this.action,  // this is the javascript this not JQuery object $(this)
+            type: this.method,
+            data: $(this).serialize(),
+            success: function(result){
+		       parent.$("#tableBody").DataTable().ajax.reload();
+//                       parent.$.fancybox.close();
+		       parent.bootstrap_alert("Success!", "Request added", "alert-success");
+                       // by iteself, $ = jQuery.
+                       // i.e. could use in the html onclick="parent.jQuery.fancybox.close();"
+                    }
+    });
+//    parent.$.fancybox.close();
+//    $.when($.ajax({url: this.action, type: this.method, data: $(this).serialize()})).done(function() {
+//        parent.$("#tableBody").DataTable().ajax.reload();
+//        parent.bootstrap_alert("Success!", "Request added", "alert-success");		 
+//    });
+  });
+
+});
+</script>
+<style>
+  .macro-selection {width: 100%;
+                    overflow-x:auto; 
+                    overflow-y:auto;
+                    overflow: -moz-scrollbars-horizontal;}
+  .required { color: red;
+              font-weight: bold;
+            }
+</style>
+</head>
+<body>
+  <div class="container">
+    <div class="panel panel-primary">
+      <div class="panel-heading">
+	<h3 class="panel-title">New Request Form</h3>
+      </div>
+      <div class="panel-body">
+	<form action="/api" method="POST">
+	  <fieldset>
+	    <legend>Basic Information</legend>
+	    
+	    <label for="requester">Requester Name:</label>
+	    <div class="input-group">
+	      <!--	<span class="input-group-addon">Hello World</span>-->
+	      <input class="form-control" placeholder="Username" type="text" name="requester" required>
+	    </div>
+
+	    <br>
+	    <label for="sim_lead">Sim Lead:</label>
+	    <div class="input-group">
+	      <input class="form-control" placeholder="Sim Lead" type="text" name="sim_lead" required>
+	    </div>
+
+	    <br>
+	    <label for="source">Source type:</label>
+	    <div class="input-group">
+	      <input class="form-control" type="text" name="source" required>
+	    </div>
+
+	    <br>
+	    <label for="detector">Detector components:</label>
+	    <div class="input-group">
+	      <input class="form-control" type="text" name="detector" required>
+	    </div>
+
+	    <br>
+	    <label for="description">Description:</label>
+	    <div>
+	      <textarea class="form-control" name="description" placeholder="Enter a description of the request here." required></textarea>
+	    </div>
+	  </fieldset>
+
+	  <!-- Application Setup -->
+	  <br>
+	  <fieldset>
+	    <legend>Application Setup</legend>	    
+	    <nav>
+	      <!-- Tabs -->
+	      <ul class="nav nav-tabs">
+		<li role="presentation" class="active"><a href="#simulation" role="tab" data-toggle="tab">Simulation</a></li>
+                <li role="presentation"><a href="#reduction" role="tab" data-toggle="tab">Reduction</a></li>
+                </ul>
+
+                <!-- Tab Content -->
+		<!-- Simulation -->
+		<!-- ---------- -->
+		<div class="tab-content">
+		  <div role="tabpanel" class="tab-pane fade in active" id="simulation">
+		    <br>
+		    <div class="row">
+		      <div class="col-xs-6">
+			<label for="luxsim_version">Select Application Type:</label>
+			<div class="input-group">
+			  <select id="app" name="app" class="selectpicker form-control" data-live-search="true" data-live-search-style="startsWith" data-size="10" data-width="150px" data-dropup-auto="false" data-live-search-placeholder="Search..." title="Application" required>
+			    <option>LUXSim</option>
+			    <option>BACCARAT</option>
+			    <option>Reduction Only</option>
+			  </select>
+			</div>
+		      </div>
+		      
+		      <div class="col-xs-6">
+			<label for="app_version">Select Application Version:</label>
+			<div class="input-group">
+			  <select id="app_version" name="app_version" class="selectpicker form-control" data-live-search="true" data-live-search-style="startsWith" data-size="10" data-width="150px" data-dropup-auto="false" data-live-search-placeholder="Search..." title="Version" required disabled>
+			    <option>test</option>
+			  </select>
+			</div>
+		      </div>
+		    </div>
+		  </div>
+
+		  <!-- Reduction -->
+		  <!-- --------- -->
+		  <div role="tabpanel" class="tab-pane fade" id="reduction">
+		    <br>
+		    <div class="row">
+		      <div class="col-xs-6">
+			<label for="request">Select Request</label>
+			<div class="input-group">
+			  <select id="request" name="request" class="selectpicker form-control" data-live-search="true" data-live-search-style="startsWith" data-size="10" data-width="150px" data-dropup-auto="false" data-live-search-placeholder="Search..." title="Request" required disabled>
+			    <option>test</option>
+			  </select>			    
+			</div>
+		      </div>
+		      
+		      <div class="col-xs-6">
+			<label for="reduction_version">Select Reduction Version:</label>
+			<div class="input-group">
+			  <select id="reduction_version" name="reduction_version" class="selectpicker form-control" data-live-search="true" data-live-search-style="startsWith" data-size="10" data-width="150px" data-dropup-auto="false" data-live-search-placeholder="Search..." title="Version" required>
+			    <option>test</option>
+			  </select>			    
+			</div>
+		      </div>
+		    </div>
+		  </div>
+		</div>
+              </nav>
+<!--	      </div>
+	      </div>-->
+	  </fieldset>
+
+	  <!-- Macro Setup-->
+	  <br>
+	  <fieldset>
+	    <legend>Request Macro Information</legend>
+
+	    <br>
+	    <label for="tag"><span class="glyphicon glyphicon-tag"></span> Select Tag:</label>
+            <div class="input-group">
+	      <select id="tags" class="selectpicker form-control" data-live-search="true" data-live-search-style="startsWith" data-size="10" data-width="100px" data-dropup-auto="false" data-live-search-placeholder="Search..." title="Tag" name="tag" required>
+	      </select>
+	    </div>
+
+	    <br>
+	    <label for="macros">Select Macros:</label>	    
+	    <div class="row">
+	      <div class="col-xs-8">
+		<div class="input-group macro-selection">
+		  <!-- having no name attribute means it's not submitted as part of the form -->
+		  <select id="macros" class="form-control macro-selection" size=10 multiple disabled></select>
+		</div>
+	      </div>
+
+	      <div class="col-xs-4">
+		<div class="row">
+		  <div class="col-xs-12">
+		    <label for="njobs">Number of Jobs/Files:</label>
+		    <div class="input-group">
+		      <input id="njobs" class="form-control" type="text">
+		    </div>
+		  </div>
+
+		  <div class="col-xs-12">
+		    <label for="nevents">Beam On Events:</label>
+		    <div class="input-group">
+		      <input id="nevents" class="form-control" type="text">
+		    </div>
+		  </div>
+
+		  <div class="col-xs-12">
+		    <label for="seed">Initial Seed:</label>
+		    <div class="input-group">
+		      <input id="seed" class="form-control" type="text" value="9000000">
+		    </div>
+		  </div>
+		</div>
+	      </div>
+	    </div>
+	    <br>
+	    <div class="row">
+	      
+	      <div class="col-xs-8">
+	      </div>
+	      <div class="col-xs-4">
+		<button id="add" type="button" class="btn btn-default">
+		  <span class="glyphicon glyphicon-plus-sign text-primary"></span> Add
+		</button>
+	      </div>
+	      
+	    </div>
+
+	    <br>
+	    <label for="selected_macros">Selected Macros:</label>
+	    	    
+	    <div class="row">
+	      <div class="col-xs-8">
+		<div class="input-group macro-selection">
+		  <select id="selected_macros" name="selected_macros" class="form-control macro-selection" size=10 multiple disabled></select>
+		</div>
+	      </div>
+	      
+	      <div class="col-xs-4">
+		<button id="remove" type="button" class="btn btn-default">
+		  <span class="glyphicon glyphicon-minus-sign text-danger"></span> Remove
+		</button>
+	      </div>
+	    </div>
+	  </fieldset>
+
+	  <br>
+	  <button type="submit" class="btn btn-primary">
+	    <span class="glyphicon glyphicon-send"></span> Submit
+	  </button>
+
+	</form>	
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,23 +1,30 @@
 #!/usr/bin/env python
+"""Script to start the LZ Production web server."""
 import os
 import sys
-import logging
 import argparse
 import importlib
-import cherrypy
+import logging
 from logging.handlers import TimedRotatingFileHandler
+import cherrypy
+
 
 class WebServer(object):
+    """The Web server."""
+
     def __init__(self, index_page):
+        """Initialisation."""
         self.index_page = index_page
 
     @cherrypy.expose
     def index(self):
+        """Return the index page."""
         with open(self.index_page, 'rb') as front_page:
             return front_page.read()
 
 if __name__ == '__main__':
     lzprod_root = os.path.dirname(os.path.dirname(os.path.expanduser(os.path.expandvars(os.path.realpath(os.path.abspath(__file__))))))
+
     parser = argparse.ArgumentParser(description='Run the LZ production web server.')
     parser.add_argument('-v', '--verbose', default=logging.INFO, action="store_const",
                         const=logging.DEBUG, dest='logginglevel',
@@ -53,7 +60,6 @@ if __name__ == '__main__':
     for h in handlers:
         cherrypy_logger.removeHandler(h)
 
-
     logger = logging.getLogger("LZWebServer")
     logger.debug("Script called with args: %s", args)
 #    sys.exit(0)
@@ -74,8 +80,8 @@ if __name__ == '__main__':
             'server.socket_host': args.socket_host,
             'server.socket_port': args.socket_port,
             'server.thread_pool': args.thread_pool,
-            'tools.expires.on'    : True,
-            'tools.expires.secs'  : 3 # expire in an hour
+            'tools.expires.on': True,
+            'tools.expires.secs': 3  # expire in an hour
         }
     }
 

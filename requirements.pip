@@ -1,0 +1,8 @@
+CherryPy>=8.1.2
+GitPython>=2.0.8
+html>=1.16
+natsort>=5.0.1
+pylru>=1.0.9
+requests>=2.11.1
+SQLAlchemy>=1.0.15
+suds>=0.4

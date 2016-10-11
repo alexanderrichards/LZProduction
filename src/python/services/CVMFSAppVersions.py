@@ -22,14 +22,14 @@ class CVMFSAppVersions(object):
         self.cvmfs_root = cvmfs_root
         self.valid_apps = valid_apps
 
-    def GET(self, id=None):
+    def GET(self, appid=None):
         """REST GET method."""
-        print "IN AppVersion GET: id=(%s)" % id
-        if id not in self.valid_apps:
-            print "Invalid app type %s" % id
+        print "IN AppVersion GET: appid=(%s)" % appid
+        if appid not in self.valid_apps:
+            print "Invalid app type %s" % appid
             return ''
         h = html.HTML()
-        _, dirs, _ = os.walk(os.path.join(self.cvmfs_root, id)).next()
+        _, dirs, _ = os.walk(os.path.join(self.cvmfs_root, appid)).next()
         for d in natsorted(dirs):
             for version in version_re.findall(d):
                 h.option(version)

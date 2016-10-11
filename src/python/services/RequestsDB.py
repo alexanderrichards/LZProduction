@@ -1,8 +1,8 @@
 """Requests service."""
 import json
-import html
 from datetime import datetime
-from sqlalchemy import Column, ForeignKey, Integer, String, Boolean
+import html
+from sqlalchemy import Column, Integer, String
 from sqlalchemy_utils import SQLTableBase, create_db, db_session
 
 
@@ -42,15 +42,15 @@ class RequestsDB(object):
         self.dburl = dburl
         create_db(dburl)
 
-    def GET(self, id=None):
+    def GET(self, reqid=None):
         """REST Get method."""
-        print "IN GET: id=(%s)" % id
+        print "IN GET: reqid=(%s)" % reqid
         with db_session(self.dburl) as session:
-            if id is None:
+            if reqid is None:
                 return json.dumps({'data': [dict(request) for request in session.query(Requests).all()]})
 
             table = html.HTML().table(border='1')
-            request = session.query(Requests).filter(Requests.id == id).first()
+            request = session.query(Requests).filter(Requests.id == reqid).first()
             if request is not None:
                 for colname, value in request:
                     tr = table.tr()
@@ -69,15 +69,15 @@ class RequestsDB(object):
             session.add(Requests(**kwargs))
         return self.GET()
 
-    def PUT(self, id, **kwargs):
+    def PUT(self, reqid, **kwargs):
         """REST Put method."""
-        print "IN PUT: id=(%s)" % id, kwargs
+        print "IN PUT: reqid=(%s)" % reqid, kwargs
         with db_session(self.dburl) as session:
-            session.query(Requests).filter(Requests.id == id).update(kwargs)
+            session.query(Requests).filter(Requests.id == reqid).update(kwargs)
 
-    def DELETE(self, id):
+    def DELETE(self, reqid):
         """REST Delete method."""
-        print "IN DELETE: id=(%s)" % id
+        print "IN DELETE: reqid=(%s)" % reqid
         with db_session(self.dburl) as session:
-            session.query(Requests).filter(Requests.id == id).delete(synchronize_session=False)
+            session.query(Requests).filter(Requests.id == reqid).delete(synchronize_session=False)
         return self.GET()

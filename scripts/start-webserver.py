@@ -33,6 +33,8 @@ if __name__ == '__main__':
                         help="Path to the log directory. Will be created if doesn't exist [default: %(default)s]")
     parser.add_argument('-g', '--git-dir', default=os.path.join(lzprod_root, 'git', 'TDRAnalysis'),
                         help="Path to the directory where to clone TDRAnalysis git repo [default: %(default)s]")
+    parser.add_argument('-d', '--dburl', default="sqlite:///" + os.path.join(lzprod_root, 'requests.db'),
+                        help="URL for the requests DB. [default: %(default)s]")
     parser.add_argument('-a', '--socket-host', default='0.0.0.0',
                         help="The host address to listen on (0.0.0.0 means all available) [default: %(default)s]")
     parser.add_argument('-p', '--socket-port', default=8080, type=int,
@@ -87,7 +89,7 @@ if __name__ == '__main__':
 
     cherrypy.config.update(config)  # global vars need updating global config
     cherrypy.tree.mount(WebServer(os.path.join(lzprod_root, 'src', 'html', 'index.html')), '/')
-    cherrypy.tree.mount(RequestsDB.RequestsDB("sqlite:///requests.db"),
+    cherrypy.tree.mount(RequestsDB.RequestsDB(args.dburl),
                         '/api',
                         {'/': {'request.dispatch': cherrypy.dispatch.MethodDispatcher()}})
     cherrypy.tree.mount(CVMFSAppVersions.CVMFSAppVersions('/cvmfs/lz.opensciencegrid.org',

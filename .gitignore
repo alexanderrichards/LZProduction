@@ -96,3 +96,6 @@ log/
 
 # backup files
 *~
+
+# database files
+*.db

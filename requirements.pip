@@ -4,5 +4,5 @@ html==1.16
 natsort==5.0.1
 pylru==1.0.9
 requests==2.11.1
-SQLAlchemy==1.0.15
+SQLAlchemy==1.1.1
 suds==0.4

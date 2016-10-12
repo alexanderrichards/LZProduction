@@ -31,6 +31,8 @@ if __name__ == '__main__':
                         help="Increase the verbosity of output")
     parser.add_argument('-l', '--log-dir', default=os.path.join(lzprod_root, 'log'),
                         help="Path to the log directory. Will be created if doesn't exist [default: %(default)s]")
+    parser.add_argument('-r', '--git-repo', default='git@lz-git.ua.edu:sim/TDRAnalysis.git',
+                        help="Git repo url [default: %(default)s]")
     parser.add_argument('-g', '--git-dir', default=os.path.join(lzprod_root, 'git', 'TDRAnalysis'),
                         help="Path to the directory where to clone TDRAnalysis git repo [default: %(default)s]")
     parser.add_argument('-d', '--dburl', default="sqlite:///" + os.path.join(lzprod_root, 'requests.db'),
@@ -96,8 +98,7 @@ if __name__ == '__main__':
                                                           ['LUXSim', 'BACCARAT', 'TDRAnalysis']),
                         '/appversion',
                         {'/': {'request.dispatch': cherrypy.dispatch.MethodDispatcher()}})
-    cherrypy.tree.mount(GitTagMacros.GitTagMacros('git@lz-git.ua.edu:sim/TDRAnalysis.git',
-                                                  args.git_dir),
+    cherrypy.tree.mount(GitTagMacros.GitTagMacros(args.git_repo, args.git_dir),
                         '/tags',
                         {'/': {'request.dispatch': cherrypy.dispatch.MethodDispatcher()}})
     cherrypy.engine.start()

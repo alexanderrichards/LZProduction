@@ -2,7 +2,7 @@
 import json
 from datetime import datetime
 import html
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy_utils import SQLTableBase, create_db, db_session
 
 
@@ -11,7 +11,8 @@ class Requests(SQLTableBase):
 
     __tablename__ = 'requests'
     id = Column(Integer, primary_key=True)
-    requester = Column(String(250), nullable=False)
+    requesterDN = ForeignKey('users.dn')
+    requesterCA = ForeignKey('users.ca')
     request_date = Column(String(250), nullable=False)
     source = Column(String(250), nullable=False)
     detector = Column(String(250), nullable=False)

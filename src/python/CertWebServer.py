@@ -27,18 +27,18 @@ class CertWebServer(object):
     @cherrypy.expose
     def index(self):
         """Return the index page."""
-        clientDN = os.environ['Ssl-Client-S-Dn']
-        clientCA = os.environ['Ssl-Client-I-Dn']
-        clientVerified = os.environ['Ssl-Client-Verify']
+        clientDN = cherrypy.request.headers['Ssl-Client-S-Dn']
+        clientCA = cherrypy.request.headers['Ssl-Client-I-Dn']
+        clientVerified = cherrypy.request.headers['Ssl-Client-Verify']
         if clientVerified != 'SUCCESS':
-            return '401 Unauthorized: Cert not verified.'
+            return '401 Unauthorized: Cert not verified for user DN: %s, CA: %s.' % (clientDN, clientCA)
 
         with db_session(self.dburl) as session:
             users = session.query(Users).filter(Users.dn == clientDN).filter(Users.ca == clientCA).all()
             if not users:
-                return '403 Forbidden: Unknown user'
+                return '403 Forbidden: Unknown user: (%s, %s), users: %s' % (clientDN, clientCA, users)
             if len(users) > 1:
-                return '500 Internal Server Error: Duplicate user detected.'
+                return '500 Internal Server Error: Duplicate user detected. users: %s' % users
             if user[0].suspended:
                 return '403 Forbidden: User is suspended by VO'
 

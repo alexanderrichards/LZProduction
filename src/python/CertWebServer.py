@@ -1,7 +1,7 @@
 """Certificate authenticated web server."""
 import cherrypy
 from sqlalchemy import Column, Integer, String, Boolean
-from .sqlalchemy_utils import SQLTableBase, create_db, db_session
+from sqlalchemy_utils import SQLTableBase, create_db, db_session
 
 
 class Users(SQLTableBase):

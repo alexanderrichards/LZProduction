@@ -23,7 +23,7 @@ if __name__ == '__main__':
     parser.add_argument('-l', '--log-dir', default=os.path.join(lzprod_root, 'log'),
                         help="Path to the log directory. Will be created if doesn't exist [default: %(default)s]")
     parser.add_argument('-d', '--dburl', default="sqlite:///" + os.path.join(lzprod_root, 'requests.db'),
-                        help="URL for the requests DB. [default: %(default)s]")
+                        help="URL for the requests DB. Note can use the prefix 'mysql+pymysql://' if you have a problem with MySQLdb.py [default: %(default)s]")
     parser.add_argument('-y', '--verify', default=False, action="store_const", const=True,
                         help="Verify the VOMS server.")
     args = parser.parse_args()

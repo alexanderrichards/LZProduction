@@ -9,41 +9,6 @@ from logging.handlers import TimedRotatingFileHandler
 import cherrypy
 
 
-'''
-class WebServer(object):
-    """The Web server."""
-
-    def __init__(self, index_page):
-        """Initialisation."""
-        ## Note if clients share the same transport we get a
-        ## 'Duplicate domain "suds.options" found' exception
-        headers={"Content-Type": "text/xml;charset=UTF-8", "SOAPAction": "",'X-VOMS-CSRF-GUARD':'1'}
-        self.LZVomsAdmin = CertClient('https://voms.hep.wisc.edu:8443/voms/lz/services/VOMSAdmin?wsdl',
-                                      cert=('/home/hep/arichard/.globus/usercert.pem',
-                                            '/home/hep/arichard/.globus/userkey-unenc.pem'),
-                                      headers=headers, verify=False)
-        self.LZVomsCompat = CertClient('https://voms.hep.wisc.edu:8443/voms/lz/services/VOMSCompatibility?wsdl',
-                                       cert=('/home/hep/arichard/.globus/usercert.pem',
-                                             '/home/hep/arichard/.globus/userkey-unenc.pem'),
-                                       headers=headers, verify=False)
-        self.index_page = index_page
-
-    @cherrypy.expose
-    def index(self):
-        """Return the index page."""
-        clientDN = os.environ['Ssl-Client-S-Dn']
-        clientCA = os.environ['Ssl-Client-I-Dn']
-        clientVerified = os.environ['Ssl-Client-Verify']
-        if clientVerified != 'SUCCESS':
-            return '401 Unauthorized: Cert not verified.'
-        users_info=self.LZVomsAdmin.service.listMembers(self.LZVomsAdmin.service.getVOName())
-        users = set(user_info['DN'] for user_info in users_info)
-        suspended_users = users.difference(self.LZVomsCompat.service.getGridmapUsers())
-
-        with open(self.index_page, 'rb') as front_page:
-            return front_page.read()
-'''
-
 if __name__ == '__main__':
     lzprod_root = os.path.dirname(os.path.dirname(os.path.expanduser(os.path.expandvars(os.path.realpath(os.path.abspath(__file__))))))
 

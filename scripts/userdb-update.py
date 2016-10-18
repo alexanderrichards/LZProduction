@@ -44,11 +44,11 @@ if __name__ == '__main__':
     headers = {"Content-Type": "text/xml;charset=UTF-8",
                "SOAPAction": "",
                'X-VOMS-CSRF-GUARD': '1'}
-    vomsAdmin = CertClient(os.path.join(args.voms_root, 'VOMSAdmin?wsdl'),
-                           cert=(args.cert_path, args.key_path),
+    vomsAdmin = CertClient(os.path.join(args.voms, 'VOMSAdmin?wsdl'),
+                           cert=(args.cert, args.key),
                            headers=headers, verify=args.verify)
-    vomsCompat = CertClient(os.path.join(args.voms_root, 'VOMSCompatibility?wsdl'),
-                            cert=(args.cert_path, args.key_path),
+    vomsCompat = CertClient(os.path.join(args.voms, 'VOMSCompatibility?wsdl'),
+                            cert=(args.cert, args.key),
                             headers=headers, verify=args.verify)
 
     voms_users_info = vomsAdmin.service.listMembers(vomsAdmin.service.getVOName())
@@ -66,7 +66,7 @@ if __name__ == '__main__':
 
         # Add new users in VOMS
         for userdn, userca in new_users:
-            logger.debug("Adding user: DN=%s, CA=%s", userdn, userca)
+            logger.debug("Adding user: DN='%s', CA='%s'", userdn, userca)
             session.add(Users(dn=userdn,
                               ca=userca,
                               suspended=userdn not in voms_valid_users,
@@ -74,7 +74,7 @@ if __name__ == '__main__':
 
         # Remove users removed from VOMS
         for userdn, userca in removed_users:
-            logger.debug("Removing user: DN=%s, CA=%s", userdn, userca)
+            logger.debug("Removing user: DN='%s', CA='%s'", userdn, userca)
             session.query(Users)\
                    .filter(Users.dn == userdn)\
                    .filter(Users.ca == userca)\
@@ -85,7 +85,7 @@ if __name__ == '__main__':
             voms_suspended = userdn not in voms_valid_users
             db_suspended = any(session.query(Users.suspended).filter(Users.dn == userdn).all())
             if voms_suspended != db_suspended:
-                logger.debug("Updating user: DN=%s, CA=%s, Suspended=%s->%s",
+                logger.debug("Updating user: DN='%s', CA='%s', Suspended=%s->%s",
                              userdn, userca, db_suspended, voms_suspended)
                 session.query(Users)\
                        .filter(Users.dn == userdn)\

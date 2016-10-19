@@ -28,7 +28,8 @@ class HttpCertAuthenticated(HttpAuthenticated):
                                directory, the directory must have been processed
                                using the c_rehash utility supplied with OpenSSL.
                                This list of trusted CAs can also be specified through
-                               the REQUESTS_CA_BUNDLE environment variable.
+                               the REQUESTS_CA_BUNDLE environment variable (this may
+                               cause pip to fail to validate against PyPI).
         """
         HttpAuthenticated.__init__(self, **kwargs)
         self.cert = cert
@@ -79,7 +80,8 @@ class CertClient(Client):
                                the directory must have been processed using the
                                c_rehash utility supplied with OpenSSL. This list
                                of trusted CAs can also be specified through the
-                               REQUESTS_CA_BUNDLE environment variable.
+                               REQUESTS_CA_BUNDLE environment variable (this may
+                               cause pip to fail to validate against PyPI).
         """
         kwargs.setdefault('transport', HttpCertAuthenticated(cert, verify))
         Client.__init__(self, url, **kwargs)

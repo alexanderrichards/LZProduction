@@ -27,7 +27,7 @@ if __name__ == '__main__':
     parser.add_argument('-y', '--verify', default=False, action="store_const", const=True,
                         help="Verify the VOMS server.")
     parser.add_argument('-t', '--trusted-cas', default='',
-                        help="Path to the trusted CA_BUNDLE file or directory containing the certificates of trusted CAs. Note if set to a directory, the directory must have been processed using the c_rehash utility supplied with OpenSSL. If using a CA_BUNDLE file can also consider using the REQUESTS_CA_BUNDLE environment variable instead. This option implies and superseeds -y")
+                        help="Path to the trusted CA_BUNDLE file or directory containing the certificates of trusted CAs. Note if set to a directory, the directory must have been processed using the c_rehash utility supplied with OpenSSL. If using a CA_BUNDLE file can also consider using the REQUESTS_CA_BUNDLE environment variable instead (this may cause pip to fail to validate against PyPI). This option implies and superseeds -y")
     args = parser.parse_args()
     if args.trusted_cas:
         args.verify = args.trusted_cas

@@ -21,7 +21,14 @@ class HttpCertAuthenticated(HttpAuthenticated):
         Args:
             cert (tuple): Tuple containing the path to the cert file followed
                           by the path to the key file as strings.
-            verify (bool): Whether to verify the handled request url.
+            verify (bool/str): Whether to verify the handled request url. If a
+                               string is given then this is used as the path to
+                               a CA_BUNDLE file or directory with certificates of
+                               trusted CAs. Note: If verify is set to a path to a
+                               directory, the directory must have been processed
+                               using the c_rehash utility supplied with OpenSSL.
+                               This list of trusted CAs can also be specified through
+                               the REQUESTS_CA_BUNDLE environment variable.
         """
         HttpAuthenticated.__init__(self, **kwargs)
         self.cert = cert
@@ -65,7 +72,14 @@ class CertClient(Client):
             url (str): The url to connect to.
             cert (tuple): Tuple containing the path to the cert file followed
                           by the path to the key file as strings.
-            verify (bool): Whether to verify the url.
+            verify (bool/str): Whether to verify the url. If a string is given
+                               then this is used as the path to a CA_BUNDLE file
+                               or directory with certificates of trusted CAs.
+                               Note: If verify is set to a path to a directory,
+                               the directory must have been processed using the
+                               c_rehash utility supplied with OpenSSL. This list
+                               of trusted CAs can also be specified through the
+                               REQUESTS_CA_BUNDLE environment variable.
         """
         kwargs.setdefault('transport', HttpCertAuthenticated(cert, verify))
         Client.__init__(self, url, **kwargs)

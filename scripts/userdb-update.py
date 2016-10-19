@@ -26,7 +26,11 @@ if __name__ == '__main__':
                         help="URL for the requests DB. Note can use the prefix 'mysql+pymysql://' if you have a problem with MySQLdb.py [default: %(default)s]")
     parser.add_argument('-y', '--verify', default=False, action="store_const", const=True,
                         help="Verify the VOMS server.")
+    parser.add_argument('-t', '--trusted-cas', default='',
+                        help="Path to the trusted CA_BUNDLE file or directory containing the certificates of trusted CAs. Note if set to a directory, the directory must have been processed using the c_rehash utility supplied with OpenSSL. If using a CA_BUNDLE file can also consider using the REQUESTS_CA_BUNDLE environment variable instead. This option implies and superseeds -y")
     args = parser.parse_args()
+    if args.trusted_cas:
+        args.verify = args.trusted_cas
 
     logging.basicConfig(level=args.logginglevel, format="%(name)15s : %(levelname)8s : %(message)s")
     logger = logging.getLogger("userdb-update")

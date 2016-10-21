@@ -63,8 +63,6 @@ class RequestsDB(object):
         """REST Post method."""
         print "IN POST", kwargs
         requester_id, _, _ = check_credentials(self.dburl)
-        kwargs.pop('requester_dn')
-        kwargs.pop('requester_ca')
         kwargs['request_date'] = datetime.now().strftime('%d/%m/%Y')
         kwargs['timestamp'] = str(datetime.now())
         kwargs['status'] = 'Requested'

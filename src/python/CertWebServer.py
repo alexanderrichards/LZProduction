@@ -1,19 +1,8 @@
 """Certificate authenticated web server."""
 import os
 import cherrypy
-from sqlalchemy import Column, Integer, String, Boolean
-from sqlalchemy_utils import SQLTableBase, create_db, db_session
+from sqlalchemy_utils import create_db
 from apache_utils import check_credentials, AuthenticationError
-
-class Users(SQLTableBase):
-    """Users SQL Table."""
-
-    __tablename__ = 'users'
-    id = Column(Integer, primary_key=True)
-    dn = Column(String(250), nullable=False)
-    ca = Column(String(250), nullable=False)
-    suspended = Column(Boolean(), nullable=False)
-    admin = Column(Boolean(), nullable=False)
 
 
 class CertWebServer(object):

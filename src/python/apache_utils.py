@@ -1,3 +1,17 @@
+import cherrypy
+from sqlalchemy import Column, Integer, String, Boolean
+from sqlalchemy_utils import SQLTableBase, create_db, db_session
+
+class Users(SQLTableBase):
+    """Users SQL Table."""
+
+    __tablename__ = 'users'
+    id = Column(Integer, primary_key=True)
+    dn = Column(String(250), nullable=False)
+    ca = Column(String(250), nullable=False)
+    suspended = Column(Boolean(), nullable=False)
+    admin = Column(Boolean(), nullable=False)
+
 def apache_client_convert(dn, ca=None):
     """
     Convert Apache style client certs.
@@ -25,6 +39,7 @@ def check_credentials(users_dburl):
     if clientVerified != 'SUCCESS':
         raise AuthenticationError('401 Unauthorized: Cert not verified for user DN: %s, CA: %s.' % (clientDN, clientCA))
 
+    create_db(users_dburl)
     with db_session(users_dburl) as session:
         users = session.query(Users).filter(Users.dn == clientDN).filter(Users.ca == clientCA).all()
         if not users:
@@ -33,7 +48,7 @@ def check_credentials(users_dburl):
             raise AuthenticationError('500 Internal Server Error: Duplicate user detected. users: %s' % users)
         if users[0].suspended:
             raise AuthenticationError('403 Forbidden: User is suspended by VO')
-    return users[0].id, users[0].dn, users[0].ca
+        return users[0].id, users[0].dn, users[0].ca
 
 class AuthenticationError(Exception):
     pass

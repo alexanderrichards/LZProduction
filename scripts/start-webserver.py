@@ -78,7 +78,7 @@ if __name__ == '__main__':
     }
 
     cherrypy.config.update(config)  # global vars need updating global config
-    cherrypy.tree.mount(CertWebServer.CertWebServer(args.dburl, os.path.join(lzprod_root, 'src', 'html', 'index.html')), '/')
+    cherrypy.tree.mount(CertWebServer.CertWebServer(args.dburl, os.path.join(lzprod_root, 'src', 'html')), '/')
     cherrypy.tree.mount(RequestsDB.RequestsDB(args.dburl),
                         '/api',
                         {'/': {'request.dispatch': cherrypy.dispatch.MethodDispatcher()}})

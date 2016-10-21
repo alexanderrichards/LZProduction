@@ -2,8 +2,9 @@
 import json
 from datetime import datetime
 import html
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKeyConstraint
 from sqlalchemy_utils import SQLTableBase, create_db, db_session
+from apache_utils import check_credentials, AuthenticationError
 
 
 class Requests(SQLTableBase):
@@ -11,8 +12,7 @@ class Requests(SQLTableBase):
 
     __tablename__ = 'requests'
     id = Column(Integer, primary_key=True)
-    requesterDN = ForeignKey('users.dn')
-    requesterCA = ForeignKey('users.ca')
+    requester_id = Column(Integer, nullable=False)
     request_date = Column(String(250), nullable=False)
     source = Column(String(250), nullable=False)
     detector = Column(String(250), nullable=False)
@@ -26,7 +26,7 @@ class Requests(SQLTableBase):
     timestamp = Column(String(250), nullable=False)
     description = Column(String(250), nullable=False)
     selected_macros = Column(String(250), nullable=False)
-
+    ForeignKeyConstraint(['requester_id'], ['users.id'])
 
 class RequestsDB(object):
     """
@@ -62,12 +62,13 @@ class RequestsDB(object):
     def POST(self, **kwargs):
         """REST Post method."""
         print "IN POST", kwargs
+        requester_id, _, _ = check_credentials(self.dburl)
         kwargs['request_date'] = datetime.now().strftime('%d/%m/%Y')
         kwargs['timestamp'] = str(datetime.now())
         kwargs['status'] = 'Requested'
         kwargs['selected_macros'] = '\n'.join(kwargs['selected_macros'])
         with db_session(self.dburl) as session:
-            session.add(Requests(**kwargs))
+            session.add(Requests(requester_id=requester_id, **kwargs))
         return self.GET()
 
     def PUT(self, reqid, **kwargs):

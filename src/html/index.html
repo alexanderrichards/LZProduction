@@ -75,7 +75,7 @@
                                                 }}],
                          columns: [{data:null, defaultContent: "<span class='glyphicon glyphicon-plus-sign text-primary details-control' style='cursor:pointer'></span>", orderable:false},
                                    {data: "id", title: "ID", className:"rowid", width:"5%"},
-                                   {data: "requester", title: "Requester", width: "20%"},
+                                   {data: "requester_id", title: "Requester", width: "20%"},
                                    {data: "description", title: "Description", width: "40%"},
                                    {data: "sim_lead", title: "Sim Lead", width: "20%"},
                                    {data: "status", title: "Status", width: "7.5%"},
@@ -103,7 +103,7 @@
     // New request button
     $("#NewRequest").fancybox({
       type: "iframe",
-      href: "/newrequest.html",
+      href: "/newrequest",
       title: "Submit New Request"
     });
   

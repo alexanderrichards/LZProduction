@@ -11,8 +11,8 @@ class Requests(SQLTableBase):
 
     __tablename__ = 'requests'
     id = Column(Integer, primary_key=True)
-    requesterDN = ForeignKey('users.dn')
-    requesterCA = ForeignKey('users.ca')
+    requester_dn = Column(String(250), ForeignKey('users.dn'), nullable=False)
+    requester_ca = Column(String(250), ForeignKey('users.ca'), nullable=False)
     request_date = Column(String(250), nullable=False)
     source = Column(String(250), nullable=False)
     detector = Column(String(250), nullable=False)

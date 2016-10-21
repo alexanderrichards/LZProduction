@@ -156,10 +156,15 @@ $(document).ready(function() {
 	  <fieldset>
 	    <legend>Basic Information</legend>
 	    
-	    <label for="requester">Requester Name:</label>
+	    <label for="requester_dn">Requester:</label>
 	    <div class="input-group">
 	      <!--	<span class="input-group-addon">Hello World</span>-->
-	      <input class="form-control" placeholder="Username" type="text" name="requester" required>
+	      <input class="form-control" type="text" value="###requester_dn###" name="requester_dn" readonly required>
+	    </div>
+
+	    <br>
+	    <div class="input-group">
+	      <input class="form-control" type="hidden" value="###requester_ca###" name="requester_ca" readonly required>
 	    </div>
 
 	    <br>

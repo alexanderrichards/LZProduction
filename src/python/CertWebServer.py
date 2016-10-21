@@ -1,4 +1,5 @@
 """Certificate authenticated web server."""
+import os
 import cherrypy
 from sqlalchemy import Column, Integer, String, Boolean
 from sqlalchemy_utils import SQLTableBase, create_db, db_session
@@ -35,32 +36,55 @@ def apache_client_convert(dn, ca=None):
     return dn, ca
 
 
+class AuthenticationError(Exception):
+    pass
+
 class CertWebServer(object):
     """The Web server."""
 
-    def __init__(self, dburl, index_page):
+    def __init__(self, dburl, html_root):
         """Initialisation."""
         self.dburl = dburl
         create_db(dburl)
-        self.index_page = index_page
+        self.html_root = html_root
 
-    @cherrypy.expose
-    def index(self):
-        """Return the index page."""
+    def _check_credentials(self):
         clientDN, clientCA = apache_client_convert(cherrypy.request.headers['Ssl-Client-S-Dn'],
                                                    cherrypy.request.headers['Ssl-Client-I-Dn'])
         clientVerified = cherrypy.request.headers['Ssl-Client-Verify']
         if clientVerified != 'SUCCESS':
-            return '401 Unauthorized: Cert not verified for user DN: %s, CA: %s.' % (clientDN, clientCA)
+            raise AuthenticationError('401 Unauthorized: Cert not verified for user DN: %s, CA: %s.' % (clientDN, clientCA))
 
         with db_session(self.dburl) as session:
             users = session.query(Users).filter(Users.dn == clientDN).filter(Users.ca == clientCA).all()
             if not users:
-                return '403 Forbidden: Unknown user: (%s, %s), users: %s' % (clientDN, clientCA, users)
+                raise AuthenticationError('403 Forbidden: Unknown user: (%s, %s), users: %s' % (clientDN, clientCA, users))
             if len(users) > 1:
-                return '500 Internal Server Error: Duplicate user detected. users: %s' % users
+                raise AuthenticationError('500 Internal Server Error: Duplicate user detected. users: %s' % users)
             if users[0].suspended:
-                return '403 Forbidden: User is suspended by VO'
+                raise AuthenticationError('403 Forbidden: User is suspended by VO')
 
-        with open(self.index_page, 'rb') as front_page:
+    @cherrypy.expose
+    def index(self):
+        """Return the index page."""
+        try:
+            self._check_credentials()
+        except AuthenticationError as e:
+            return e.message
+
+        with open(os.path.join(self.html_root, 'index.html'), 'rb') as front_page:
             return front_page.read()
+
+
+    @cherrypy.expose
+    def newrequest(self):
+        """Return the new requests page."""
+
+        try:
+            self._check_credentials()
+        except AuthenticationError as e:
+            return e.message
+
+        with open(os.path.join(self.html_root, 'newrequest.html')) as new_request:
+            return new_request.read().replace('###requester_dn###', clientDN)\
+                                     .replace('###requester_ca###', clientCA)

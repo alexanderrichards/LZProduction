@@ -32,9 +32,9 @@ class CertWebServer(object):
         """Return the new requests page."""
 
         try:
-            _, clientDN, _ = check_credentials(self.dburl)
+            check_credentials(self.dburl)
         except AuthenticationError as e:
             return e.message
 
         with open(os.path.join(self.html_root, 'newrequest.html')) as new_request:
-            return new_request.read().replace('###requester_dn###', clientDN)
+            return new_request.read()

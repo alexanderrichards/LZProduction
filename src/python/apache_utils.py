@@ -1,3 +1,4 @@
+from collections import namedtuple
 import cherrypy
 from sqlalchemy import Column, Integer, String, Boolean
 from sqlalchemy_utils import SQLTableBase, create_db, db_session
@@ -11,6 +12,8 @@ class Users(SQLTableBase):
     ca = Column(String(250), nullable=False)
     suspended = Column(Boolean(), nullable=False)
     admin = Column(Boolean(), nullable=False)
+
+VerifiedUser = namedtuple('VerifiedUser', ('id', 'dn', 'ca', 'admin'))
 
 def apache_client_convert(dn, ca=None):
     """
@@ -48,7 +51,7 @@ def check_credentials(users_dburl):
             raise AuthenticationError('500 Internal Server Error: Duplicate user detected. users: %s' % users)
         if users[0].suspended:
             raise AuthenticationError('403 Forbidden: User is suspended by VO')
-        return users[0].id, users[0].dn, users[0].ca
+        return VerifiedUser(users[0].id, users[0].dn, users[0].ca, users[0].admin)
 
 class AuthenticationError(Exception):
     pass

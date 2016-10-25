@@ -65,7 +65,7 @@ class RequestsDB(object):
         try:
             # if coming through the web app then this should be
             # checked already but could use curl
-            requester_id, _, _ = check_credentials(self.dburl)
+            requester = check_credentials(self.dburl)
         except AuthenticationError as e:
             return e.message
         kwargs['request_date'] = datetime.now().strftime('%d/%m/%Y')
@@ -73,7 +73,7 @@ class RequestsDB(object):
         kwargs['status'] = 'Requested'
         kwargs['selected_macros'] = '\n'.join(kwargs['selected_macros'])
         with db_session(self.dburl) as session:
-            session.add(Requests(requester_id=requester_id, **kwargs))
+            session.add(Requests(requester_id=requester.id, **kwargs))
         return self.GET()
 
     def PUT(self, reqid, **kwargs):

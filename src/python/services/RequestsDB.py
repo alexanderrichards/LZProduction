@@ -62,7 +62,12 @@ class RequestsDB(object):
     def POST(self, **kwargs):
         """REST Post method."""
         print "IN POST", kwargs
-        requester_id, _, _ = check_credentials(self.dburl)
+        try:
+            # if coming through the web app then this should be
+            # checked already but could use curl
+            requester_id, _, _ = check_credentials(self.dburl)
+        except AuthenticationError as e:
+            return e.message
         kwargs['request_date'] = datetime.now().strftime('%d/%m/%Y')
         kwargs['timestamp'] = str(datetime.now())
         kwargs['status'] = 'Requested'

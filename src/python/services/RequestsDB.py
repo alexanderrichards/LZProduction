@@ -48,7 +48,29 @@ class RequestsDB(object):
         print "IN GET: reqid=(%s)" % reqid
         with db_session(self.dburl) as session:
             if reqid is None:
-                return json.dumps({'data': [dict(request) for request in session.query(Requests).all()]})
+                try:
+                    requester = check_credentials(self.dburl)
+                except AuthenticationError as e:
+                    return e.message
+
+                columns = ['id']
+                query = session.query(Requests.id,
+                                      Requests.request_date,
+                                      Requests.sim_lead,
+                                      Requests.status,
+                                      Requests.description)\
+                               .filter(Requests.requester_id == requester.id)
+                if requester.admin:
+                    columns += ['requester_id']
+                    query = session.query(Requests.id,
+                                          Requests.requester_id,
+                                          Requests.request_date,
+                                          Requests.sim_lead,
+                                          Requests.status,
+                                          Requests.description)
+                columns += ['request_date', 'sim_lead', 'status', 'description']
+                return json.dumps({'data': [dict(zip(columns, request)) for request in query.all()]})
+
 
             table = html.HTML().table(border='1')
             request = session.query(Requests).filter(Requests.id == reqid).first()

@@ -20,14 +20,11 @@ class CertWebServer(object):
     def index(self):
         """Return the index page."""
         try:
-            check_credentials(self.dburl)
+            user = check_credentials(self.dburl)
         except AuthenticationError as e:
             return e.message
 
-        return self.template_env.get_template('index.html').render({'admin': False})
-
-#        with open(os.path.join(self.html_root, 'index.html'), 'rb') as front_page:
-#            return front_page.read()
+        return self.template_env.get_template('index.html').render({'user': user})
 
 
     @cherrypy.expose

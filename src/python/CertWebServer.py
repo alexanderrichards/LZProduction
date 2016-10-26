@@ -1,6 +1,7 @@
 """Certificate authenticated web server."""
 import os
 import cherrypy
+import jinja2
 from sqlalchemy_utils import create_db
 from apache_utils import check_credentials, AuthenticationError
 
@@ -13,18 +14,17 @@ class CertWebServer(object):
         self.dburl = dburl
         create_db(dburl)
         self.html_root = html_root
-
+        self.template_env = jinja2.Environment(loader=jinja2.FileSystemLoader(searchpath=html_root))
 
     @cherrypy.expose
     def index(self):
         """Return the index page."""
         try:
-            check_credentials(self.dburl)
+            user = check_credentials(self.dburl)
         except AuthenticationError as e:
             return e.message
 
-        with open(os.path.join(self.html_root, 'index.html'), 'rb') as front_page:
-            return front_page.read()
+        return self.template_env.get_template('index.html').render({'user': user})
 
 
     @cherrypy.expose

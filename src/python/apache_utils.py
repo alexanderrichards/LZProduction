@@ -1,7 +1,15 @@
+"""
+Apache Utils.
+
+Tools for dealing with credential checking from X509 SSL certificates.
+These are useful when using Apache as a reverse proxy to check user
+credentials agains a local DB.
+"""
 from collections import namedtuple
 import cherrypy
 from sqlalchemy import Column, Integer, String, Boolean
 from sqlalchemy_utils import SQLTableBase, create_db, db_session
+
 
 class Users(SQLTableBase):
     """Users SQL Table."""
@@ -14,6 +22,7 @@ class Users(SQLTableBase):
     admin = Column(Boolean(), nullable=False)
 
 VerifiedUser = namedtuple('VerifiedUser', ('id', 'dn', 'ca', 'admin'))
+
 
 def apache_client_convert(dn, ca=None):
     """
@@ -36,6 +45,21 @@ def apache_client_convert(dn, ca=None):
 
 
 def check_credentials(users_dburl):
+    """
+    Check credentials of incoming request.
+
+    Takes the credentials from the incoming requests header which is where Apache
+    places them and checks them against a local DB. It returns information about the
+    user in a VerifiedUser tuple if the user is valid. If not then an
+    AuthenticationError is raised.
+
+    Args:
+        users_dburl (str): The URL for the DB containing the valid users information
+
+    Returns
+        VerifiedUser: A named tuple containing the users (id, dn, ca, admin status)
+                      from the DB.
+    """
     clientDN, clientCA = apache_client_convert(cherrypy.request.headers['Ssl-Client-S-Dn'],
                                                cherrypy.request.headers['Ssl-Client-I-Dn'])
     clientVerified = cherrypy.request.headers['Ssl-Client-Verify']
@@ -53,5 +77,8 @@ def check_credentials(users_dburl):
             raise AuthenticationError('403 Forbidden: User is suspended by VO')
         return VerifiedUser(users[0].id, users[0].dn, users[0].ca, users[0].admin)
 
+
 class AuthenticationError(Exception):
+    """Error authentication user."""
+
     pass

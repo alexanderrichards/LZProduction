@@ -28,6 +28,7 @@ class Requests(SQLTableBase):
     selected_macros = Column(String(250), nullable=False)
     ForeignKeyConstraint(['requester_id'], ['users.id'])
 
+
 class RequestsDB(object):
     """
     RequestsDB Service.
@@ -43,7 +44,7 @@ class RequestsDB(object):
         self.dburl = dburl
         create_db(dburl)
 
-    def GET(self, reqid=None):
+    def GET(self, reqid=None):  # pylint: disable=C0103
         """REST Get method."""
         print "IN GET: reqid=(%s)" % reqid
         with db_session(self.dburl) as session:
@@ -71,7 +72,6 @@ class RequestsDB(object):
                 columns += ['request_date', 'sim_lead', 'status', 'description']
                 return json.dumps({'data': [dict(zip(columns, request)) for request in query.all()]})
 
-
             table = html.HTML().table(border='1')
             request = session.query(Requests).filter(Requests.id == reqid).first()
             if request is not None:
@@ -81,7 +81,7 @@ class RequestsDB(object):
                     tr.td(str(value))
         return str(table)
 
-    def POST(self, **kwargs):
+    def POST(self, **kwargs):  # pylint: disable=C0103
         """REST Post method."""
         print "IN POST", kwargs
         try:
@@ -98,13 +98,13 @@ class RequestsDB(object):
             session.add(Requests(requester_id=requester.id, **kwargs))
         return self.GET()
 
-    def PUT(self, reqid, **kwargs):
+    def PUT(self, reqid, **kwargs):  # pylint: disable=C0103
         """REST Put method."""
         print "IN PUT: reqid=(%s)" % reqid, kwargs
         with db_session(self.dburl) as session:
             session.query(Requests).filter(Requests.id == reqid).update(kwargs)
 
-    def DELETE(self, reqid):
+    def DELETE(self, reqid):  # pylint: disable=C0103
         """REST Delete method."""
         print "IN DELETE: reqid=(%s)" % reqid
         with db_session(self.dburl) as session:

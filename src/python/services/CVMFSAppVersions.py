@@ -22,7 +22,7 @@ class CVMFSAppVersions(object):
         self.cvmfs_root = cvmfs_root
         self.valid_apps = valid_apps
 
-    def GET(self, appid=None):
+    def GET(self, appid=None):  # pylint: disable=C0103
         """REST GET method."""
         print "IN AppVersion GET: appid=(%s)" % appid
         if appid not in self.valid_apps:

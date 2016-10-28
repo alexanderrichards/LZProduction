@@ -26,7 +26,7 @@ class GitTagMacros(object):
         self.tag_cache = pylru.lrucache(50)
 
 #    @pylru.lrudecorator(50)  # don't want to cache list of tags where tagid = None
-    def GET(self, tagid=None):
+    def GET(self, tagid=None):  # pylint: disable=C0103
         """REST Get method."""
         print "IN GET: tagid=(%s)" % tagid
         if tagid in self.tag_cache:

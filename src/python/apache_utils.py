@@ -3,7 +3,7 @@ Apache Utils.
 
 Tools for dealing with credential checking from X509 SSL certificates.
 These are useful when using Apache as a reverse proxy to check user
-credentials agains a local DB.
+credentials against a local DB.
 """
 from collections import namedtuple
 import cherrypy
@@ -28,8 +28,8 @@ def apache_client_convert(dn, ca=None):
     """
     Convert Apache style client certs.
 
-    Convert from the Apache comma delimeted style to the
-    more usual slash delimeted style.
+    Convert from the Apache comma delimited style to the
+    more usual slash delimited style.
 
     Args:
         dn (str): The client DN
@@ -60,17 +60,19 @@ def check_credentials(users_dburl):
         VerifiedUser: A named tuple containing the users (id, dn, ca, admin status)
                       from the DB.
     """
-    clientDN, clientCA = apache_client_convert(cherrypy.request.headers['Ssl-Client-S-Dn'],
-                                               cherrypy.request.headers['Ssl-Client-I-Dn'])
-    clientVerified = cherrypy.request.headers['Ssl-Client-Verify']
-    if clientVerified != 'SUCCESS':
-        raise AuthenticationError('401 Unauthorized: Cert not verified for user DN: %s, CA: %s.' % (clientDN, clientCA))
+    client_dn, client_ca = apache_client_convert(cherrypy.request.headers['Ssl-Client-S-Dn'],
+                                                 cherrypy.request.headers['Ssl-Client-I-Dn'])
+    client_verified = cherrypy.request.headers['Ssl-Client-Verify']
+    if client_verified != 'SUCCESS':
+        raise AuthenticationError('401 Unauthorized: Cert not verified for user DN: %s, CA: %s.'
+                                  % (client_dn, client_ca))
 
     create_db(users_dburl)
     with db_session(users_dburl) as session:
-        users = session.query(Users).filter(Users.dn == clientDN).filter(Users.ca == clientCA).all()
+        users = session.query(Users).filter(Users.dn == client_dn).filter(Users.ca == client_ca).all()
         if not users:
-            raise AuthenticationError('403 Forbidden: Unknown user: (%s, %s), users: %s' % (clientDN, clientCA, users))
+            raise AuthenticationError('403 Forbidden: Unknown user: (%s, %s), users: %s'
+                                      % (client_dn, client_ca, users))
         if len(users) > 1:
             raise AuthenticationError('500 Internal Server Error: Duplicate user detected. users: %s' % users)
         if users[0].suspended:

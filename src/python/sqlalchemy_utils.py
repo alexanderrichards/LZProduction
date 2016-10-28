@@ -45,7 +45,7 @@ def db_session(url):
     DB Session context.
 
     Returns a DB session context which automatically rolls back on
-    any excepion as well as automatically commiting if no exception is
+    any exception as well as automatically committing if no exception is
     thrown.
     """
     engine = create_engine(url)

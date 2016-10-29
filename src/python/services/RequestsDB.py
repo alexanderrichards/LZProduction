@@ -47,13 +47,13 @@ class RequestsDB(object):
     def GET(self, reqid=None):  # pylint: disable=C0103
         """REST Get method."""
         print "IN GET: reqid=(%s)" % reqid
+        try:
+            requester = check_credentials(self.dburl)
+        except AuthenticationError as e:
+            return e.message
+
         with db_session(self.dburl) as session:
             if reqid is None:
-                try:
-                    requester = check_credentials(self.dburl)
-                except AuthenticationError as e:
-                    return e.message
-
                 columns = ['id']
                 query = session.query(Requests.id,
                                       Requests.request_date,
@@ -85,11 +85,10 @@ class RequestsDB(object):
         """REST Post method."""
         print "IN POST", kwargs
         try:
-            # if coming through the web app then this should be
-            # checked already but could use curl
             requester = check_credentials(self.dburl)
         except AuthenticationError as e:
             return e.message
+
         kwargs['request_date'] = datetime.now().strftime('%d/%m/%Y')
         kwargs['timestamp'] = str(datetime.now())
         kwargs['status'] = 'Requested'
@@ -101,12 +100,26 @@ class RequestsDB(object):
     def PUT(self, reqid, **kwargs):  # pylint: disable=C0103
         """REST Put method."""
         print "IN PUT: reqid=(%s)" % reqid, kwargs
+        try:
+            requester = check_credentials(self.dburl)
+        except AuthenticationError as e:
+            return e.message
+
         with db_session(self.dburl) as session:
-            session.query(Requests).filter(Requests.id == reqid).update(kwargs)
+            query = session.query(Requests).filter(Requests.id == reqid)
+            if not requester.admin:
+                query = query.filter(Requests.requester_id == requester.id)
+            query.update(kwargs)
 
     def DELETE(self, reqid):  # pylint: disable=C0103
         """REST Delete method."""
         print "IN DELETE: reqid=(%s)" % reqid
-        with db_session(self.dburl) as session:
-            session.query(Requests).filter(Requests.id == reqid).delete(synchronize_session=False)
+        try:
+            requester = check_credentials(self.dburl)
+        except AuthenticationError as e:
+            return e.message
+
+        if requester.admin:
+            with db_session(self.dburl) as session:
+                session.query(Requests).filter(Requests.id == reqid).delete(synchronize_session=False)
         return self.GET()

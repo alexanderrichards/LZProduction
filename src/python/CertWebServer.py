@@ -19,22 +19,11 @@ class CertWebServer(object):
     @cherrypy.expose
     def index(self):
         """Return the index page."""
-        try:
-            user = check_credentials(self.dburl)
-        except AuthenticationError as e:
-            return e.message
-
-        return self.template_env.get_template('index.html').render({'user': user})
+        return self.template_env.get_template('index.html').render({'user': cherrypy.request.verified_user})
 
 
     @cherrypy.expose
     def newrequest(self):
         """Return the new requests page."""
-
-        try:
-            check_credentials(self.dburl)
-        except AuthenticationError as e:
-            return e.message
-
         with open(os.path.join(self.html_root, 'newrequest.html')) as new_request:
             return new_request.read()

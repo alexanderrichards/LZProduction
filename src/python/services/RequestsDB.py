@@ -1,6 +1,7 @@
 """Requests service."""
 import json
 from datetime import datetime
+import cherrypy
 import html
 from sqlalchemy import Column, Integer, String, ForeignKeyConstraint
 from sqlalchemy_utils import SQLTableBase, create_db, db_session
@@ -47,10 +48,7 @@ class RequestsDB(object):
     def GET(self, reqid=None):  # pylint: disable=C0103
         """REST Get method."""
         print "IN GET: reqid=(%s)" % reqid
-        try:
-            requester = check_credentials(self.dburl)
-        except AuthenticationError as e:
-            return e.message
+        requester = cherrypy.request.verified_user
 
         with db_session(self.dburl) as session:
             if reqid is None:
@@ -84,26 +82,18 @@ class RequestsDB(object):
     def POST(self, **kwargs):  # pylint: disable=C0103
         """REST Post method."""
         print "IN POST", kwargs
-        try:
-            requester = check_credentials(self.dburl)
-        except AuthenticationError as e:
-            return e.message
-
         kwargs['request_date'] = datetime.now().strftime('%d/%m/%Y')
         kwargs['timestamp'] = str(datetime.now())
         kwargs['status'] = 'Requested'
         kwargs['selected_macros'] = '\n'.join(kwargs['selected_macros'])
         with db_session(self.dburl) as session:
-            session.add(Requests(requester_id=requester.id, **kwargs))
+            session.add(Requests(requester_id=cherrypy.request.verified_user.id, **kwargs))
         return self.GET()
 
     def PUT(self, reqid, **kwargs):  # pylint: disable=C0103
         """REST Put method."""
         print "IN PUT: reqid=(%s)" % reqid, kwargs
-        try:
-            requester = check_credentials(self.dburl)
-        except AuthenticationError as e:
-            return e.message
+        requester = cherrypy.request.verified_user
 
         with db_session(self.dburl) as session:
             query = session.query(Requests).filter(Requests.id == reqid)
@@ -114,12 +104,8 @@ class RequestsDB(object):
     def DELETE(self, reqid):  # pylint: disable=C0103
         """REST Delete method."""
         print "IN DELETE: reqid=(%s)" % reqid
-        try:
-            requester = check_credentials(self.dburl)
-        except AuthenticationError as e:
-            return e.message
 
-        if requester.admin:
+        if cherrypy.request.verified_user.admin:
             with db_session(self.dburl) as session:
                 session.query(Requests).filter(Requests.id == reqid).delete(synchronize_session=False)
         return self.GET()

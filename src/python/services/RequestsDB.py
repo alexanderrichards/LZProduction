@@ -5,7 +5,6 @@ import cherrypy
 import html
 from sqlalchemy import Column, Integer, String, ForeignKeyConstraint
 from sqlalchemy_utils import SQLTableBase, create_db, db_session
-from apache_utils import check_credentials, AuthenticationError
 
 
 class Requests(SQLTableBase):

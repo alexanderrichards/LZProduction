@@ -74,7 +74,8 @@ if __name__ == '__main__':
             'server.socket_port': args.socket_port,
             'server.thread_pool': args.thread_pool,
             'tools.expires.on': True,
-            'tools.expires.secs': 3  # expire in an hour
+            'tools.expires.secs': 3,  # expire in an hour, 3 secs for debug
+            'checker.check_static_paths': None
         }
     }
 

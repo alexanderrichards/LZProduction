@@ -79,6 +79,7 @@ def check_credentials(users_dburl):
             raise AuthenticationError('403 Forbidden: User is suspended by VO')
         return VerifiedUser(users[0].id, users[0].dn, users[0].ca, users[0].admin)
 
+
 class CredentialDispatcher(object):
     """
     Dispatcher that checks SSL credentials.
@@ -88,10 +89,18 @@ class CredentialDispatcher(object):
     """
 
     def __init__(self, users_dburl, dispatcher):
+        """Initialise."""
         self._users_dburl = users_dburl
         self._dispatcher = dispatcher
 
     def __call__(self, path):
+        """Dispatch."""
+        required_headers = set(['Ssl-Client-S-Dn', 'Ssl-Client-I-Dn', 'Ssl-Client-Verify'])
+        missing_headers = required_headers.difference(cherrypy.request.headers.iterkeys())
+        if missing_headers:
+            raise cherrypy.HTTPError(401, 'Unauthorized: Incomplete certificate information '
+                                     'available, required: %s' % list(missing_headers))
+
         client_dn, client_ca = apache_client_convert(cherrypy.request.headers['Ssl-Client-S-Dn'],
                                                      cherrypy.request.headers['Ssl-Client-I-Dn'])
         client_verified = cherrypy.request.headers['Ssl-Client-Verify']
@@ -113,6 +122,7 @@ class CredentialDispatcher(object):
                                          % (client_dn, client_ca))
             cherrypy.request.verified_user = VerifiedUser(users[0].id, users[0].dn, users[0].ca, users[0].admin)
         return self._dispatcher(path)
+
 
 class AuthenticationError(Exception):
     """Error authentication user."""

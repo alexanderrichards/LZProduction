@@ -62,6 +62,7 @@ if __name__ == '__main__':
     CVMFSAppVersions = importlib.import_module('services.CVMFSAppVersions')
     GitTagMacros = importlib.import_module('services.GitTagMacros')
     CertWebServer = importlib.import_module('CertWebServer')
+    apache_utils = importlib.import_module('apache_utils')
 
     config = {
         'global': {
@@ -73,22 +74,23 @@ if __name__ == '__main__':
             'server.socket_port': args.socket_port,
             'server.thread_pool': args.thread_pool,
             'tools.expires.on': True,
-            'tools.expires.secs': 3  # expire in an hour
+            'tools.expires.secs': 3,  # expire in an hour, 3 secs for debug
+            'checker.check_static_paths': None
         }
     }
 
     cherrypy.config.update(config)  # global vars need updating global config
-    cherrypy.tree.mount(CertWebServer.CertWebServer(args.dburl, os.path.join(lzprod_root, 'src', 'html')), '/')
+    cherrypy.tree.mount(CertWebServer.CertWebServer(os.path.join(lzprod_root, 'src', 'html')), '/', {'/': {'request.dispatch': apache_utils.CredentialDispatcher(args.dburl, cherrypy.dispatch.Dispatcher())}})
     cherrypy.tree.mount(RequestsDB.RequestsDB(args.dburl),
                         '/api',
-                        {'/': {'request.dispatch': cherrypy.dispatch.MethodDispatcher()}})
+                        {'/': {'request.dispatch': apache_utils.CredentialDispatcher(args.dburl, cherrypy.dispatch.MethodDispatcher())}})
     cherrypy.tree.mount(CVMFSAppVersions.CVMFSAppVersions('/cvmfs/lz.opensciencegrid.org',
                                                           ['LUXSim', 'BACCARAT', 'TDRAnalysis']),
                         '/appversion',
-                        {'/': {'request.dispatch': cherrypy.dispatch.MethodDispatcher()}})
+                        {'/': {'request.dispatch': apache_utils.CredentialDispatcher(args.dburl, cherrypy.dispatch.MethodDispatcher())}})
     cherrypy.tree.mount(GitTagMacros.GitTagMacros(args.git_repo, args.git_dir),
                         '/tags',
-                        {'/': {'request.dispatch': cherrypy.dispatch.MethodDispatcher()}})
+                        {'/': {'request.dispatch':  apache_utils.CredentialDispatcher(args.dburl, cherrypy.dispatch.MethodDispatcher())}})
     cherrypy.engine.start()
     cherrypy.engine.block()
 

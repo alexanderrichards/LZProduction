@@ -80,6 +80,50 @@ def check_credentials(users_dburl):
         return VerifiedUser(users[0].id, users[0].dn, users[0].ca, users[0].admin)
 
 
+class CredentialDispatcher(object):
+    """
+    Dispatcher that checks SSL credentials.
+
+    This dispatcher is a wrapper that simply checks SSL credentials and
+    then hands off to the wrapped dispatcher.
+    """
+
+    def __init__(self, users_dburl, dispatcher):
+        """Initialise."""
+        self._users_dburl = users_dburl
+        self._dispatcher = dispatcher
+
+    def __call__(self, path):
+        """Dispatch."""
+        required_headers = set(['Ssl-Client-S-Dn', 'Ssl-Client-I-Dn', 'Ssl-Client-Verify'])
+        missing_headers = required_headers.difference(cherrypy.request.headers.iterkeys())
+        if missing_headers:
+            raise cherrypy.HTTPError(401, 'Unauthorized: Incomplete certificate information '
+                                     'available, required: %s' % list(missing_headers))
+
+        client_dn, client_ca = apache_client_convert(cherrypy.request.headers['Ssl-Client-S-Dn'],
+                                                     cherrypy.request.headers['Ssl-Client-I-Dn'])
+        client_verified = cherrypy.request.headers['Ssl-Client-Verify']
+        if client_verified != 'SUCCESS':
+            raise cherrypy.HTTPError(401, 'Unauthorized: Cert not verified for user DN: %s, CA: %s.'
+                                     % (client_dn, client_ca))
+
+        create_db(self._users_dburl)
+        with db_session(self._users_dburl) as session:
+            users = session.query(Users).filter(Users.dn == client_dn).filter(Users.ca == client_ca).all()
+            if not users:
+                raise cherrypy.HTTPError(403, 'Forbidden: Unknown user. user: (%s, %s)'
+                                         % (client_dn, client_ca))
+            if len(users) > 1:
+                raise cherrypy.HTTPError(500, 'Internal Server Error: Duplicate user detected. user: (%s, %s)'
+                                         % (client_dn, client_ca))
+            if users[0].suspended:
+                raise cherrypy.HTTPError(403, 'Forbidden: User is suspended by VO. user: (%s, %s)'
+                                         % (client_dn, client_ca))
+            cherrypy.request.verified_user = VerifiedUser(users[0].id, users[0].dn, users[0].ca, users[0].admin)
+        return self._dispatcher(path)
+
+
 class AuthenticationError(Exception):
     """Error authentication user."""
 

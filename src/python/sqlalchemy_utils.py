@@ -27,7 +27,7 @@ class _IterableBase(object):
                                   lambda value: isinstance(value, InstrumentedAttribute)):
             yield name, getattr(self, name)
 
-SQLTableBase = declarative_base(cls=_IterableBase)
+SQLTableBase = declarative_base(cls=_IterableBase)  # pylint: disable=C0103
 
 
 def create_db(url):

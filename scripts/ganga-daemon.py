@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import os
 import sys
 import argparse
@@ -5,6 +6,8 @@ import importlib
 import ganga
 from contextlib import contextmanager
 from daemonize import Daemonize
+import logging
+from logging.handlers import RotatingFileHandler, TimedRotatingFileHandler
 
 @contextmanager
 def auto_cleanup_request():
@@ -27,7 +30,7 @@ def monitor_requests(dburl):
     with sqlalchemy_utils.db_session(dburl) as session:
         monitored_requests = session.query(Requests)\
                                     .filter(Requests.status != 'Completed')\
-                                    .filter(Request.status != 'New')\
+                                    .filter(Requests.status != 'Requested')\
                                     .all()
 
         approved_requests = ((r, getGangaRequest(r.id)) for r in monitored_requests
@@ -38,12 +41,12 @@ def monitor_requests(dburl):
                             if r.status == "Running")
 
         for request, ganga_request in approved_requests:
-            if ganga_request is not None
-            # why is it still approved?
-            session.query(Requests)\
-                   .filter(Requests.id == request.id)\
-                   .update(status=ganga_request.status.capitalize())
-            continue
+            if ganga_request is not None:
+                # why is it still approved?
+                session.query(Requests)\
+                       .filter(Requests.id == request.id)\
+                       .update(status=ganga_request.status.capitalize())
+                continue
             t.requestdb_id = request.id
             t.requestdb_status = request.status
             tr = ganga.CoreTransform(backend=ganga.Dirac())
@@ -92,9 +95,42 @@ if __name__ == '__main__':
     lzprod_root = os.path.dirname(os.path.dirname(os.path.expanduser(os.path.expandvars(os.path.realpath(os.path.abspath(__file__))))))
 
     parser = argparse.ArgumentParser(description='Run the ganga job submission daemon.')
+    parser.add_argument('-p', '--pid-file', default=os.path.join(lzprod_root, 'ganga-daemon.pid'),
+                        help="The pid file used by the daemon [default: %(default)s]")
+    parser.add_argument('-l', '--log-dir', default=os.path.join(lzprod_root, 'log'),
+                        help="Path to the log directory. Will be created if doesn't exist [default: %(default)s]")
+    parser.add_argument('-v', '--verbose', action='count',
+                        help="Increate the logged verbosite, can be used twice")
     parser.add_argument('-d', '--dburl', default="sqlite:///" + os.path.join(lzprod_root, 'requests.db'),
                         help="URL for the requests DB. Note can use the prefix 'mysql+pymysql://' if you have a problem with MySQLdb.py [default: %(default)s]")
+    parser.add_argument('--debug-mode', action='store_true', default=False,
+                        help="Run the daemon in a debug interactive monitoring mode. (debugging only)")
     args = parser.parse_args()
+
+    if not os.path.isdir(args.log_dir):
+        if os.path.exists(args.log_dir):
+            raise Exception("%s path already exists and is not a directory so cant make log dir" % args.log_dir)
+        os.mkdir(args.log_dir)
+
+    fhandler = TimedRotatingFileHandler(os.path.join(args.log_dir, 'ganga-daemon.log'),
+                                        when='midnight', backupCount=5)
+    if args.debug_mode:
+        fhandler = logging.StreamHandler()
+    fhandler.setFormatter(logging.Formatter("[%(asctime)s] %(name)15s : %(levelname)8s : %(message)s"))
+    root_logger = logging.getLogger()
+    ganga_handlers = [h for h in root_logger.handlers if isinstance(h, RotatingFileHandler)]
+    root_logger.handlers = [fhandler]  # importing ganga adds root handlers so use this to replace them rather than logger.addHandler
+    root_logger.setLevel({None: logging.WARNING,
+                          1: logging.INFO,
+                          2: logging.DEBUG}.get(args.verbose, logging.DEBUG))
+
+    # use the level from the root rather than the gangarc
+    ganga_logger = logging.getLogger("Ganga")
+    ganga_logger.setLevel(logging.NOTSET)
+    ganga_logger.handlers = ganga_handlers
+
+    logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0])
+    logger.debug("Script called with args: %s", args)
 
     # Add the python src path to the sys.path for future imports
     sys.path = [os.path.join(lzprod_root, 'src', 'python')] + sys.path
@@ -106,5 +142,7 @@ if __name__ == '__main__':
     sqlalchemy_utils.create_db(args.dburl)
     daemon = Daemonize(app=os.path.splitext(os.path.basename(__file__))[0],
                        pid=args.pid_file,
-                       action=monitor_requests(args.dburl))
+                       action=monitor_requests(args.dburl),
+                       keep_fds=fhandler.stream.fileno(),
+                       foreground=not args.debug_mode)
     daemon.start()

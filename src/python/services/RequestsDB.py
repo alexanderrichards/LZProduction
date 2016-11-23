@@ -86,6 +86,7 @@ class RequestsDB(object):
         kwargs['timestamp'] = str(datetime.now())
         kwargs['status'] = 'Requested'
         kwargs['selected_macros'] = '\n'.join(kwargs['selected_macros'])
+        kwargs['output_lfns'] = ''
         with db_session(self.dburl) as session:
             session.add(Requests(requester_id=cherrypy.request.verified_user.id, **kwargs))
         return self.GET()

@@ -155,6 +155,6 @@ if __name__ == '__main__':
     daemon = Daemonize(app=os.path.splitext(os.path.basename(__file__))[0],
                        pid=args.pid_file,
                        action=monitor_requests(args.dburl),
-                       keep_fds=fhandler.stream.fileno(),
+                       keep_fds=[fhandler.stream.fileno()],
                        foreground=not args.debug_mode)
     daemon.start()

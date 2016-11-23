@@ -3,7 +3,7 @@ import json
 from datetime import datetime
 import cherrypy
 import html
-from sqlalchemy import Column, Integer, String, ForeignKeyConstraint
+from sqlalchemy import Column, Integer, String, Text, ForeignKeyConstraint
 from sqlalchemy_utils import SQLTableBase, create_db, db_session
 
 
@@ -25,7 +25,8 @@ class Requests(SQLTableBase):
     status = Column(String(250), nullable=False)
     timestamp = Column(String(250), nullable=False)
     description = Column(String(250), nullable=False)
-    selected_macros = Column(String(250), nullable=False)
+    selected_macros = Column(Text())
+    output_lfns = Column(Text())
     ForeignKeyConstraint(['requester_id'], ['users.id'])
 
 
@@ -85,6 +86,7 @@ class RequestsDB(object):
         kwargs['timestamp'] = str(datetime.now())
         kwargs['status'] = 'Requested'
         kwargs['selected_macros'] = '\n'.join(kwargs['selected_macros'])
+        kwargs['output_lfns'] = ''
         with db_session(self.dburl) as session:
             session.add(Requests(requester_id=cherrypy.request.verified_user.id, **kwargs))
         return self.GET()

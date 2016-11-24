@@ -56,16 +56,14 @@ def monitor_requests(dburl):
                             continue
 
                         with auto_cleanup_request() as t:
-                            t.requestdb_id = request.id
-                            t.requestdb_status = request.status
+                            t.requestdb_id = int(request.id)
                             tr = ganga.CoreTransform(backend=ganga.Dirac())
                             tr.application = ganga.LZApp()
                             tr.application.luxsim_version=request.app_version
                             tr.application.reduction_version = request.reduction_version
-                            tr.application.requestid = request.id
                             tr.application.tag = request.tag
                             macros, njobs, nevents, seed = zip(*(i.split() for i in request.selected_macros.splitlines()))
-                            tr.unit_splitter = GenericSplitter()
+                            tr.unit_splitter = ganga.GenericSplitter()
                             tr.unit_splitter.multi_attrs={'application.macro': macros,
                                                           'application.njobs': [int(i) for i in njobs],
                                                           'application.nevents': [int(i) for i in nevents],

@@ -58,7 +58,7 @@ def monitor_requests(dburl):
 
                         with auto_cleanup_request() as t:
                             t.requestdb_id = int(request.id)
-                            tr = ganga.CoreTransform(backend=ganga.Dirac())
+                            tr = ganga.CoreTransform(backend=ganga.LZDirac())
                             tr.application = ganga.LZApp()
                             tr.application.luxsim_version=request.app_version
                             tr.application.reduction_version = request.reduction_version

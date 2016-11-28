@@ -59,7 +59,6 @@ if __name__ == '__main__':
     sys.path = [os.path.join(lzprod_root, 'src', 'python')] + sys.path
 
     services = importlib.import_module('services')
-    CertWebServer = importlib.import_module('CertWebServer')
     apache_utils = importlib.import_module('apache_utils')
 
     config = {
@@ -78,7 +77,7 @@ if __name__ == '__main__':
     }
 
     cherrypy.config.update(config)  # global vars need updating global config
-    cherrypy.tree.mount(CertWebServer.CertWebServer(os.path.join(lzprod_root, 'src', 'html')), '/', {'/': {'request.dispatch': apache_utils.CredentialDispatcher(args.dburl, cherrypy.dispatch.Dispatcher())}})
+    cherrypy.tree.mount(services.HTMLPageServer(os.path.join(lzprod_root, 'src', 'html')), '/', {'/': {'request.dispatch': apache_utils.CredentialDispatcher(args.dburl, cherrypy.dispatch.Dispatcher())}})
     cherrypy.tree.mount(services.RequestsDB(args.dburl),
                         '/api',
                         {'/': {'request.dispatch': apache_utils.CredentialDispatcher(args.dburl, cherrypy.dispatch.MethodDispatcher())}})

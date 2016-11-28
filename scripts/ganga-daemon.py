@@ -18,6 +18,7 @@ def auto_cleanup_request():
     try:
         yield req
     except:
+        req.pause()  # must pause task before removing if running
         req.remove(remove_jobs=True)
         raise
 
@@ -52,20 +53,18 @@ def monitor_requests(dburl):
                             # why is it still approved?
                             session.query(Requests)\
                                    .filter(Requests.id == request.id)\
-                                   .update(status=ganga_request.status.capitalize())
+                                   .update({'status': ganga_request.status.capitalize()})
                             continue
 
                         with auto_cleanup_request() as t:
-                            t.requestdb_id = request.id
-                            t.requestdb_status = request.status
-                            tr = ganga.CoreTransform(backend=ganga.Dirac())
+                            t.requestdb_id = int(request.id)
+                            tr = ganga.CoreTransform(backend=ganga.LZDirac())
                             tr.application = ganga.LZApp()
                             tr.application.luxsim_version=request.app_version
                             tr.application.reduction_version = request.reduction_version
-                            tr.application.requestid = request.id
                             tr.application.tag = request.tag
                             macros, njobs, nevents, seed = zip(*(i.split() for i in request.selected_macros.splitlines()))
-                            tr.unit_splitter = GenericSplitter()
+                            tr.unit_splitter = ganga.GenericSplitter()
                             tr.unit_splitter.multi_attrs={'application.macro': macros,
                                                           'application.njobs': [int(i) for i in njobs],
                                                           'application.nevents': [int(i) for i in nevents],
@@ -75,23 +74,33 @@ def monitor_requests(dburl):
                             t.run()
                             session.query(Requests)\
                                    .filter(Requests.id == request.id)\
-                                   .update(status=t.status.capitalize())
+                                   .update({'status': t.status.capitalize()})
                 except:
                     logger.exception("Problem with request id: %i", request.id)
 
             for request, ganga_request in paused_requests:
-                if ganga_request is not None and ganga_request.status != "paused":
+                if ganga_request is None:
+                    logger.error("Request %i has gone missing!", request.id)
+                    continue
+                if ganga_request.status != "paused":
                     try:
                         with session.begin_nested():
                             session.query(Requests)\
                                    .filter(Requests.id == request.id)\
-                                   .update(status=ganga_request.status.capitalize())
+                                   .update({'status': ganga_request.status.capitalize()})
                     except:
                         logger.exception("Problem with request id: %i", request.id)
 
             for request, ganga_request in running_requests:
+                if ganga_request is None:
+                    logger.error("Request %i has gone missing!", request.id)
+                    continue
+
+                if ganga_request.status == 'running':
+                    continue
+
                 if ganga_request.status not in ['paused', 'completed']:
-                    logger.error("Ganga reports Running request %i and in state: %s",
+                    logger.error("Ganga reports 'Running' request %i in state: %s",
                                  request.id, ganga_request.status)
                     continue
 
@@ -103,7 +112,7 @@ def monitor_requests(dburl):
 
                         session.query(Requests)\
                                .filter(Requests.id == request.id)\
-                               .update(status=ganga_request.status.capitalize())
+                               .update({'status': ganga_request.status.capitalize()})
                 except:
                     logger.exception("Problem with request id: %i", request.id)
 

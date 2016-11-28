@@ -1,12 +1,13 @@
 """Git tag service."""
 import os
 import threading
+import cherrypy
 import html
 import pylru
 from git import Git, Repo
 from natsort import natsorted
 
-
+@cherrypy.popargs('tagid')
 class GitTagMacros(object):
     """
     Git tag checking service.
@@ -14,8 +15,6 @@ class GitTagMacros(object):
     Service for reporting the macros associated to a given git tag
     or returning list of available tags.
     """
-
-    exposed = True
 
     def __init__(self, repo, git_dir):
         """Initialisation."""
@@ -25,10 +24,10 @@ class GitTagMacros(object):
         self.fs_lock = threading.Lock()
         self.tag_cache = pylru.lrucache(50)
 
-#    @pylru.lrudecorator(50)  # don't want to cache list of tags where tagid = None
-    def GET(self, tagid=None):  # pylint: disable=C0103
-        """REST Get method."""
-        print "IN GET: tagid=(%s)" % tagid
+    @cherrypy.expose
+    def index(self, tagid=None):
+        """Return the index page."""
+        print "IN GitTagMacro: tagid=(%s)" % tagid
         if tagid in self.tag_cache:
             return self.tag_cache[tagid]
 

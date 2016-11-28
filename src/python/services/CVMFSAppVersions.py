@@ -1,12 +1,13 @@
 """CVMFS Servcice."""
 import os
 import re
+import cherrypy
 import html
 from natsort import natsorted
 
 version_re = re.compile(r"^release-(\d{1,3}\.\d{1,3}\.\d{1,3})$")
 
-
+@cherrypy.popargs('appid')
 class CVMFSAppVersions(object):
     """
     CVMFS App Version checking service.
@@ -15,16 +16,15 @@ class CVMFSAppVersions(object):
     on CVMFS for a given app.
     """
 
-    exposed = True
-
     def __init__(self, cvmfs_root, valid_apps):
         """Initialise."""
         self.cvmfs_root = cvmfs_root
         self.valid_apps = valid_apps
 
-    def GET(self, appid=None):  # pylint: disable=C0103
-        """REST GET method."""
-        print "IN AppVersion GET: appid=(%s)" % appid
+    @cherrypy.expose
+    def index(self, appid=None):
+        """Return the index page."""
+        print "IN CVMFSAppVersion: appid=(%s)" % appid
         if appid not in self.valid_apps:
             print "Invalid app type %s" % appid
             return ''

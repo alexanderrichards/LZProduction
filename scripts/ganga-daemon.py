@@ -29,6 +29,13 @@ def getGangaRequest(requestdb_id):
             return t
     return None
 
+@contextmanager
+def subsession(session, req_id):
+    try:
+        with session.begin_nested():
+            yield
+    except:
+        logger.exception("Problem with request id: %i, rolling back", req_id)
 
 def monitor_requests(dburl):
     while True:
@@ -47,49 +54,46 @@ def monitor_requests(dburl):
                                 if r.status == "Running")
 
             for request, ganga_request in approved_requests:
-                try:
-                    with session.begin_nested():
-                        if ganga_request is not None:
-                            # why is it still approved?
-                            session.query(Requests)\
-                                   .filter(Requests.id == request.id)\
-                                   .update({'status': ganga_request.status.capitalize()})
-                            continue
+                with subsession(session, request.id):
+                    if ganga_request is not None:
+                        # why is it still approved?
+                        session.query(Requests)\
+                               .filter(Requests.id == request.id)\
+                               .update(status=ganga_request.status.capitalize())
+                        continue
 
-                        with auto_cleanup_request() as t:
-                            t.requestdb_id = int(request.id)
-                            tr = ganga.CoreTransform(backend=ganga.LZDirac())
-                            tr.application = ganga.LZApp()
-                            tr.application.luxsim_version=request.app_version
-                            tr.application.reduction_version = request.reduction_version
-                            tr.application.tag = request.tag
-                            macros, njobs, nevents, seed = zip(*(i.split() for i in request.selected_macros.splitlines()))
-                            tr.unit_splitter = ganga.GenericSplitter()
-                            tr.unit_splitter.multi_attrs={'application.macro': macros,
-                                                          'application.njobs': [int(i) for i in njobs],
-                                                          'application.nevents': [int(i) for i in nevents],
-                                                          'application.seed': [int(i) for i in seed]}
-                            t.appendTransform(tr)
-                            t.float = 100
-                            t.run()
-                            session.query(Requests)\
-                                   .filter(Requests.id == request.id)\
-                                   .update({'status': t.status.capitalize()})
-                except:
-                    logger.exception("Problem with request id: %i", request.id)
+                    with auto_cleanup_request() as t:
+                        t.requestdb_id = request.id
+                        t.requestdb_status = request.status
+                        tr = ganga.CoreTransform(backend=ganga.Dirac())
+                        tr.application = ganga.LZApp()
+                        tr.application.luxsim_version=request.app_version
+                        tr.application.reduction_version = request.reduction_version
+                        tr.application.requestid = request.id
+                        tr.application.tag = request.tag
+                        macros, njobs, nevents, seed = zip(*(i.split() for i in request.selected_macros.splitlines()))
+                        tr.unit_splitter = GenericSplitter()
+                        tr.unit_splitter.multi_attrs={'application.macro': macros,
+                                                      'application.njobs': [int(i) for i in njobs],
+                                                      'application.nevents': [int(i) for i in nevents],
+                                                      'application.seed': [int(i) for i in seed]}
+                        t.appendTransform(tr)
+                        t.float = 100
+                        t.run()
+                        session.query(Requests)\
+                               .filter(Requests.id == request.id)\
+                               .update(status=t.status.capitalize())
 
             for request, ganga_request in paused_requests:
                 if ganga_request is None:
                     logger.error("Request %i has gone missing!", request.id)
                     continue
                 if ganga_request.status != "paused":
-                    try:
-                        with session.begin_nested():
-                            session.query(Requests)\
-                                   .filter(Requests.id == request.id)\
-                                   .update({'status': ganga_request.status.capitalize()})
-                    except:
-                        logger.exception("Problem with request id: %i", request.id)
+                    with subsession(session, request.id):
+                        session.query(Requests)\
+                               .filter(Requests.id == request.id)\
+                               .update(status=ganga_request.status.capitalize())
+
 
             for request, ganga_request in running_requests:
                 if ganga_request is None:
@@ -104,17 +108,15 @@ def monitor_requests(dburl):
                                  request.id, ganga_request.status)
                     continue
 
-                try:
-                    with session.begin_nested():
-                        if ganga_request.status == "completed":
-                            # job completed, time to feed stuff back
-                            pass
 
-                        session.query(Requests)\
-                               .filter(Requests.id == request.id)\
-                               .update({'status': ganga_request.status.capitalize()})
-                except:
-                    logger.exception("Problem with request id: %i", request.id)
+                with subsession(session, request.id):
+                    if ganga_request.status == "completed":
+                        # job completed, time to feed stuff back
+                        pass
+
+                    session.query(Requests)\
+                           .filter(Requests.id == request.id)\
+                           .update(status=ganga_request.status.capitalize())
 
         time.sleep(5 * MINS)
 

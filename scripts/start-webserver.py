@@ -58,10 +58,7 @@ if __name__ == '__main__':
     # Add the python src path to the sys.path for future imports
     sys.path = [os.path.join(lzprod_root, 'src', 'python')] + sys.path
 
-    RequestsDB = importlib.import_module('services.RequestsDB')
-    CVMFSAppVersions = importlib.import_module('services.CVMFSAppVersions')
-    GitTagMacros = importlib.import_module('services.GitTagMacros')
-    CertWebServer = importlib.import_module('CertWebServer')
+    services = importlib.import_module('services')
     apache_utils = importlib.import_module('apache_utils')
 
     config = {
@@ -80,17 +77,17 @@ if __name__ == '__main__':
     }
 
     cherrypy.config.update(config)  # global vars need updating global config
-    cherrypy.tree.mount(CertWebServer.CertWebServer(os.path.join(lzprod_root, 'src', 'html')), '/', {'/': {'request.dispatch': apache_utils.CredentialDispatcher(args.dburl, cherrypy.dispatch.Dispatcher())}})
-    cherrypy.tree.mount(RequestsDB.RequestsDB(args.dburl),
+    cherrypy.tree.mount(services.HTMLPageServer(os.path.join(lzprod_root, 'src', 'html')), '/', {'/': {'request.dispatch': apache_utils.CredentialDispatcher(args.dburl, cherrypy.dispatch.Dispatcher())}})
+    cherrypy.tree.mount(services.RequestsDB(args.dburl),
                         '/api',
                         {'/': {'request.dispatch': apache_utils.CredentialDispatcher(args.dburl, cherrypy.dispatch.MethodDispatcher())}})
-    cherrypy.tree.mount(CVMFSAppVersions.CVMFSAppVersions('/cvmfs/lz.opensciencegrid.org',
-                                                          ['LUXSim', 'BACCARAT', 'TDRAnalysis']),
+    cherrypy.tree.mount(services.CVMFSAppVersions('/cvmfs/lz.opensciencegrid.org',
+                                                  ['LUXSim', 'BACCARAT', 'TDRAnalysis']),
                         '/appversion',
-                        {'/': {'request.dispatch': apache_utils.CredentialDispatcher(args.dburl, cherrypy.dispatch.MethodDispatcher())}})
-    cherrypy.tree.mount(GitTagMacros.GitTagMacros(args.git_repo, args.git_dir),
+                        {'/': {'request.dispatch': apache_utils.CredentialDispatcher(args.dburl, cherrypy.dispatch.Dispatcher())}})
+    cherrypy.tree.mount(services.GitTagMacros(args.git_repo, args.git_dir),
                         '/tags',
-                        {'/': {'request.dispatch':  apache_utils.CredentialDispatcher(args.dburl, cherrypy.dispatch.MethodDispatcher())}})
+                        {'/': {'request.dispatch':  apache_utils.CredentialDispatcher(args.dburl, cherrypy.dispatch.Dispatcher())}})
     cherrypy.engine.start()
     cherrypy.engine.block()
 

@@ -4,7 +4,7 @@ import cherrypy
 import jinja2
 
 
-class CertWebServer(object):
+class HTMLPageServer(object):
     """The Web server."""
 
     def __init__(self, html_root):

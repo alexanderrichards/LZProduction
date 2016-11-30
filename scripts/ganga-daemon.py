@@ -87,7 +87,7 @@ def monitor_requests(session):
                 # why is it still approved?
                 session.query(Requests)\
                        .filter(Requests.id == request.id)\
-                       .update(status=ganga_request.status.capitalize())
+                       .update({'status': ganga_request.status.capitalize()})
                 continue
 
             with auto_cleanup_request() as t:
@@ -108,7 +108,7 @@ def monitor_requests(session):
                 t.run()
                 session.query(Requests)\
                        .filter(Requests.id == request.id)\
-                       .update(status=t.status.capitalize())
+                       .update({'status': t.status.capitalize()})
 
     for request, ganga_request in paused_requests:
         if ganga_request is None:
@@ -119,7 +119,7 @@ def monitor_requests(session):
             with subsession(session, request.id):
                 session.query(Requests)\
                        .filter(Requests.id == request.id)\
-                       .update(status=ganga_request.status.capitalize())
+                       .update({'status': ganga_request.status.capitalize()})
 
 
     for request, ganga_request in running_requests:
@@ -143,7 +143,7 @@ def monitor_requests(session):
 
             session.query(Requests)\
                    .filter(Requests.id == request.id)\
-                   .update(status=ganga_request.status.capitalize())
+                   .update({'status': ganga_request.status.capitalize()})
 
 
 

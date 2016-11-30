@@ -24,7 +24,7 @@ if __name__ == '__main__':
                         help="Path to the log directory. Will be created if doesn't exist [default: %(default)s]")
     parser.add_argument('-d', '--dburl', default="sqlite:///" + os.path.join(lzprod_root, 'requests.db'),
                         help="URL for the requests DB. Note can use the prefix 'mysql+pymysql://' if you have a problem with MySQLdb.py [default: %(default)s]")
-    parser.add_argument('-y', '--verify', default=False, action="store_const", const=True,
+    parser.add_argument('-y', '--verify', default=False, action="store_true",
                         help="Verify the VOMS server.")
     parser.add_argument('-t', '--trusted-cas', default='',
                         help="Path to the trusted CA_BUNDLE file or directory containing the certificates of trusted CAs. Note if set to a directory, the directory must have been processed using the c_rehash utility supplied with OpenSSL. If using a CA_BUNDLE file can also consider using the REQUESTS_CA_BUNDLE environment variable instead (this may cause pip to fail to validate against PyPI). This option implies and superseeds -y")

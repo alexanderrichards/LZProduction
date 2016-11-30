@@ -56,17 +56,22 @@ def daemon_main(dburl, delay, cert, verify=False):
         time.sleep(delay * MINS)
 
 def check_services(session, cert, verify):
+    query = session.query(Services)
+
+    # DIRAC
+    query_dirac = query.filter(Services.name == "DIRAC")
     status = 'down'
     if requests.get("https://dirac.gridpp.ac.uk/DIRAC/", cert=cert, verify=verify).status_code == 200:
         status = 'up'
-    session.query(Services)\
-           .filter(Services.name == "DIRAC")\
-           .update({'status': status,
-                    'timestamp': datetime.utcnow()})
-    session.query(Services)\
-           .filter(Services.name == 'gangad')\
-           .update({'status': 'up',
-                    'timestamp': datetime.utcnow()})
+    query_dirac.update({'status': status})
+    if query_dirac.one_or_none() is None:
+        session.add(Services(name='DIRAC', status=status))
+
+    # gangad
+    query_gangad = query).filter(Services.name == "gangad")
+    query_gangad.update({'status': 'up'})
+    if query_gangad.one_or_None() is None:
+        session.add(Services(name='gangad', status='up'))
 
 def monitor_requests(session):
     monitored_requests = session.query(Requests)\

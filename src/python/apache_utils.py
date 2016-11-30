@@ -7,19 +7,8 @@ credentials against a local DB.
 """
 from collections import namedtuple
 import cherrypy
-from sqlalchemy import Column, Integer, String, Boolean
-from sqlalchemy_utils import SQLTableBase, create_db, db_session
-
-
-class Users(SQLTableBase):
-    """Users SQL Table."""
-
-    __tablename__ = 'users'
-    id = Column(Integer, primary_key=True)
-    dn = Column(String(250), nullable=False)
-    ca = Column(String(250), nullable=False)
-    suspended = Column(Boolean(), nullable=False)
-    admin = Column(Boolean(), nullable=False)
+from sqlalchemy_utils import create_db, db_session
+from tables import Users
 
 VerifiedUser = namedtuple('VerifiedUser', ('id', 'dn', 'ca', 'admin'))
 

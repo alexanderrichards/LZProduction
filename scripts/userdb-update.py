@@ -39,7 +39,7 @@ if __name__ == '__main__':
     # Add the python src path to the sys.path for future imports
     sys.path = [os.path.join(lzprod_root, 'src', 'python')] + sys.path
 
-    Users = importlib.import_module('apache_utils').Users
+    Users = importlib.import_module('tables').Users
     CertClient = importlib.import_module('suds_utils').CertClient
     sqlalchemy_utils = importlib.import_module('sqlalchemy_utils')
 

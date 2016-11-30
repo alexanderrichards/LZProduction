@@ -43,7 +43,7 @@ def subsession(session, req_id):
 def exit_status(dburl):
     with sqlalchemy_utils.db_session(dburl) as session:
         session.query(Services)\
-               .filter(Service.name == "gangad")\
+               .filter(Services.name == "gangad")\
                .update({'status': 'down',
                         'timestamp': datetime.utcnow()})
 

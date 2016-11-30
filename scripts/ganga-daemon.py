@@ -163,7 +163,7 @@ if __name__ == '__main__':
     # Add the python src path to the sys.path for future imports
     sys.path = [os.path.join(lzprod_root, 'src', 'python')] + sys.path
 
-    Requests = importlib.import_module('services.RequestsDB').Requests
+    Requests = importlib.import_module('tables').Requests
     sqlalchemy_utils = importlib.import_module('sqlalchemy_utils')
 
 

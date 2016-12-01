@@ -24,16 +24,16 @@ class HTMLPageServer(object):
     @cherrypy.expose
     def index(self):
         """Return the index page."""
+        data = {'user': cherrypy.request.verified_user}
         with db_session(self.dburl) as session:
             services = session.query(Services).all()
 
-        data = {'user': cherrypy.request.verified_user}
-        for service in services:
-            status = service.status
-            if (datetime.now() - service.timestamp).total_seconds() > 30. * MINS:
-                status = 'stuck?'
-            data.update({service.name + '_status': status,
-                         service.name + '_status_colour': SERVICE_COLOUR_MAP[service.status]})
+            for service in services:
+                status = service.status
+                if (datetime.now() - service.timestamp).total_seconds() > 30. * MINS:
+                    status = 'stuck?'
+                data.update({service.name + '_status': status,
+                             service.name + '_status_colour': SERVICE_COLOUR_MAP[service.status]})
         return self.template_env.get_template('index.html').render(data)
 
 

@@ -9,7 +9,7 @@ from tables import Services
 MINS = 60
 SERVICE_COLOUR_MAP = {'up': 'brightgreen',
                       'down': 'red',
-                      'stuck?': 'lightgrey'}
+                      'stuck%3F': 'lightgrey'}  # %3F = ?
 
 class HTMLPageServer(object):
     """The Web server."""
@@ -31,7 +31,7 @@ class HTMLPageServer(object):
             for service in services:
                 status = service.status
                 if (datetime.now() - service.timestamp).total_seconds() > 30. * MINS:
-                    status = 'stuck?'
+                    status = 'stuck%3F'  # %3F = ?
                 data.update({service.name + '_status': status,
                              service.name + '_status_colour': SERVICE_COLOUR_MAP[service.status]})
         return self.template_env.get_template('index.html').render(data)

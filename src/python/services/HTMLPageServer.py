@@ -1,21 +1,40 @@
 """Certificate authenticated web server."""
 import os
+from datetime import datetime
 import cherrypy
 import jinja2
+from sqlalchemy_utils import create_db, db_session
+from tables import Services
 
+MINS = 60
+SERVICE_COLOUR_MAP = {'up': 'brightgreen',
+                      'down': 'red',
+                      'stuck?': 'lightgrey'}
 
 class HTMLPageServer(object):
     """The Web server."""
 
-    def __init__(self, html_root):
+    def __init__(self, html_root, dburl):
         """Initialisation."""
         self.html_root = html_root
+        self.dburl = dburl
+        create_db(dburl)
         self.template_env = jinja2.Environment(loader=jinja2.FileSystemLoader(searchpath=html_root))
 
     @cherrypy.expose
     def index(self):
         """Return the index page."""
-        return self.template_env.get_template('index.html').render({'user': cherrypy.request.verified_user})
+        with db_session(self.dburl) as session:
+            services = session.query(Services).all()
+
+        data = {'user': cherrypy.request.verified_user}
+        for service in services:
+            status = service.status
+            if (datetime.now() - service.timestamp).total_seconds() > 30. * MINS:
+                status = 'stuck?'
+            data.update({service.name + '_status': status,
+                         service.name + '_status_colour': SERVICE_COLOUR_MAP[service.status]})
+        return self.template_env.get_template('index.html').render(data)
 
 
     @cherrypy.expose

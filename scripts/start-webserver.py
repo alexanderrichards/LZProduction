@@ -77,7 +77,9 @@ if __name__ == '__main__':
     }
 
     cherrypy.config.update(config)  # global vars need updating global config
-    cherrypy.tree.mount(services.HTMLPageServer(os.path.join(lzprod_root, 'src', 'html')), '/', {'/': {'request.dispatch': apache_utils.CredentialDispatcher(args.dburl, cherrypy.dispatch.Dispatcher())}})
+    cherrypy.tree.mount(services.HTMLPageServer(os.path.join(lzprod_root, 'src', 'html'), args.dburl),
+                        '/',
+                        {'/': {'request.dispatch': apache_utils.CredentialDispatcher(args.dburl, cherrypy.dispatch.Dispatcher())}})
     cherrypy.tree.mount(services.RequestsDB(args.dburl),
                         '/api',
                         {'/': {'request.dispatch': apache_utils.CredentialDispatcher(args.dburl, cherrypy.dispatch.MethodDispatcher())}})

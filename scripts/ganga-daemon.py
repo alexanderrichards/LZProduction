@@ -68,9 +68,9 @@ def check_services(session, cert, verify):
         session.add(Services(name='DIRAC', status=status))
 
     # gangad
-    query_gangad = query).filter(Services.name == "gangad")
+    query_gangad = query.filter(Services.name == "gangad")
     query_gangad.update({'status': 'up'})
-    if query_gangad.one_or_None() is None:
+    if query_gangad.one_or_none() is None:
         session.add(Services(name='gangad', status='up'))
 
 def monitor_requests(session):

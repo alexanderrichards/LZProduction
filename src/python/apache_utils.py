@@ -33,42 +33,6 @@ def apache_client_convert(dn, ca=None):
     return dn, ca
 
 
-def check_credentials(users_dburl):
-    """
-    Check credentials of incoming request.
-
-    Takes the credentials from the incoming requests header which is where Apache
-    places them and checks them against a local DB. It returns information about the
-    user in a VerifiedUser tuple if the user is valid. If not then an
-    AuthenticationError is raised.
-
-    Args:
-        users_dburl (str): The URL for the DB containing the valid users information
-
-    Returns
-        VerifiedUser: A named tuple containing the users (id, dn, ca, admin status)
-                      from the DB.
-    """
-    client_dn, client_ca = apache_client_convert(cherrypy.request.headers['Ssl-Client-S-Dn'],
-                                                 cherrypy.request.headers['Ssl-Client-I-Dn'])
-    client_verified = cherrypy.request.headers['Ssl-Client-Verify']
-    if client_verified != 'SUCCESS':
-        raise AuthenticationError('401 Unauthorized: Cert not verified for user DN: %s, CA: %s.'
-                                  % (client_dn, client_ca))
-
-    create_db(users_dburl)
-    with db_session(users_dburl) as session:
-        users = session.query(Users).filter(Users.dn == client_dn).filter(Users.ca == client_ca).all()
-        if not users:
-            raise AuthenticationError('403 Forbidden: Unknown user: (%s, %s), users: %s'
-                                      % (client_dn, client_ca, users))
-        if len(users) > 1:
-            raise AuthenticationError('500 Internal Server Error: Duplicate user detected. users: %s' % users)
-        if users[0].suspended:
-            raise AuthenticationError('403 Forbidden: User is suspended by VO')
-        return VerifiedUser(users[0].id, users[0].dn, users[0].ca, users[0].admin)
-
-
 class CredentialDispatcher(object):
     """
     Dispatcher that checks SSL credentials.
@@ -111,9 +75,3 @@ class CredentialDispatcher(object):
                                          % (client_dn, client_ca))
             cherrypy.request.verified_user = VerifiedUser(users[0].id, users[0].dn, users[0].ca, users[0].admin)
         return self._dispatcher(path)
-
-
-class AuthenticationError(Exception):
-    """Error authentication user."""
-
-    pass

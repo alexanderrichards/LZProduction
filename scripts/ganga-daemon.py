@@ -63,15 +63,17 @@ def check_services(session, cert, verify):
     status = 'down'
     if requests.get("https://dirac.gridpp.ac.uk/DIRAC/", cert=cert, verify=verify).status_code == 200:
         status = 'up'
-    query_dirac.update({'status': status})
     if query_dirac.one_or_none() is None:
-        session.add(Services(name='DIRAC', status=status))
+        session.add(Services(name='DIRAC', status=status, timestamp=datetime.now()))
+    else:
+        query_dirac.update({'status': status, 'timestamp': datetime.now()})
 
     # gangad
     query_gangad = query.filter(Services.name == "gangad")
-    query_gangad.update({'status': 'up'})
     if query_gangad.one_or_none() is None:
-        session.add(Services(name='gangad', status='up'))
+        session.add(Services(name='gangad', status='up', timestamp=datetime.now()))
+    else:
+        query_gangad.update({'status': 'up', 'timestamp': datetime.now()})
 
 def monitor_requests(session):
     monitored_requests = session.query(Requests)\

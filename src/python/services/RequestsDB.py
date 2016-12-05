@@ -61,6 +61,8 @@ class RequestsDB(object):
         kwargs['request_date'] = datetime.now().strftime('%d/%m/%Y')
         kwargs['timestamp'] = str(datetime.now())
         kwargs['status'] = 'Requested'
+        if not isinstance(kwargs['selected_macros'], list):
+            kwargs['selected_macros'] = [kwargs['selected_macros']]
         kwargs['selected_macros'] = '\n'.join(kwargs['selected_macros'])
         kwargs['output_lfns'] = ''
         with db_session(self.dburl) as session:

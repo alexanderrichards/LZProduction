@@ -9,7 +9,8 @@ from tables import Services
 MINS = 60
 SERVICE_COLOUR_MAP = {'up': 'brightgreen',
                       'down': 'red',
-                      'stuck%3F': 'lightgrey'}  # %3F = ?
+                      'unknown': 'lightgrey',
+                      'stuck%3F': 'yellow'}  # %3F = ?
 
 class HTMLPageServer(object):
     """The Web server."""
@@ -26,13 +27,22 @@ class HTMLPageServer(object):
         """Return the index page."""
         data = {'user': cherrypy.request.verified_user}
         with db_session(self.dburl) as session:
-            services = session.query(Services).all()
+            gangad = session.query(Services).filter(Services.name == 'gangad').one_or_none()
+            if gangad is None:
+                data.update({'gangad_status': 'Not in DB!', 'gangad_status_colour': 'red'})
+                return self.template_env.get_template('index.html').render(data)
 
-            for service in services:
-                status = service.status
-                if (datetime.now() - service.timestamp).total_seconds() > 30. * MINS:
-                    status = 'stuck%3F'  # %3F = ?
-                data.update({service.name + '_status': status,
+            nongangad_services = session.query(Services).filter(Services.name != 'gangad').all()
+            out_of_date = (datetime.now() - gangad.timestamp).total_seconds() > 30. * MINS
+            if gangad.status == 'down' or out_of_date:
+                nongangad_services = (Services(service.name, 'unknown') for service in nongangad_services)
+                if out_of_date:
+                    gangad = Services(gangad.name, 'stuck%3F')  # %3F = ?
+
+            data.update({'gangad_status': gangad.status,
+                         'gangad_status_colour':SERVICE_COLOUR_MAP[gangad.status]})
+            for service in nongangad_services:
+                data.update({service.name + '_status': service.status,
                              service.name + '_status_colour': SERVICE_COLOUR_MAP[service.status]})
         return self.template_env.get_template('index.html').render(data)
 

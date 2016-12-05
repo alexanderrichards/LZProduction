@@ -48,8 +48,8 @@ def exit_status(dburl):
                         'timestamp': datetime.utcnow()})
 
 def daemon_main(dburl, delay, cert, verify=False):
+    ganga.enableMonitoring()
     while True:
-        ganga.runMonitoring()
         with sqlalchemy_utils.db_session(dburl) as session:
             check_services(session, cert, verify)
             monitor_requests(session)

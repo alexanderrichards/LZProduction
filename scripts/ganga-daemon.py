@@ -1,4 +1,10 @@
 #!/usr/bin/env python
+"""
+DB monitoring daemon.
+
+Daemon that monitors the DB and creates Ganga jobs from new requests. It
+also runs the Ganga monitoring loop to keep Ganga jobs up to date.
+"""
 import os
 import time
 import sys
@@ -15,8 +21,10 @@ from logging.handlers import RotatingFileHandler, TimedRotatingFileHandler
 
 MINS = 60
 
+
 @contextmanager
 def auto_cleanup_request():
+    """Self cleaning job context."""
     req = ganga.LZRequest()
     try:
         yield req
@@ -25,29 +33,37 @@ def auto_cleanup_request():
         req.remove(remove_jobs=True)
         raise
 
+
 def getGangaRequest(requestdb_id):
+    """Get Ganga task number from DB request number."""
     # note could use tasks.select here
     for t in ganga.tasks:
         if t.requestdb_id == requestdb_id:
             return t
     return None
 
+
 @contextmanager
 def subsession(session, req_id):
+    """DB sub-session context."""
     try:
         with session.begin_nested():
             yield
     except:
         logger.exception("Problem with request id: %i, rolling back", req_id)
 
+
 def exit_status(dburl):
+    """Update the gangad status on exit."""
     with sqlalchemy_utils.db_session(dburl) as session:
         session.query(Services)\
                .filter(Services.name == "gangad")\
                .update({'status': 'down',
                         'timestamp': datetime.utcnow()})
 
+
 def daemon_main(dburl, delay, cert, verify=False):
+    """Daemon main function."""
     ganga.enableMonitoring()
     while True:
         with sqlalchemy_utils.db_session(dburl) as session:
@@ -55,7 +71,14 @@ def daemon_main(dburl, delay, cert, verify=False):
             monitor_requests(session)
         time.sleep(delay * MINS)
 
+
 def check_services(session, cert, verify):
+    """
+    Check the status of the services.
+
+    This function checks the status of the DIRAC status as well as updating the
+    timestamp for the current gangad service.
+    """
     query = session.query(Services)
 
     # DIRAC
@@ -75,7 +98,14 @@ def check_services(session, cert, verify):
     else:
         query_gangad.update({'status': 'up', 'timestamp': datetime.now()})
 
+
 def monitor_requests(session):
+    """
+    Monitor the DB requests.
+
+    Check the status of ongoing DB requests and either update them or
+    create new Ganga tasks for new requests.
+    """
     monitored_requests = session.query(Requests)\
                                 .filter(Requests.status != 'Completed')\
                                 .filter(Requests.status != 'Requested')\
@@ -101,15 +131,15 @@ def monitor_requests(session):
                 t.requestdb_id = int(request.id)
                 tr = ganga.CoreTransform(backend=ganga.LZDirac())
                 tr.application = ganga.LZApp()
-                tr.application.luxsim_version=request.app_version
+                tr.application.luxsim_version = request.app_version
                 tr.application.reduction_version = request.reduction_version
                 tr.application.tag = request.tag
                 macros, njobs, nevents, seed = zip(*(i.split() for i in request.selected_macros.splitlines()))
                 tr.unit_splitter = ganga.GenericSplitter()
-                tr.unit_splitter.multi_attrs={'application.macro': macros,
-                                              'application.njobs': [int(i) for i in njobs],
-                                              'application.nevents': [int(i) for i in nevents],
-                                              'application.seed': [int(i) for i in seed]}
+                tr.unit_splitter.multi_attrs = {'application.macro': macros,
+                                                'application.njobs': [int(i) for i in njobs],
+                                                'application.nevents': [int(i) for i in nevents],
+                                                'application.seed': [int(i) for i in seed]}
                 t.appendTransform(tr)
                 t.float = 100
                 t.run()
@@ -128,7 +158,6 @@ def monitor_requests(session):
                        .filter(Requests.id == request.id)\
                        .update({'status': ganga_request.status.capitalize()})
 
-
     for request, ganga_request in running_requests:
         if ganga_request is None:
             logger.error("Request %i has gone missing!", request.id)
@@ -142,7 +171,6 @@ def monitor_requests(session):
                          request.id, ganga_request.status)
             continue
 
-
         with subsession(session, request.id):
             if ganga_request.status == "completed":
                 # job completed, time to feed stuff back
@@ -151,7 +179,6 @@ def monitor_requests(session):
             session.query(Requests)\
                    .filter(Requests.id == request.id)\
                    .update({'status': ganga_request.status.capitalize()})
-
 
 
 if __name__ == '__main__':
@@ -214,7 +241,6 @@ if __name__ == '__main__':
     Requests = tables.Requests
     Services = tables.Services
     sqlalchemy_utils = importlib.import_module('sqlalchemy_utils')
-
 
     atexit.register(exit_status, args.dburl)
     sqlalchemy_utils.create_db(args.dburl)

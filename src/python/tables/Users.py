@@ -2,6 +2,7 @@
 from sqlalchemy import Column, Integer, String, Boolean
 from sqlalchemy_utils import SQLTableBase
 
+
 class Users(SQLTableBase):
     """Users SQL Table."""
 

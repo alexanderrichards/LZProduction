@@ -6,6 +6,7 @@ import html
 from sqlalchemy_utils import create_db, db_session
 from tables import Requests
 
+
 class RequestsDB(object):
     """
     RequestsDB Service.

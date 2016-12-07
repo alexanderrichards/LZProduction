@@ -2,6 +2,7 @@
 from sqlalchemy import Column, Integer, String, TIMESTAMP
 from sqlalchemy_utils import SQLTableBase
 
+
 class Services(SQLTableBase):
     """Services SQL Table."""
 

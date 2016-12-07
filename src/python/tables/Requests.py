@@ -2,6 +2,7 @@
 from sqlalchemy import Column, Integer, String, Text, ForeignKeyConstraint
 from sqlalchemy_utils import SQLTableBase
 
+
 class Requests(SQLTableBase):
     """Requests SQL Table."""
 
@@ -23,5 +24,3 @@ class Requests(SQLTableBase):
     selected_macros = Column(Text())
     output_lfns = Column(Text())
     ForeignKeyConstraint(['requester_id'], ['users.id'])
-
-

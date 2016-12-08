@@ -7,6 +7,7 @@ import pylru
 from git import Git, Repo
 from natsort import natsorted
 
+
 @cherrypy.popargs('tagid')
 class GitTagMacros(object):
     """

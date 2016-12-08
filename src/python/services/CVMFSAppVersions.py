@@ -7,6 +7,7 @@ from natsort import natsorted
 
 version_re = re.compile(r"^release-(\d{1,3}\.\d{1,3}\.\d{1,3})$")
 
+
 @cherrypy.popargs('appid')
 class CVMFSAppVersions(object):
     """

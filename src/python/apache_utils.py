@@ -71,9 +71,8 @@ class CredentialDispatcher(object):
                 raise cherrypy.HTTPError(403, 'Forbidden: Unknown user. user: (%s, %s)'
                                          % (client_dn, client_ca))
             if len(users) > 1:
-                raise cherrypy.HTTPError(500,
-                                         'Internal Server Error: Duplicate user detected. '
-                                         'user: (%s, %s)' % (client_dn, client_ca))
+                raise cherrypy.HTTPError(500, 'Internal Server Error: Duplicate user detected. user: (%s, %s)'
+                                         % (client_dn, client_ca))
             if users[0].suspended:
                 raise cherrypy.HTTPError(403, 'Forbidden: User is suspended by VO. user: (%s, %s)'
                                          % (client_dn, client_ca))
@@ -82,3 +81,5 @@ class CredentialDispatcher(object):
                                                           users[0].ca,
                                                           users[0].admin)
         return self._dispatcher(path)
+
+__all__ = ('VerifiedUser', 'apache_client_convert', 'CredentialDispatcher')

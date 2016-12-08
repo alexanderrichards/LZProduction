@@ -45,7 +45,8 @@ class RequestsDB(object):
                                           Requests.status,
                                           Requests.description)
                 columns += ['request_date', 'sim_lead', 'status', 'description']
-                return json.dumps({'data': [dict(zip(columns, request)) for request in query.all()]})
+                return json.dumps({'data': [dict(zip(columns, request))
+                                            for request in query.all()]})
 
             table = html.HTML().table(border='1')
             request = session.query(Requests).filter(Requests.id == reqid).first()
@@ -87,5 +88,7 @@ class RequestsDB(object):
 
         if cherrypy.request.verified_user.admin:
             with db_session(self.dburl) as session:
-                session.query(Requests).filter(Requests.id == reqid).delete(synchronize_session=False)
+                session.query(Requests)\
+                       .filter(Requests.id == reqid)\
+                       .delete(synchronize_session=False)
         return self.GET()

@@ -36,7 +36,8 @@ class HTMLPageServer(object):
             nongangad_services = session.query(Services).filter(Services.name != 'gangad').all()
             out_of_date = (datetime.now() - gangad.timestamp).total_seconds() > 30. * MINS
             if gangad.status == 'down' or out_of_date:
-                nongangad_services = (Services(name=service.name, status='unknown') for service in nongangad_services)
+                nongangad_services = (Services(name=service.name, status='unknown')
+                                      for service in nongangad_services)
                 if gangad.status != 'down':
                     gangad = Services(name=gangad.name, status='stuck%3F')  # %3F = ?
 

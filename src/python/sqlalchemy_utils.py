@@ -4,6 +4,7 @@ SQLAlchemy utility module.
 Contains helper classes and functions for working
 with SQLAlchemy.
 """
+import logging
 from inspect import getmembers
 from contextlib import contextmanager
 from sqlalchemy import create_engine
@@ -47,6 +48,9 @@ def db_session(url):
     Returns a DB session context which automatically rolls back on
     any exception as well as automatically committing if no exception is
     thrown.
+
+    Args:
+        url (str): The DB access URL.
     """
     engine = create_engine(url)
     # Bind the engine to the metadata of the Base class so that the
@@ -63,4 +67,26 @@ def db_session(url):
     finally:
         session.close()
 
-__all__ = ('SQLTableBase', 'create_db', 'db_session')
+
+@contextmanager
+def db_subsession(session):
+    """
+    DB sub-session context.
+
+    Returns a DB sub-session context which automatically rolls back on
+    any exception as well as automatically committing if no exception
+    is thrown. Note that this context swallows any exception allowing
+    any other DB sub-sessions to carry on even if this one fails.
+
+    Args:
+        session (SQLAlchemy DB session): The open DB session
+    """
+    logger = logging.getLogger(__name__)
+    try:
+        with session.begin_nested():
+            yield
+    except:
+        logger.exception("Problem with DB sub-session, rolling back.")
+
+
+__all__ = ('SQLTableBase', 'create_db', 'db_session', 'db_subsession')

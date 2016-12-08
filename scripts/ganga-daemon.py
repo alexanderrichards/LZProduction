@@ -19,38 +19,8 @@ from daemonize import Daemonize
 import logging
 from logging.handlers import RotatingFileHandler, TimedRotatingFileHandler
 
+
 MINS = 60
-
-
-@contextmanager
-def auto_cleanup_request():
-    """Self cleaning job context."""
-    req = ganga.LZRequest()
-    try:
-        yield req
-    except:
-        req.pause()  # must pause task before removing if running
-        req.remove(remove_jobs=True)
-        raise
-
-
-def getGangaRequest(requestdb_id):
-    """Get Ganga task number from DB request number."""
-    # note could use tasks.select here
-    for t in ganga.tasks:
-        if t.requestdb_id == requestdb_id:
-            return t
-    return None
-
-
-@contextmanager
-def subsession(session, req_id):
-    """DB sub-session context."""
-    try:
-        with session.begin_nested():
-            yield
-    except:
-        logger.exception("Problem with request id: %i, rolling back", req_id)
 
 
 def exit_status(dburl):
@@ -59,7 +29,7 @@ def exit_status(dburl):
         session.query(Services)\
                .filter(Services.name == "gangad")\
                .update({'status': 'down',
-                        'timestamp': datetime.utcnow()})
+                        'timestamp': datetime.now()})
 
 
 def daemon_main(dburl, delay, cert, verify=False):
@@ -111,15 +81,15 @@ def monitor_requests(session):
                                 .filter(Requests.status != 'Requested')\
                                 .all()
 
-    approved_requests = ((r, getGangaRequest(r.id)) for r in monitored_requests
+    approved_requests = ((r, ganga_utils.ganga_request(r.id)) for r in monitored_requests
                          if r.status == "Approved")
-    paused_requests = ((r, getGangaRequest(r.id)) for r in monitored_requests
+    paused_requests = ((r, ganga_utils.ganga_request(r.id)) for r in monitored_requests
                        if r.status == "Pause")
-    running_requests = ((r, getGangaRequest(r.id)) for r in monitored_requests
+    running_requests = ((r, ganga_utils.ganga_request(r.id)) for r in monitored_requests
                         if r.status == "Running")
 
     for request, ganga_request in approved_requests:
-        with subsession(session, request.id):
+        with sqlalchemy_utils.db_subsession(session):
             if ganga_request is not None:
                 # why is it still approved?
                 session.query(Requests)\
@@ -127,7 +97,7 @@ def monitor_requests(session):
                        .update({'status': ganga_request.status.capitalize()})
                 continue
 
-            with auto_cleanup_request() as t:
+            with ganga_utils.removing_request() as t:
                 t.requestdb_id = int(request.id)
                 tr = ganga.CoreTransform(backend=ganga.LZDirac())
                 tr.application = ganga.LZApp()
@@ -153,7 +123,7 @@ def monitor_requests(session):
             continue
 
         if ganga_request.status != "pause":
-            with subsession(session, request.id):
+            with sqlalchemy_utils.db_subsession(session):
                 session.query(Requests)\
                        .filter(Requests.id == request.id)\
                        .update({'status': ganga_request.status.capitalize()})
@@ -171,7 +141,7 @@ def monitor_requests(session):
                          request.id, ganga_request.status)
             continue
 
-        with subsession(session, request.id):
+        with sqlalchemy_utils.db_subsession(session):
             if ganga_request.status == "completed":
                 # job completed, time to feed stuff back
                 pass
@@ -258,6 +228,7 @@ if __name__ == '__main__':
     Requests = tables.Requests
     Services = tables.Services
     sqlalchemy_utils = importlib.import_module('sqlalchemy_utils')
+    ganga_utils = importlib.import_module('ganga_utils')
 
     atexit.register(exit_status, args.dburl)
     sqlalchemy_utils.create_db(args.dburl)

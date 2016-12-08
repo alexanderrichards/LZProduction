@@ -8,12 +8,12 @@ import importlib
 
 
 if __name__ == '__main__':
-    lzprod_root = os.path.dirname(\
-                  os.path.dirname(\
-                  os.path.expanduser(\
-                  os.path.expandvars(\
-                  os.path.realpath(\
-                  os.path.abspath(__file__))))))
+    lzprod_root = os.path.dirname(
+        os.path.dirname(
+            os.path.expanduser(
+                os.path.expandvars(
+                    os.path.realpath(
+                        os.path.abspath(__file__))))))
 
     parser = argparse.ArgumentParser(description='Read list of users from VOMS and update '
                                                  'local table.')

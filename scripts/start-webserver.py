@@ -10,12 +10,12 @@ import cherrypy
 
 
 if __name__ == '__main__':
-    lzprod_root = os.path.dirname(\
-                  os.path.dirname(\
-                  os.path.expanduser(\
-                  os.path.expandvars(\
-                  os.path.realpath(\
-                  os.path.abspath(__file__))))))
+    lzprod_root = os.path.dirname(
+        os.path.dirname(
+            os.path.expanduser(
+                os.path.expandvars(
+                    os.path.realpath(
+                        os.path.abspath(__file__))))))
 
     parser = argparse.ArgumentParser(description='Run the LZ production web server.')
     parser.add_argument('-v', '--verbose', default=logging.INFO, action="store_const",

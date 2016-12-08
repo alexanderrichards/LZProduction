@@ -152,12 +152,12 @@ def monitor_requests(session):
 
 
 if __name__ == '__main__':
-    lzprod_root = os.path.dirname(\
-                  os.path.dirname(\
-                  os.path.expanduser(\
-                  os.path.expandvars(\
-                  os.path.realpath(\
-                  os.path.abspath(__file__))))))
+    lzprod_root = os.path.dirname(
+        os.path.dirname(
+            os.path.expanduser(
+                os.path.expandvars(
+                    os.path.realpath(
+                        os.path.abspath(__file__))))))
 
     parser = argparse.ArgumentParser(description='Run the ganga job submission daemon.')
     parser.add_argument('-f', '--frequency', default=5, type=int,
@@ -236,8 +236,8 @@ if __name__ == '__main__':
                        pid=args.pid_file,
                        keep_fds=[fhandler.stream.fileno()],
                        foreground=not args.debug_mode,
-                       action = daemon_main(args.dburl,
-                                            args.frequency,
-                                            cert=(args.cert, args.key),
-                                            verify=args.verify))
+                       action=daemon_main(args.dburl,
+                                          args.frequency,
+                                          cert=(args.cert, args.key),
+                                          verify=args.verify))
     daemon.start()

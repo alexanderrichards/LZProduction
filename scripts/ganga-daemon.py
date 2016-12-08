@@ -114,7 +114,7 @@ def monitor_requests(session):
     approved_requests = ((r, getGangaRequest(r.id)) for r in monitored_requests
                          if r.status == "Approved")
     paused_requests = ((r, getGangaRequest(r.id)) for r in monitored_requests
-                       if r.status == "Paused")
+                       if r.status == "Pause")
     running_requests = ((r, getGangaRequest(r.id)) for r in monitored_requests
                         if r.status == "Running")
 
@@ -152,7 +152,7 @@ def monitor_requests(session):
             logger.error("Request %i has gone missing!", request.id)
             continue
 
-        if ganga_request.status != "paused":
+        if ganga_request.status != "pause":
             with subsession(session, request.id):
                 session.query(Requests)\
                        .filter(Requests.id == request.id)\
@@ -166,7 +166,7 @@ def monitor_requests(session):
         if ganga_request.status == 'running':
             continue
 
-        if ganga_request.status not in ['paused', 'completed']:
+        if ganga_request.status not in ['pause', 'completed']:
             logger.error("Ganga reports 'Running' request %i in state: %s",
                          request.id, ganga_request.status)
             continue

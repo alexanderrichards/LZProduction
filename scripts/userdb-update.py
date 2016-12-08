@@ -8,26 +8,42 @@ import importlib
 
 
 if __name__ == '__main__':
-    lzprod_root = os.path.dirname(os.path.dirname(os.path.expanduser(os.path.expandvars(os.path.realpath(os.path.abspath(__file__))))))
+    lzprod_root = os.path.dirname(\
+                  os.path.dirname(\
+                  os.path.expanduser(\
+                  os.path.expandvars(\
+                  os.path.realpath(\
+                  os.path.abspath(__file__))))))
 
-    parser = argparse.ArgumentParser(description='Read list of users from VOMS and update local table.')
+    parser = argparse.ArgumentParser(description='Read list of users from VOMS and update '
+                                                 'local table.')
     parser.add_argument('-m', '--voms', default='https://voms.hep.wisc.edu:8443/voms/lz/services',
                         help='Root path of VOMS server services. [default: %(default)s]')
     parser.add_argument('-c', '--cert', default=os.path.expanduser('~/.globus/usercert.pem'),
                         help='Path to cert .pem file [default: %(default)s]')
     parser.add_argument('-k', '--key', default=os.path.expanduser('~/.globus/userkey.pem'),
-                        help='Path to key .pem file. Note must be an unencrypted key. [default: %(default)s]')
+                        help='Path to key .pem file. Note must be an unencrypted key. '
+                             '[default: %(default)s]')
     parser.add_argument('-v', '--verbose', default=logging.INFO, action="store_const",
                         const=logging.DEBUG, dest='logginglevel',
                         help="Increase the verbosity of output")
     parser.add_argument('-l', '--log-dir', default=os.path.join(lzprod_root, 'log'),
-                        help="Path to the log directory. Will be created if doesn't exist [default: %(default)s]")
-    parser.add_argument('-d', '--dburl', default="sqlite:///" + os.path.join(lzprod_root, 'requests.db'),
-                        help="URL for the requests DB. Note can use the prefix 'mysql+pymysql://' if you have a problem with MySQLdb.py [default: %(default)s]")
+                        help="Path to the log directory. Will be created if doesn't exist "
+                             "[default: %(default)s]")
+    parser.add_argument('-d', '--dburl',
+                        default="sqlite:///" + os.path.join(lzprod_root, 'requests.db'),
+                        help="URL for the requests DB. Note can use the prefix 'mysql+pymysql://' "
+                             "if you have a problem with MySQLdb.py [default: %(default)s]")
     parser.add_argument('-y', '--verify', default=False, action="store_true",
                         help="Verify the VOMS server.")
     parser.add_argument('-t', '--trusted-cas', default='',
-                        help="Path to the trusted CA_BUNDLE file or directory containing the certificates of trusted CAs. Note if set to a directory, the directory must have been processed using the c_rehash utility supplied with OpenSSL. If using a CA_BUNDLE file can also consider using the REQUESTS_CA_BUNDLE environment variable instead (this may cause pip to fail to validate against PyPI). This option implies and superseeds -y")
+                        help="Path to the trusted CA_BUNDLE file or directory containing the "
+                             "certificates of trusted CAs. Note if set to a directory, the "
+                             "directory must have been processed using the c_rehash utility "
+                             "supplied with OpenSSL. If using a CA_BUNDLE file can also consider "
+                             "using the REQUESTS_CA_BUNDLE environment variable instead (this may "
+                             "cause pip to fail to validate against PyPI). This option implies and "
+                             "superseeds -y")
     args = parser.parse_args()
     if args.trusted_cas:
         args.verify = args.trusted_cas

@@ -43,9 +43,9 @@ class GitTagMacros(object):
         with self.fs_lock:
             Git(self.git_dir).checkout(tagid)
             for root, _, files in os.walk(os.path.join(self.git_dir, 'BackgroundMacros')):
-                for file in files:
-                    if file.endswith('.mac'):
-                        ret_html.option(file, path=os.path.relpath(root, self.git_dir))
+                for file_ in files:
+                    if file_.endswith('.mac'):
+                        ret_html.option(file_, path=os.path.relpath(root, self.git_dir))
             # print "returning:", str(ret_html)
             self.tag_cache[tagid] = str(ret_html)
             return str(ret_html)

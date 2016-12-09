@@ -5,7 +5,7 @@ import cherrypy
 import html
 from natsort import natsorted
 
-version_re = re.compile(r"^release-(\d{1,3}\.\d{1,3}\.\d{1,3})$")
+VERSION_RE = re.compile(r"^release-(\d{1,3}\.\d{1,3}\.\d{1,3})$")
 
 
 @cherrypy.popargs('appid')
@@ -32,6 +32,6 @@ class CVMFSAppVersions(object):
         html_ = html.HTML()
         _, dirs, _ = os.walk(os.path.join(self.cvmfs_root, appid)).next()
         for dir_ in natsorted(dirs):
-            for version in version_re.findall(dir_):
+            for version in VERSION_RE.findall(dir_):
                 html_.option(version)
         return str(html_)

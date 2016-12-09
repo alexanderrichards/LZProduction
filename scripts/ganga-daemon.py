@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# pylint: disable=invalid-name
 """
 DB monitoring daemon.
 
@@ -10,14 +11,13 @@ import time
 import sys
 import argparse
 import atexit
-from datetime import datetime
 import importlib
-import requests
-import ganga
-from contextlib import contextmanager
-from daemonize import Daemonize
 import logging
 from logging.handlers import RotatingFileHandler, TimedRotatingFileHandler
+from datetime import datetime
+import requests
+import ganga
+from daemonize import Daemonize
 
 
 MINS = 60

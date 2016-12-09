@@ -21,7 +21,7 @@ def apache_client_convert(client_dn, client_ca=None):
     more usual slash delimited style.
 
     Args:
-        client_dn (str): The client CLIENT_DN
+        client_dn (str): The client DN
         client_ca (str): [Optional] The client CA
 
     Returns:

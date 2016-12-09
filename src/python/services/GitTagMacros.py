@@ -46,6 +46,6 @@ class GitTagMacros(object):
                 for file_ in files:
                     if file_.endswith('.mac'):
                         html_.option(file_, path=os.path.relpath(root, self.git_dir))
-            # print "returning:", str(ret_html)
+            # print "returning:", str(html_)
             self.tag_cache[tagid] = str(html_)
             return str(html_)

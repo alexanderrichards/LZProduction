@@ -7,7 +7,7 @@ class Requests(SQLTableBase):
     """Requests SQL Table."""
 
     __tablename__ = 'requests'
-    id = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True)  # pylint: disable=C0103
     requester_id = Column(Integer, nullable=False)
     request_date = Column(String(250), nullable=False)
     source = Column(String(250), nullable=False)

@@ -13,7 +13,7 @@ from tables import Users
 VerifiedUser = namedtuple('VerifiedUser', ('id', 'dn', 'ca', 'admin'))
 
 
-def apache_client_convert(dn, ca=None):
+def apache_client_convert(client_dn, client_ca=None):
     """
     Convert Apache style client certs.
 
@@ -21,16 +21,16 @@ def apache_client_convert(dn, ca=None):
     more usual slash delimited style.
 
     Args:
-        dn (str): The client DN
-        ca (str): [Optional] The client CA
+        client_dn (str): The client CLIENT_DN
+        client_ca (str): [Optional] The client CA
 
     Returns:
         tuple: The converted client (DN, CA)
     """
-    dn = '/' + '/'.join(reversed(dn.split(',')))
-    if ca is not None:
-        ca = '/' + '/'.join(reversed(ca.split(',')))
-    return dn, ca
+    client_dn = '/' + '/'.join(reversed(client_dn.split(',')))
+    if client_ca is not None:
+        client_ca = '/' + '/'.join(reversed(client_ca.split(',')))
+    return client_dn, client_ca
 
 
 class CredentialDispatcher(object):

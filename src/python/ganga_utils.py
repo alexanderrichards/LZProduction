@@ -35,7 +35,7 @@ def ganga_request(requestdb_id):
                          requestdb_id arg.
     """
     # note could use tasks.select here
-    for t in ganga.tasks:
-        if t.requestdb_id == requestdb_id:
-            return t
+    for task in ganga.tasks:
+        if task.requestdb_id == requestdb_id:
+            return task
     return None

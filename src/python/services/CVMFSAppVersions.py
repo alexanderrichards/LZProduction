@@ -29,9 +29,9 @@ class CVMFSAppVersions(object):
         if appid not in self.valid_apps:
             print "Invalid app type %s" % appid
             return ''
-        h = html.HTML()
+        ret_html = html.HTML()
         _, dirs, _ = os.walk(os.path.join(self.cvmfs_root, appid)).next()
-        for d in natsorted(dirs):
-            for version in version_re.findall(d):
-                h.option(version)
-        return str(h)
+        for dir in natsorted(dirs):
+            for version in version_re.findall(dir):
+                ret_html.option(version)
+        return str(ret_html)

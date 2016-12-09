@@ -32,20 +32,20 @@ class GitTagMacros(object):
         if tagid in self.tag_cache:
             return self.tag_cache[tagid]
 
-        h = html.HTML()
+        ret_html = html.HTML()
         if tagid is None:
             tags = natsorted(tag.name for tag in Repo(self.git_dir).tags)
             for tag in tags:
-                h.option(tag)
-            # print "returning:", str(h)
-            return str(h)
+                ret_html.option(tag)
+            # print "returning:", str(ret_html)
+            return str(ret_html)
 
         with self.fs_lock:
             Git(self.git_dir).checkout(tagid)
             for root, _, files in os.walk(os.path.join(self.git_dir, 'BackgroundMacros')):
-                for f in files:
-                    if f.endswith('.mac'):
-                        h.option(f, path=os.path.relpath(root, self.git_dir))
-            # print "returning:", str(h)
-            self.tag_cache[tagid] = str(h)
-            return str(h)
+                for file in files:
+                    if file.endswith('.mac'):
+                        ret_html.option(file, path=os.path.relpath(root, self.git_dir))
+            # print "returning:", str(ret_html)
+            self.tag_cache[tagid] = str(ret_html)
+            return str(ret_html)

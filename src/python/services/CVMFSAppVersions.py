@@ -31,7 +31,7 @@ class CVMFSAppVersions(object):
             return ''
         ret_html = html.HTML()
         _, dirs, _ = os.walk(os.path.join(self.cvmfs_root, appid)).next()
-        for dir in natsorted(dirs):
-            for version in version_re.findall(dir):
+        for app_dir in natsorted(dirs):
+            for version in version_re.findall(app_dir):
                 ret_html.option(version)
         return str(ret_html)

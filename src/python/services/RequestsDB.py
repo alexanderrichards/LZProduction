@@ -52,9 +52,9 @@ class RequestsDB(object):
             request = session.query(Requests).filter(Requests.id == reqid).first()
             if request is not None:
                 for colname, value in request:
-                    tr = table.tr()
-                    tr.td(colname)
-                    tr.td(str(value))
+                    row = table.tr()
+                    row.td(colname)
+                    row.td(str(value))
         return str(table)
 
     def POST(self, **kwargs):  # pylint: disable=C0103

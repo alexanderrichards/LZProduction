@@ -12,6 +12,23 @@ from tables import Users
 
 VerifiedUser = namedtuple('VerifiedUser', ('id', 'dn', 'ca', 'admin'))
 
+def name_from_dn(client_dn):
+    """
+    Get human-readable name from DN.
+
+    Attempt to determine a meaningful name from a
+    clients DN. Requires the DN to have already been
+    converted to the more usual slash delimeted style.
+
+    Args:
+        client_dn (str): The client DN
+
+    Returns:
+        str: The human-readable name
+    """
+    cns = (token.strip('CN= ') for token in client_dn.split('/')
+           if token.startswith('CN='))
+    return sorted(cns, key=len)[-1]
 
 def apache_client_convert(client_dn, client_ca=None):
     """
@@ -41,10 +58,11 @@ class CredentialDispatcher(object):
     then hands off to the wrapped dispatcher.
     """
 
-    def __init__(self, users_dburl, dispatcher):
+    def __init__(self, users_dburl, dispatcher, admin_only=False):
         """Initialise."""
         self._users_dburl = users_dburl
         self._dispatcher = dispatcher
+        self._admin_only = admin_only
 
     def __call__(self, path):
         """Dispatch."""
@@ -76,10 +94,15 @@ class CredentialDispatcher(object):
             if users[0].suspended:
                 raise cherrypy.HTTPError(403, 'Forbidden: User is suspended by VO. user: (%s, %s)'
                                          % (client_dn, client_ca))
+
+            if self._admin_only and not users[0].admin:
+                raise cherrypy.HTTPError(403, 'Forbidden: Admin users only')
+
             cherrypy.request.verified_user = VerifiedUser(users[0].id,
                                                           users[0].dn,
                                                           users[0].ca,
                                                           users[0].admin)
         return self._dispatcher(path)
 
-__all__ = ('VerifiedUser', 'apache_client_convert', 'CredentialDispatcher')
+
+__all__ = ('VerifiedUser', 'name_from_dn', 'apache_client_convert', 'CredentialDispatcher')

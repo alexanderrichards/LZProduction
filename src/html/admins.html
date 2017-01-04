@@ -13,7 +13,10 @@
 <script type="text/javascript">
 $(document).ready(function () {
   $(".checkbox input").change(function(){
-    alert($(this).attr("id"));
+    var chkbox = $(this);
+    $.ajax({url: "/admins/" + chkbox.attr("id"),
+            type: "PUT",
+            data: {"admin": chkbox.prop("checked")}});
   });
 });
 </script>

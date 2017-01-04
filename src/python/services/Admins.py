@@ -24,5 +24,10 @@ class Admins(object):
                 User(user.id, user.admin, name_from_dn(user.dn)) for user in session.query(Users).all()
             ]})
 
-    def PUT(self):
+    def PUT(self, user_id, admin):
         """"""
+        print "IN PUT(Admins)", user_id, admin
+        # could use ast.literal_eval(admin.capitalize()) but not sure if I trust it yet
+        admin = (admin.lower() == 'true')
+        with db_session(self._users_dburl) as session:
+            session.query(Users).filter(Users.id == int(user_id)).update({'admin': admin})

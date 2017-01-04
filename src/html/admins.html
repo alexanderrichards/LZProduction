@@ -4,11 +4,8 @@
 <!-- Add jQuery library using Google CDN (Content Delivery Network)-->
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.3/jquery.min.js"></script>
 
-<!-- Latest compiled and minified Bootstrap CSS/Javascript -->
-<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+<!-- Latest compiled and minified Bootstrap Javascript -->
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
-<!-- Optional Bootstrap theme -->
-<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css" integrity="sha384-fLW2N01lMqjakBkx3l/M9EahuwpSfeNvV63J5ezn3uZzapT0u7EYsXMjQV+0En5r" crossorigin="anonymous">
 
 <!-- TiTaToggle CSS -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/titatoggle/1.2.11/titatoggle-dist-min.css">
@@ -23,21 +20,7 @@ $(document).ready(function () {
 
 <title>LZ Production Admins</title>
 </head>
-
-<!-- EXAMPLE
 <body>
-  <div class="checkbox checkbox-slider-info checkbox-slider--b">
-    <label>
-      <input type="checkbox"><span>TiTaToggle</span>
-    </label>
-  </div>
-  <div class="checkbox checkbox-slider-info checkbox-slider--b-flat">
-    <label>
-      <input type="checkbox" checked><span>TiTaToggle</span>
-    </label>
-  </div>
--->
-
   {% for user in users %}
     <div class="checkbox checkbox-slider-info checkbox-slider--b"> <!-- could have checkbox-slider--b-flat -->
       <label>

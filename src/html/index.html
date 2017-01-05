@@ -122,7 +122,8 @@
     $("#Admins").fancybox({
       type: "ajax",
       href: "/admins",
-      title: "Admin Management"
+      title: "Admin Management",
+      afterClose: function(){location.reload();}
     });
 
     // Table row selection

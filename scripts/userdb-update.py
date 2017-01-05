@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# pylint: disable=invalid-name
 """Script to read users info from VOMS and update locat SQL table."""
 import os
 import sys

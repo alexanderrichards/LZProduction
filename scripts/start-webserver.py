@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# pylint: disable=invalid-name
 """Script to start the LZ Production web server."""
 import os
 import sys

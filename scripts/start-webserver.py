@@ -8,6 +8,7 @@ import importlib
 import logging
 from logging.handlers import TimedRotatingFileHandler
 import cherrypy
+import jinja2
 
 
 if __name__ == '__main__':
@@ -71,6 +72,8 @@ if __name__ == '__main__':
 
     services = importlib.import_module('services')
     apache_utils = importlib.import_module('apache_utils')
+    html_root = os.path.join(lzprod_root, 'src', 'html')
+    template_env = jinja2.Environment(loader=jinja2.FileSystemLoader(searchpath=html_root))
 
     config = {
         'global': {
@@ -101,6 +104,11 @@ if __name__ == '__main__':
     cherrypy.tree.mount(services.GitTagMacros(args.git_repo, args.git_dir),
                         '/tags',
                         {'/': {'request.dispatch':  apache_utils.CredentialDispatcher(args.dburl, cherrypy.dispatch.Dispatcher())}})
+    cherrypy.tree.mount(services.Admins(args.dburl, template_env),
+                        '/admins',
+                        {'/': {'request.dispatch':  apache_utils.CredentialDispatcher(args.dburl,
+                                                                                      cherrypy.dispatch.MethodDispatcher(),
+                                                                                      admin_only=True)}})
     cherrypy.engine.start()
     cherrypy.engine.block()
 

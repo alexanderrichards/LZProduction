@@ -119,6 +119,12 @@
       });
     });
 
+    $("#Admins").fancybox({
+      type: "ajax",
+      href: "/admins",
+      title: "Admin Management"
+    });
+
     // Table row selection
     /////////////////////////////////////////////////////
     var last_selected = 0;
@@ -205,7 +211,7 @@
       if ($(this).hasClass("disabled")){ return false; }
       alert("COPY");
     });
-
+{% if user.admin %}
     $("#contextApprove").click(function() {
       if ($(this).hasClass("disabled")){ return false; }
       var ajax_calls = [];
@@ -234,6 +240,7 @@
         bootstrap_alert("Attention!", "Deleted "+ ids.length +" request(s)", "alert-danger");
       });
     });
+{% endif %}
     /////////////////////////////////////////////////////
 
     // Pressing Delete key
@@ -312,10 +319,15 @@
   <div class="page-header">
     <h1>LZ Production Requests</h1>
     <div align="right">
+      <img border="0" alt="Ganga daemon status" src="https://img.shields.io/badge/gangad-{{gangad_status}}-{{gangad_status_colour}}.svg">
       <a href="https://dirac.gridpp.ac.uk/DIRAC/GridPP/lz_user/jobs/JobMonitor/display">
 	<img border="0" alt="DIRAC status" src="https://img.shields.io/badge/DIRAC-{{DIRAC_status}}-{{DIRAC_status_colour}}.svg">
       </a>
-      <img border="0" alt="Ganga daemon status" src="https://img.shields.io/badge/gangad-{{gangad_status}}-{{gangad_status_colour}}.svg">
+      {% if user.admin %}
+        <button id="Admins" class="btn btn-default" alt="Admins">
+          <span class="glyphicon glyphicon-user text-primary"></span> Admins
+        </button>
+      {% endif %}
     </div>
   </div>
   <div class="container">

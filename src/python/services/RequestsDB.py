@@ -3,9 +3,11 @@ import json
 from datetime import datetime
 import cherrypy
 import html
+from apache_utils import name_from_dn
 from sqlalchemy_utils import create_db, db_session
-from tables import Requests
+from tables import Requests, Users
 
+COLUMNS = ['id', 'request_date', 'sim_lead', 'status', 'description']
 
 class RequestsDB(object):
     """
@@ -29,24 +31,29 @@ class RequestsDB(object):
 
         with db_session(self.dburl) as session:
             if reqid is None:
-                columns = ['id']
+                if not requester.admin:
+                    query = session.query(Requests.id,
+                                          Requests.request_date,
+                                          Requests.sim_lead,
+                                          Requests.status,
+                                          Requests.description)\
+                                   .filter(Requests.requester_id == requester.id)
+                    return json.dumps({'data': [dict(zip(COLUMNS, request))
+                                                for request in query.all()]})
                 query = session.query(Requests.id,
                                       Requests.request_date,
                                       Requests.sim_lead,
                                       Requests.status,
-                                      Requests.description)\
-                               .filter(Requests.requester_id == requester.id)
-                if requester.admin:
-                    columns += ['requester_id']
-                    query = session.query(Requests.id,
-                                          Requests.requester_id,
-                                          Requests.request_date,
-                                          Requests.sim_lead,
-                                          Requests.status,
-                                          Requests.description)
-                columns += ['request_date', 'sim_lead', 'status', 'description']
-                return json.dumps({'data': [dict(zip(columns, request))
-                                            for request in query.all()]})
+                                      Requests.description,
+                                      Users.dn)\
+                               .join(Users, Requests.requester_id == Users.id)
+                data = []
+                for request in query.all():
+                    tmp = dict(zip(COLUMNS, request))
+                    tmp['requester'] = name_from_dn(request.dn)
+                    data.append(tmp)
+
+                return json.dumps({'data': data})
 
             table = html.HTML().table(border='1')
             request = session.query(Requests).filter(Requests.id == reqid).first()

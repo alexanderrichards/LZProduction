@@ -91,7 +91,7 @@ $(document).ready(function() {
     // New request button
     $("#NewRequest").fancybox({
 	type: "iframe",
-	href: "/newrequest",
+	href: "/newrequest.html",
 	title: "Submit New Request"
     });
     

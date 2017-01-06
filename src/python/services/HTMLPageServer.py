@@ -48,8 +48,3 @@ class HTMLPageServer(object):
                 data.update({service.name + '_status': service.status,
                              service.name + '_status_colour': SERVICE_COLOUR_MAP[service.status]})
         return self.template_env.get_template('html/index.html').render(data)
-
-    @cherrypy.expose
-    def newrequest(self):
-        """Return the new requests page."""
-        return self.template_env.get_template('html/newrequest.html').render()

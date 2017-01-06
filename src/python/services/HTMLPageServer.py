@@ -16,22 +16,23 @@ SERVICE_COLOUR_MAP = {'up': 'brightgreen',
 class HTMLPageServer(object):
     """The Web server."""
 
-    def __init__(self, html_root, dburl):
+    def __init__(self, dburl, template_env):
         """Initialisation."""
-        self.html_root = html_root
         self.dburl = dburl
         create_db(dburl)
-        self.template_env = jinja2.Environment(loader=jinja2.FileSystemLoader(searchpath=html_root))
+        self.template_env = template_env
 
     @cherrypy.expose
     def index(self):
         """Return the index page."""
         data = {'user': cherrypy.request.verified_user}
+        data['index_script'] = self.template_env.get_template('javascript/index.js')\
+                                                .render(data)
         with db_session(self.dburl) as session:
             gangad = session.query(Services).filter(Services.name == 'gangad').one_or_none()
             if gangad is None:
                 data.update({'gangad_status': 'Not in DB!', 'gangad_status_colour': 'red'})
-                return self.template_env.get_template('index.html').render(data)
+                return self.template_env.get_template('html/index.html').render(data)
 
             nongangad_services = session.query(Services).filter(Services.name != 'gangad').all()
             out_of_date = (datetime.now() - gangad.timestamp).total_seconds() > 30. * MINS
@@ -46,10 +47,9 @@ class HTMLPageServer(object):
             for service in nongangad_services:
                 data.update({service.name + '_status': service.status,
                              service.name + '_status_colour': SERVICE_COLOUR_MAP[service.status]})
-        return self.template_env.get_template('index.html').render(data)
+        return self.template_env.get_template('html/index.html').render(data)
 
     @cherrypy.expose
     def newrequest(self):
         """Return the new requests page."""
-        with open(os.path.join(self.html_root, 'newrequest.html')) as new_request:
-            return new_request.read()
+        return self.template_env.get_template('html/newrequest.html').render()

@@ -39,7 +39,7 @@ class Admins(object):
             str: The rendered HTML containing the users admin status as toggles.
         """
         with db_session(self._users_dburl) as session:
-            return self._template_env.get_template('admins.html')\
+            return self._template_env.get_template('html/admins.html')\
                                      .render({'users': [
                                          User(user.id, user.admin, name_from_dn(user.dn))
                                          for user in session.query(Users).all()

@@ -82,10 +82,21 @@
                                      {data: "description", title: "Description", width: "60%"},
                                    {% endif %}
                                    {data: "sim_lead", title: "Sim Lead", width: "20%"},
-                                   {data: "status", title: "Status", width: "7.5%"},
+                                   {data: "status", title: "Status", width: "7.5%", type: "request-status"},
                                    {data: "request_date", title: "Request Date", width: "7.5%"}]
                         });
     });
+
+    $.fn.dataTable.ext.type.order['request-status-pre'] = function ( d ) {
+      switch ( d ) {
+        case 'Requested':    return 1;
+        case 'Approved': return 2;
+        case 'Running': return 3;
+        case 'Failed':   return 4;
+        case 'Completed':   return 5;
+      }
+      return 0;
+    };
 
     $("#tableBody tbody").on("click", "tr td span.details-control", function() {
       var tr = $(this).closest("tr");

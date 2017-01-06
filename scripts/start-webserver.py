@@ -72,8 +72,8 @@ if __name__ == '__main__':
 
     services = importlib.import_module('services')
     apache_utils = importlib.import_module('apache_utils')
-    html_root = os.path.join(lzprod_root, 'src', 'html')
-    template_env = jinja2.Environment(loader=jinja2.FileSystemLoader(searchpath=html_root))
+    src_root = os.path.join(lzprod_root, 'src')
+    template_env = jinja2.Environment(loader=jinja2.FileSystemLoader(searchpath=src_root))
 
     config = {
         'global': {
@@ -91,7 +91,7 @@ if __name__ == '__main__':
     }
 
     cherrypy.config.update(config)  # global vars need updating global config
-    cherrypy.tree.mount(services.HTMLPageServer(os.path.join(lzprod_root, 'src', 'html'), args.dburl),
+    cherrypy.tree.mount(services.HTMLPageServer(args.dburl, template_env),
                         '/',
                         {'/': {'request.dispatch': apache_utils.CredentialDispatcher(args.dburl, cherrypy.dispatch.Dispatcher())}})
     cherrypy.tree.mount(services.RequestsDB(args.dburl),

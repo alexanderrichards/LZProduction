@@ -65,7 +65,7 @@
                                            return json.data;
                                           }
                                 },
-                         order: [[1, "asc"]],
+                         order: [[4, "asc"], [5, "asc"]],
                          autoWidth: false,
                          columnDefs: [{ targets: "_all", className: "dt-body-left dt-head-left",
                                         render: function(data, type, row){
@@ -76,14 +76,17 @@
                          columns: [{data:null, defaultContent: "<span class='glyphicon glyphicon-plus-sign text-primary details-control' style='cursor:pointer'></span>", orderable:false},
                                    {data: "id", title: "ID", className:"rowid", width:"5%"},
                                    {% if user.admin %}
-                                     {data: "requester_id", title: "Requester", width: "10%"},
                                      {data: "description", title: "Description", width: "50%"},
                                    {% else %}
                                      {data: "description", title: "Description", width: "60%"},
                                    {% endif %}
                                    {data: "sim_lead", title: "Sim Lead", width: "20%"},
                                    {data: "status", title: "Status", width: "7.5%", type: "request-status"},
-                                   {data: "request_date", title: "Request Date", width: "7.5%"}]
+                                   {data: "request_date", title: "Request Date", width: "7.5%"},
+                                   {% if user.admin %}
+                                     {data: "requester_id", title: "Requester", width: "10%"}
+                                   {% endif %}
+                                   ]
                         });
     });
 

@@ -1,8 +1,6 @@
 """Certificate authenticated web server."""
-import os
 from datetime import datetime
 import cherrypy
-import jinja2
 from sqlalchemy_utils import create_db, db_session
 from tables import Services
 

@@ -3,7 +3,7 @@ daemonize==2.4.7
 enum34==1.1.6
 GitPython==2.1.1
 html==1.16
-jinja2==2.9.3
+jinja2==2.9.4
 natsort==5.0.1
 pylru==1.0.9
 PyMySQL==0.7.9

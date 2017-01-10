@@ -113,17 +113,16 @@ if __name__ == '__main__':
     root_logger.addHandler(fhandler)
     root_logger.setLevel(args.logginglevel)
 
-    # force cherrypy to log to the logfile
-    cherrypy_logger = logging.getLogger('cherrypy.error')
-    cherrypy_logger.setLevel(logging.NOTSET)
-    handlers = cherrypy_logger.handlers[:]
-    for h in handlers:
-        cherrypy_logger.removeHandler(h)
+    # NOTE: all current loggers can be found with:
+    #     logging.Logger.manager.loggerDict.keys()
+    # Force cherrypy to log to our handler
+    for logger_handle in ['cherrypy', 'cherrypy.access', 'cherrypy.error']:
+        cherrypy_logger = logging.getLogger(logger_handle)
+        cherrypy_logger.setLevel(logging.NOTSET)
+        cherrypy_logger.handlers = []
 
     logger = logging.getLogger("LZWebServer")
     logger.debug("Script called with args: %s", args)
-#    sys.exit(0)
-
 
     daemon = Daemonize(app=os.path.splitext(os.path.basename(__file__))[0],
                        pid=args.pid_file,

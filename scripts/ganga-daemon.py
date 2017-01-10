@@ -15,6 +15,7 @@ import importlib
 import logging
 from logging.handlers import RotatingFileHandler, TimedRotatingFileHandler
 from datetime import datetime
+from functools import partial
 import requests
 import ganga
 from daemonize import Daemonize
@@ -235,9 +236,10 @@ if __name__ == '__main__':
     daemon = Daemonize(app=os.path.splitext(os.path.basename(__file__))[0],
                        pid=args.pid_file,
                        keep_fds=[fhandler.stream.fileno()],
-                       foreground=not args.debug_mode,
-                       action=daemon_main(args.dburl,
-                                          args.frequency,
-                                          cert=(args.cert, args.key),
-                                          verify=args.verify))
+                       foreground=args.debug_mode,
+                       action=partial(daemon_main,
+                                      dburl=args.dburl,
+                                      delay=args.frequency,
+                                      cert=(args.cert, args.key),
+                                      verify=args.verify))
     daemon.start()

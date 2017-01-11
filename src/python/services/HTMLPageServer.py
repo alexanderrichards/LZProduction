@@ -46,3 +46,11 @@ class HTMLPageServer(object):
                 data.update({service.name + '_status': service.status,
                              service.name + '_status_colour': SERVICE_COLOUR_MAP[service.status]})
         return self.template_env.get_template('html/index.html').render(data)
+
+    @cherrypy.expose
+    def details(self, id):
+        class row(object):
+            macro = property(lambda x: 12)
+            njobs = property(lambda x: 12)
+            seed = property(lambda x: 12)
+        return self.template_env.get_template('html/subtables.html').render({'stuff': [row(), row()]})

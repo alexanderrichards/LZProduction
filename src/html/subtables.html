@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Subtables</title>
+</head>
+<body>
+  <table>
+    <tr>
+      <td>Macro</td>
+      <td>njobs</td>
+      <td>seed</td>
+    </tr>
+    {% for row in stuff %}
+    <tr>
+      <td>{{ row.macro }}</td>
+      <td>{{ row.njobs }}</td>
+      <td>{{ row.seed }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+</body>
+</html>

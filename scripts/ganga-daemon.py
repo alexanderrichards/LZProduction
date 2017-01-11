@@ -105,18 +105,24 @@ def monitor_requests(session):
                 tr.application.luxsim_version = request.app_version
                 tr.application.reduction_version = request.reduction_version
                 tr.application.tag = request.tag
-                macros, njobs, nevents, seed = zip(*(i.split() for i in request.selected_macros.splitlines()))
+                macros, njobs, nevents, seeds, _, _ = zip(*(m for m in request.selected_macros))
                 tr.unit_splitter = ganga.GenericSplitter()
                 tr.unit_splitter.multi_attrs = {'application.macro': macros,
-                                                'application.njobs': [int(i) for i in njobs],
-                                                'application.nevents': [int(i) for i in nevents],
-                                                'application.seed': [int(i) for i in seed]}
+                                                'application.njobs': njobs,
+                                                'application.nevents': nevents,
+                                                'application.seed': seeds}
                 t.appendTransform(tr)
                 t.float = 100
                 t.run()
                 session.query(Requests)\
                        .filter(Requests.id == request.id)\
-                       .update({'status': t.status.capitalize()})
+                       .update({'status': t.status.capitalize()
+                                'selected_macros': [Macro(m.path,
+                                                          m.njobs,
+                                                          m.nevents,
+                                                          m.seed,
+                                                          "Submitted",
+                                                          None) for m in request.selected_macros]})
 
     for request, ganga_request in paused_requests:
         if ganga_request is None:
@@ -134,10 +140,7 @@ def monitor_requests(session):
             logger.error("Request %i has gone missing!", request.id)
             continue
 
-        if ganga_request.status == 'running':
-            continue
-
-        if ganga_request.status not in ['pause', 'completed']:
+        if ganga_request.status not in ['running', 'pause', 'completed']:
             logger.error("Ganga reports 'Running' request %i in state: %s",
                          request.id, ganga_request.status)
             continue
@@ -149,7 +152,13 @@ def monitor_requests(session):
 
             session.query(Requests)\
                    .filter(Requests.id == request.id)\
-                   .update({'status': ganga_request.status.capitalize()})
+                   .update({'status': ganga_request.status.capitalize(),
+                            'selected_macros': [Macro(m.path,
+                                                      m.njobs,
+                                                      m.nevents,
+                                                      m.seed,
+                                                      "Submitted",  # this should reflect the job status
+                                                      None) for m in request.selected_macros]})
 
 
 if __name__ == '__main__':

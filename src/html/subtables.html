@@ -7,14 +7,20 @@
   <table>
     <tr>
       <td>Macro</td>
-      <td>njobs</td>
-      <td>seed</td>
+      <td>NJobs</td>
+      <td>NEvents</td>
+      <td>Seed</td>
+      <td>Output</td>
+      <td>Status</td>
     </tr>
-    {% for row in stuff %}
+    {% for macro in macros %}
     <tr>
-      <td>{{ row.macro }}</td>
-      <td>{{ row.njobs }}</td>
-      <td>{{ row.seed }}</td>
+      <td>{{ macro.name }}</td>
+      <td>{{ macro.njobs }}</td>
+      <td>{{ macro.nevents }}</td>
+      <td>{{ macro.seed }}</td>
+      <td>{{ macro.output }}</td>
+      <td>{{ macro.status }}</td>
     </tr>
     {% endfor %}
   </table>

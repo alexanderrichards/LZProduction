@@ -20,7 +20,6 @@ import requests
 import ganga
 from daemonize import Daemonize
 
-
 MINS = 60
 
 
@@ -105,7 +104,7 @@ def monitor_requests(session):
                 tr.application.luxsim_version = request.app_version
                 tr.application.reduction_version = request.reduction_version
                 tr.application.tag = request.tag
-                macros, njobs, nevents, seeds, _, _ = zip(*(m for m in request.selected_macros))
+                macros, _, njobs, nevents, seeds, _, _ = zip(*(m for m in request.selected_macros))
                 tr.unit_splitter = ganga.GenericSplitter()
                 tr.unit_splitter.multi_attrs = {'application.macro': macros,
                                                 'application.njobs': njobs,
@@ -116,13 +115,14 @@ def monitor_requests(session):
                 t.run()
                 session.query(Requests)\
                        .filter(Requests.id == request.id)\
-                       .update({'status': t.status.capitalize()
-                                'selected_macros': [Macro(m.path,
-                                                          m.njobs,
-                                                          m.nevents,
-                                                          m.seed,
-                                                          "Submitted",
-                                                          None) for m in request.selected_macros]})
+                       .update({'status': t.status.capitalize(),
+                                'selected_macros': [SelectedMacro(m.path,
+                                                                  m.name,
+                                                                  m.njobs,
+                                                                  m.nevents,
+                                                                  m.seed,
+                                                                  "Submitted",
+                                                                  None) for m in request.selected_macros]})
 
     for request, ganga_request in paused_requests:
         if ganga_request is None:
@@ -153,12 +153,13 @@ def monitor_requests(session):
             session.query(Requests)\
                    .filter(Requests.id == request.id)\
                    .update({'status': ganga_request.status.capitalize(),
-                            'selected_macros': [Macro(m.path,
-                                                      m.njobs,
-                                                      m.nevents,
-                                                      m.seed,
-                                                      "Submitted",  # this should reflect the job status
-                                                      None) for m in request.selected_macros]})
+                            'selected_macros': [SelectedMacro(m.path,
+                                                              m.name,
+                                                              m.njobs,
+                                                              m.nevents,
+                                                              m.seed,
+                                                              "Submitted",  # this should reflect the job status
+                                                              None) for m in request.selected_macros]})
 
 
 if __name__ == '__main__':
@@ -239,6 +240,7 @@ if __name__ == '__main__':
     Services = tables.Services
     sqlalchemy_utils = importlib.import_module('sqlalchemy_utils')
     ganga_utils = importlib.import_module('ganga_utils')
+    SelectedMacro = importlib.import_module('services.RequestsDB').SelectedMacro
 
     atexit.register(exit_status, args.dburl)
     sqlalchemy_utils.create_db(args.dburl)

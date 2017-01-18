@@ -7,6 +7,6 @@ jinja2==2.9.4
 natsort==5.0.1
 pylru==1.0.9
 PyMySQL==0.7.9
-requests==2.12.4
+requests==2.12.5
 SQLAlchemy==1.1.5
 suds==0.4

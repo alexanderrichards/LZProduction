@@ -1,4 +1,4 @@
-CherryPy==9.0.0
+CherryPy==10.0.0
 daemonize==2.4.7
 enum34==1.1.6
 GitPython==2.1.1

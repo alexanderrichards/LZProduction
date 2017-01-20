@@ -87,7 +87,7 @@ if __name__ == '__main__':
 
         # Add new users in VOMS
         for userdn, userca in new_users:
-            logger.debug("Adding user: DN='%s', CA='%s'", userdn, userca)
+            logger.info("Adding user: DN='%s', CA='%s'", userdn, userca)
             session.add(Users(dn=userdn,
                               ca=userca,
                               suspended=userdn not in voms_valid_users,
@@ -95,7 +95,7 @@ if __name__ == '__main__':
 
         # Remove users removed from VOMS
         for userdn, userca in removed_users:
-            logger.debug("Removing user: DN='%s', CA='%s'", userdn, userca)
+            logger.info("Removing user: DN='%s', CA='%s'", userdn, userca)
             session.query(Users)\
                    .filter(Users.dn == userdn)\
                    .filter(Users.ca == userca)\
@@ -104,13 +104,13 @@ if __name__ == '__main__':
         # Users with modified suspended status, update from VOMS
         for userdn, userca in common_users:
             voms_suspended = userdn not in voms_valid_users
-            db_suspended = any(session.query(Users.suspended).filter(Users.dn == userdn).all())
+            db_suspended = any(session.query(Users.suspended).filter(Users.dn == userdn).one())
             if voms_suspended != db_suspended:
-                logger.debug("Updating user: DN='%s', CA='%s', Suspended=%s->%s",
+                logger.info("Updating user: DN='%s', CA='%s', Suspended=%s->%s",
                              userdn, userca, db_suspended, voms_suspended)
                 session.query(Users)\
                        .filter(Users.dn == userdn)\
                        .filter(Users.ca == userca)\
-                       .update(suspended=voms_suspended)
+                       .update({'suspended': voms_suspended})
 
     logging.shutdown()

@@ -62,6 +62,7 @@ def db_session(url):
         yield session
         session.commit()
     except:
+        logger.error("Problem with DB session, rolling back.")
         session.rollback()
         raise
     finally:

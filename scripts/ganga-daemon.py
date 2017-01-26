@@ -102,9 +102,9 @@ def monitor_requests(session):
                 tr.application = ganga.LZApp(luxsim_version=request.app_version,
                                              reduction_version=request.reduction_version,
                                              tag=request.tag)
-                tr.outputfiles = ganga.DiracFile(namePattern="*.root",
-                                                 remoteDir='%i' % request.id,
-                                                 defaultSE='UKI-LT2-IC-HEP-disk')
+                tr.outputfiles = [ganga.DiracFile(namePattern="*.root",
+                                                  remoteDir='%i' % request.id,
+                                                  defaultSE='UKI-LT2-IC-HEP-disk')]
                 macros, _, njobs, nevents, seeds, _, _ = zip(*(m for m in request.selected_macros))
                 tr.unit_splitter = ganga.GenericSplitter()
                 tr.unit_splitter.multi_attrs = {'application.macro': macros,

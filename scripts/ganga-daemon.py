@@ -81,13 +81,12 @@ def monitor_requests(session):
                                 .filter(Requests.status != 'Requested')\
                                 .all()
 
-    approved_requests = ((r, ganga_utils.ganga_request(r.id)) for r in monitored_requests
-                         if r.status == "Approved")
-    paused_requests = ((r, ganga_utils.ganga_request(r.id)) for r in monitored_requests
-                       if r.status == "Pause")
-    running_requests = ((r, ganga_utils.ganga_request(r.id)) for r in monitored_requests
-                        if r.status == "Running")
+    approved_requests = ganga_utils.ganga_request_task(monitored_requests, status="Approved")
+    paused_requests = ganga_utils.ganga_request_task(monitored_requests, status="Pause")
+    running_requests = ganga_utils.ganga_request_task(monitored_requests, status="Running")
 
+    # Approved Requests
+    # ####################################################################################
     for request, ganga_request in approved_requests:
         with sqlalchemy_utils.db_subsession(session):
             if ganga_request is not None:
@@ -100,10 +99,12 @@ def monitor_requests(session):
             with ganga_utils.removing_request() as t:
                 t.requestdb_id = int(request.id)
                 tr = ganga.CoreTransform(backend=ganga.LZDirac())
-                tr.application = ganga.LZApp()
-                tr.application.luxsim_version = request.app_version
-                tr.application.reduction_version = request.reduction_version
-                tr.application.tag = request.tag
+                tr.application = ganga.LZApp(luxsim_version=request.app_version,
+                                             reduction_version=request.app_version,
+                                             tag=request.tag)
+                tr.outputfiles = ganga.DiracFile(namePattern="*.root",
+                                                 remoteDir='%i' % request.id,
+                                                 defaultSE='UKI-LT2-IC-HEP-disk')
                 macros, _, njobs, nevents, seeds, _, _ = zip(*(m for m in request.selected_macros))
                 tr.unit_splitter = ganga.GenericSplitter()
                 tr.unit_splitter.multi_attrs = {'application.macro': macros,
@@ -124,6 +125,8 @@ def monitor_requests(session):
                                                                   "Submitted",
                                                                   None) for m in request.selected_macros]})
 
+    # Paused Requests
+    # ####################################################################################
     for request, ganga_request in paused_requests:
         if ganga_request is None:
             logger.error("Request %i has gone missing!", request.id)
@@ -135,6 +138,8 @@ def monitor_requests(session):
                        .filter(Requests.id == request.id)\
                        .update({'status': ganga_request.status.capitalize()})
 
+    # Running Requests
+    # ####################################################################################
     for request, ganga_request in running_requests:
         if ganga_request is None:
             logger.error("Request %i has gone missing!", request.id)
@@ -145,21 +150,25 @@ def monitor_requests(session):
                          request.id, ganga_request.status)
             continue
 
-        with sqlalchemy_utils.db_subsession(session):
-            if ganga_request.status == "completed":
-                # job completed, time to feed stuff back
-                pass
 
+        macros = []
+        for macro, job in ganga_utils.ganga_macro_jobs(request, ganga_request):
+            output = None
+            if job.status == "completed":
+                output = '/n'.join(file_.accessURL for file_ in job.outputfiles)
+            macros.append(SelectedMacro(macro.path,
+                                        macro.name,
+                                        macro.njobs,
+                                        macro.nevents,
+                                        macro.seed,
+                                        job.status,
+                                        output))
+
+        with sqlalchemy_utils.db_subsession(session):
             session.query(Requests)\
                    .filter(Requests.id == request.id)\
                    .update({'status': ganga_request.status.capitalize(),
-                            'selected_macros': [SelectedMacro(m.path,
-                                                              m.name,
-                                                              m.njobs,
-                                                              m.nevents,
-                                                              m.seed,
-                                                              "Submitted",  # this should reflect the job status
-                                                              None) for m in request.selected_macros]})
+                            'selected_macros': macros})
 
 
 if __name__ == '__main__':

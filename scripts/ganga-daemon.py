@@ -100,7 +100,7 @@ def monitor_requests(session):
                 t.requestdb_id = int(request.id)
                 tr = ganga.CoreTransform(backend=ganga.LZDirac())
                 tr.application = ganga.LZApp(luxsim_version=request.app_version,
-                                             reduction_version=request.app_version,
+                                             reduction_version=request.reduction_version,
                                              tag=request.tag)
                 tr.outputfiles = ganga.DiracFile(namePattern="*.root",
                                                  remoteDir='%i' % request.id,
@@ -151,20 +151,20 @@ def monitor_requests(session):
             continue
 
 
-        macros = []
-        for macro, job in ganga_utils.ganga_macro_jobs(request, ganga_request):
-            output = None
-            if job.status == "completed":
-                output = '/n'.join(file_.accessURL for file_ in job.outputfiles)
-            macros.append(SelectedMacro(macro.path,
-                                        macro.name,
-                                        macro.njobs,
-                                        macro.nevents,
-                                        macro.seed,
-                                        job.status,
-                                        output))
-
         with sqlalchemy_utils.db_subsession(session):
+            macros = []
+            for macro, job in ganga_utils.ganga_macro_jobs(request, ganga_request):
+                output = None
+                if job.status == "completed":
+                    output = '/n'.join(file_.accessURL for file_ in job.outputfiles)
+                macros.append(SelectedMacro(macro.path,
+                                            macro.name,
+                                            macro.njobs,
+                                            macro.nevents,
+                                            macro.seed,
+                                            job.status,
+                                            output))
+
             session.query(Requests)\
                    .filter(Requests.id == request.id)\
                    .update({'status': ganga_request.status.capitalize(),

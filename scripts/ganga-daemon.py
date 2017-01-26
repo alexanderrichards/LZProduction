@@ -162,7 +162,7 @@ def monitor_requests(session):
                                             macro.njobs,
                                             macro.nevents,
                                             macro.seed,
-                                            job.status,
+                                            job.status.capitalize(),
                                             output))
 
             session.query(Requests)\
@@ -194,7 +194,7 @@ if __name__ == '__main__':
                         help='Path to key .pem file. Note must be an unencrypted key. '
                              '[default: %(default)s]')
     parser.add_argument('-v', '--verbose', action='count',
-                        help="Increate the logged verbosite, can be used twice")
+                        help="Increase the logged verbosite, can be used twice")
     parser.add_argument('-d', '--dburl',
                         default="sqlite:///" + os.path.join(lzprod_root, 'requests.db'),
                         help="URL for the requests DB. Note can use the prefix 'mysql+pymysql://' "

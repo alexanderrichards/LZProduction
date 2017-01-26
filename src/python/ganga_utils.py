@@ -39,3 +39,23 @@ def ganga_request(requestdb_id):
         if task.requestdb_id == requestdb_id:
             return task
     return None
+
+def ganga_request_task(requests, status=None):
+    tasks = ganga.tasks  # optimize, avoid lookup in each requests loop
+    for request in requests:
+        if status is not None and request.status != status:
+            continue
+        for task in tasks:
+            if request.id == task.requestdb_id:
+                yield request, task
+                break
+        else:
+            yield request, None
+
+
+def ganga_macro_jobs(request, task):
+    units = task.transforms[0].units  # optimize, avoid looking this up in loop
+    for macro in request.selected_macros:
+        for unit in units:
+            if macro.path == unit.application.macro:
+                yield macro, unit

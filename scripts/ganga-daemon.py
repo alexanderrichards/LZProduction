@@ -156,7 +156,10 @@ def monitor_requests(session):
             for macro, job in ganga_utils.ganga_macro_jobs(request, ganga_request):
                 output = None
                 if job.status == "completed":
-                    output = '/n'.join(file_.accessURL for file_ in job.outputfiles)
+                    try:
+                        output = '/n'.join(file_.accessURL() for file_ in job.outputfiles)
+                    except Exception as e:
+                        logger.exception("Problem returning the DiracFile AccessURL.")
                 macros.append(SelectedMacro(macro.path,
                                             macro.name,
                                             macro.njobs,

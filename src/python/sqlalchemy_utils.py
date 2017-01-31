@@ -12,6 +12,8 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.attributes import InstrumentedAttribute
 from sqlalchemy.ext.declarative import declarative_base
 
+logger = logging.getLogger(__name__)
+
 
 class _IterableBase(object):
     """
@@ -82,7 +84,6 @@ def db_subsession(session):
     Args:
         session (SQLAlchemy DB session): The open DB session
     """
-    logger = logging.getLogger(__name__)
     try:
         with session.begin_nested():
             yield

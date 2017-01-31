@@ -35,12 +35,15 @@ def exit_status(dburl):
 def daemon_main(dburl, delay, cert, verify=False):
     """Daemon main function."""
     ganga.enableMonitoring()
-    while True:
-        with sqlalchemy_utils.db_session(dburl) as session:
-            check_services(session, cert, verify)
-            monitor_requests(session)
-        time.sleep(delay * MINS)
-
+    logger.debug("Ganga monitoring enabled.")
+    try:
+        while True:
+            with sqlalchemy_utils.db_session(dburl) as session:
+                check_services(session, cert, verify)
+                monitor_requests(session)
+            time.sleep(delay * MINS)
+    except Exception:
+        logger.exception("Unhandled exception while running daemon.")
 
 def check_services(session, cert, verify):
     """
@@ -182,6 +185,18 @@ if __name__ == '__main__':
                     os.path.realpath(
                         os.path.abspath(__file__))))))
 
+    # Add the python src path to the sys.path for future imports
+    sys.path = [os.path.join(lzprod_root, 'src', 'python')] + sys.path
+
+    tables = importlib.import_module('tables')
+    Requests = tables.Requests
+    Services = tables.Services
+    sqlalchemy_utils = importlib.import_module('sqlalchemy_utils')
+    ganga_utils = importlib.import_module('ganga_utils')
+    logging_utils = importlib.import_module('logging_utils')
+    SelectedMacro = importlib.import_module('services.RequestsDB').SelectedMacro
+
+
     parser = argparse.ArgumentParser(description='Run the ganga job submission daemon.')
     parser.add_argument('-f', '--frequency', default=5, type=int,
                         help="The frequency that the daemon does it's main functionality (in mins) "
@@ -216,6 +231,10 @@ if __name__ == '__main__':
                         help="Run the daemon in a debug interactive monitoring mode. "
                              "(debugging only)")
     args = parser.parse_args()
+
+    atexit.register(exit_status, args.dburl)
+    sqlalchemy_utils.create_db(args.dburl)
+
     if args.trusted_cas:
         args.verify = args.trusted_cas
 
@@ -230,34 +249,27 @@ if __name__ == '__main__':
         fhandler = logging.StreamHandler()
     fhandler.setFormatter(logging.Formatter("[%(asctime)s] %(name)15s : %(levelname)8s : %(message)s"))
     root_logger = logging.getLogger()
-    ganga_handlers = [h for h in root_logger.handlers if isinstance(h, RotatingFileHandler)]
     root_logger.handlers = [fhandler]  # importing ganga adds root handlers so use this to replace them rather than logger.addHandler
     root_logger.setLevel({None: logging.WARNING,
                           1: logging.INFO,
                           2: logging.DEBUG}.get(args.verbose, logging.DEBUG))
 
-    # use the level from the root rather than the gangarc
-    ganga_logger = logging.getLogger("Ganga")
-    ganga_logger.setLevel(logging.NOTSET)
-    ganga_logger.handlers = ganga_handlers
+    for _, logger in logging_utils.loggers_not_at_level(logging.NOTSET):
+        logger.setLevel(logging.NOTSET)
+    for _, logger in logging_utils.loggers_with_handlers():
+        logger.handlers = []
+
+    logging.getLogger("sqlalchemy").setLevel(logging.WARNING)
+    logging.getLogger("cherrypy").setLevel(logging.WARNING)  # Why is cherrypy present?
+    logging.getLogger("git").setLevel(logging.WARNING)
+    logging.getLogger("requests").setLevel(logging.WARNING)
 
     logger = logging.getLogger(os.path.splitext(os.path.basename(__file__))[0])
     logger.debug("Script called with args: %s", args)
 
-    # Add the python src path to the sys.path for future imports
-    sys.path = [os.path.join(lzprod_root, 'src', 'python')] + sys.path
-
-    tables = importlib.import_module('tables')
-    Requests = tables.Requests
-    Services = tables.Services
-    sqlalchemy_utils = importlib.import_module('sqlalchemy_utils')
-    ganga_utils = importlib.import_module('ganga_utils')
-    SelectedMacro = importlib.import_module('services.RequestsDB').SelectedMacro
-
-    atexit.register(exit_status, args.dburl)
-    sqlalchemy_utils.create_db(args.dburl)
     daemon = Daemonize(app=os.path.splitext(os.path.basename(__file__))[0],
                        pid=args.pid_file,
+                       logger=logger,
                        keep_fds=[fhandler.stream.fileno()],
                        foreground=args.debug_mode,
                        action=partial(daemon_main,

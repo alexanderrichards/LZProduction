@@ -34,8 +34,20 @@ def exit_status(dburl):
 
 def daemon_main(dburl, delay, cert, verify=False):
     """Daemon main function."""
-    ganga.enableMonitoring()
-    logger.debug("Ganga monitoring enabled.")
+    try:
+        sqlalchemy_utils.create_db(dburl)
+    except Exception:
+        logger.exception("Failed to connect to/create DB.")
+    else:
+        logger.debug("Connected to DB.")
+
+    try:
+        ganga.enableMonitoring()
+    except Exception:
+        logger.exception("Failed to enable the Ganga monitoring.")
+    else:
+        logger.debug("Ganga monitoring enabled.")
+
     try:
         while True:
             with sqlalchemy_utils.db_session(dburl) as session:
@@ -233,7 +245,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     atexit.register(exit_status, args.dburl)
-    sqlalchemy_utils.create_db(args.dburl)
 
     if args.trusted_cas:
         args.verify = args.trusted_cas

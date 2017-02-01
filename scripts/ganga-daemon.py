@@ -183,6 +183,9 @@ def monitor_requests(session):
                                             job.status.capitalize(),
                                             output))
 
+            if not macros:
+                continue  # task probably just created so no jobs yet.
+
             session.query(Requests)\
                    .filter(Requests.id == request.id)\
                    .update({'status': ganga_request.status.capitalize(),

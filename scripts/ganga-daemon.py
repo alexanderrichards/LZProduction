@@ -52,6 +52,7 @@ class GangaDaemon(Daemonize):
         logging.getLogger("cherrypy").setLevel(logging.WARNING)  # Why is cherrypy present?
         logging.getLogger("git").setLevel(logging.WARNING)
         logging.getLogger("requests").setLevel(logging.WARNING)
+        logging.getLogger("stomp.py").setLevel(logging.WARNING)
 
     def main(self):
         """Daemon main function."""

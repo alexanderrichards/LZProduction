@@ -203,19 +203,22 @@ class GangaDaemon(Daemonize):
             with sqlalchemy_utils.db_subsession(session):
                 macros = []
                 for macro, job in ganga_utils.ganga_macro_jobs(request, ganga_request):
-                    output = None
-                    if job.status == "completed":
-                        try:
-                            output = '/n'.join(file_.accessURL() for file_ in job.outputfiles)
-                        except Exception:
-                            logger.exception("Problem returning the DiracFile AccessURL.")
+                    output = ''
+                    for job in job.subjobs:
+                        if job.status == "completed":
+                            try:
+                                output += '\n'.join(file_.accessURL() for file_ in job.outputfiles)
+                            except Exception:
+                                logger.exception("Problem returning the DiracFile AccessURL.")
+                            else:
+                                output += '\n'
                     macros.append(SelectedMacro(macro.path,
                                                 macro.name,
                                                 macro.njobs,
                                                 macro.nevents,
                                                 macro.seed,
                                                 job.status.capitalize(),
-                                                output))
+                                                output or None))
 
                 if not macros:
                     continue  # task probably just created so no jobs yet.

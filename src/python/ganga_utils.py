@@ -58,4 +58,4 @@ def ganga_macro_jobs(request, task):
     for macro in request.selected_macros:
         for unit in units:
             if macro.path == unit.application.macro:
-                yield macro, unit
+                yield macro, ganga.jobs(unit._impl.active_job_ids[0])

@@ -134,6 +134,8 @@ class GangaDaemon(Daemonize):
             with sqlalchemy_utils.db_subsession(session):
                 if ganga_request is not None:
                     # why is it still approved?
+                    logger.error("Approved request %s already has an associated task, id: %i.",
+                                 request.id, ganga_request.id)
                     session.query(Requests)\
                            .filter(Requests.id == request.id)\
                            .update({'status': ganga_request.status.capitalize()})
@@ -157,6 +159,7 @@ class GangaDaemon(Daemonize):
                     t.appendTransform(tr)
                     t.float = 100
                     t.run()
+                    logger.info("Created task %i for newly approved request %s.", t.id, request.id)
                     session.query(Requests)\
                            .filter(Requests.id == request.id)\
                            .update({'status': t.status.capitalize(),
@@ -176,6 +179,8 @@ class GangaDaemon(Daemonize):
                 continue
 
             if ganga_request.status != "pause":
+                logger.warning("Request %s (task %i) moved to status Pause.",
+                               request.id, ganga_request.id)
                 with sqlalchemy_utils.db_subsession(session):
                     session.query(Requests)\
                            .filter(Requests.id == request.id)\
@@ -193,6 +198,7 @@ class GangaDaemon(Daemonize):
                              request.id, ganga_request.status)
                 continue
 
+            logger.info("Monitoring task %i (request %s).", ganga_request.id, request.id)
             with sqlalchemy_utils.db_subsession(session):
                 macros = []
                 for macro, job in ganga_utils.ganga_macro_jobs(request, ganga_request):

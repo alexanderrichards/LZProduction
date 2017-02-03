@@ -242,7 +242,7 @@ if __name__ == '__main__':
     parser.add_argument('-f', '--frequency', default=5, type=int,
                         help="The frequency that the daemon does it's main functionality (in mins) "
                              "[default: %(default)s]")
-    parser.add_argument('-p', '--pid-file', default=os.path.join(lzprod_root, 'ganga-daemon.pid'),
+    parser.add_argument('-p', '--pid-file', default=os.path.join(lzprod_root, app_name + '.pid'),
                         help="The pid file used by the daemon [default: %(default)s]")
     parser.add_argument('-l', '--log-dir', default=os.path.join(lzprod_root, 'log'),
                         help="Path to the log directory. Will be created if doesn't exist "

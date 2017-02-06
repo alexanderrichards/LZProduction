@@ -147,7 +147,8 @@ class GangaDaemon(Daemonize):
                     tr = ganga.CoreTransform(backend=ganga.LZDirac())
                     tr.application = ganga.LZApp(luxsim_version=request.app_version,
                                                  reduction_version=request.reduction_version,
-                                                 tag=request.tag)
+                                                 tag=request.tag,
+                                                 requestid=str(request.id))
                     tr.outputfiles = [ganga.DiracFile(namePattern="*.root",
                                                       remoteDir='%i' % request.id,
                                                       defaultSE='UKI-LT2-IC-HEP-disk')]

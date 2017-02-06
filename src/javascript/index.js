@@ -35,7 +35,7 @@ $(document).ready(function() {
                                       return json.data;
                                   }
                                  },
-                           order: [[4, "asc"], [5, "desc"]],
+                           order: [[4, "asc"], [5, "desc"], [1, "desc"]],
                            autoWidth: false,
                            columnDefs: [{ targets: "_all", className: "dt-body-left dt-head-left",
                                           render: function(data, type, row){

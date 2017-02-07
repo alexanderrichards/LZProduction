@@ -4,6 +4,8 @@ import os
 import argparse
 from SimpleXMLRPCServer import SimpleXMLRPCServer
 from daemonize import Daemonize
+from DIRAC.Core.Base import Script
+Script.parseCommandLine(ignoreErrors=True)
 from DIRAC.Interfaces.API.Dirac import Dirac
 
 

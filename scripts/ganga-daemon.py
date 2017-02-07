@@ -206,12 +206,14 @@ class GangaDaemon(Daemonize):
                 macros = []
                 for macro, job in ganga_utils.ganga_macro_jobs(request, ganga_request):
                     output = ''
-                    for job in job.subjobs:
-                        if job.status == "completed":
+                    for subjob in job.subjobs:
+                        if subjob.status == "completed":
                             try:
-                                output += '\n'.join(file_.accessURL() for file_ in job.outputfiles)
+                                with dirac_utils.dirac_server("http://localhost:8000/") as dirac:
+                                    output += '\n'.join(dirac.getJobOutputLFNs(subjob.backend.id)\
+                                                             .get('Value', []))
                             except Exception:
-                                logger.exception("Problem returning the DiracFile AccessURL.")
+                                logger.exception("Problem returning the LFNs for job: %s", subjob.fqid)
                             else:
                                 output += '\n'
                     macros.append(SelectedMacro(macro.path,
@@ -290,6 +292,7 @@ if __name__ == '__main__':
     logging_utils = importlib.import_module('logging_utils')
     SelectedMacro = importlib.import_module('services.RequestsDB').SelectedMacro  # includes the cherrypy logger as imports cherrypy. We should move SelectedMacro elsewhere probably with the table!
     sqlalchemy_utils = importlib.import_module('sqlalchemy_utils')
+    dirac_utils = importlib.import_module('dirac_utils')
 
     # Logging setup
     ###########################################################################

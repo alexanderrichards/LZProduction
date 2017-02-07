@@ -145,7 +145,8 @@ class GangaDaemon(Daemonize):
                 with ganga_utils.removing_request() as t:
                     t.requestdb_id = int(request.id)
                     tr = ganga.CoreTransform(backend=ganga.LZDirac())
-                    tr.application = ganga.LZApp(luxsim_version=request.app_version,
+                    tr.application = ganga.LZApp(app=request.app,
+                                                 app_version=request.app_version,
                                                  reduction_version=request.reduction_version,
                                                  tag=request.tag,
                                                  requestid=str(request.id))

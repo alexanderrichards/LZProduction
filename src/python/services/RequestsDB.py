@@ -1,6 +1,8 @@
 """Requests service."""
+import os
 import json
 from datetime import datetime
+from collections import namedtuple
 import cherrypy
 import html
 from apache_utils import name_from_dn
@@ -8,6 +10,7 @@ from sqlalchemy_utils import create_db, db_session
 from tables import Requests, Users
 
 COLUMNS = ['id', 'request_date', 'sim_lead', 'status', 'description']
+SelectedMacro = namedtuple('SelectedMacro', ('path', 'name', 'njobs', 'nevents', 'seed', 'status', 'output'))
 
 class RequestsDB(object):
     """
@@ -70,10 +73,19 @@ class RequestsDB(object):
         kwargs['request_date'] = datetime.now().strftime('%d/%m/%Y')
         kwargs['timestamp'] = str(datetime.now())
         kwargs['status'] = 'Requested'
-        if not isinstance(kwargs['selected_macros'], list):
-            kwargs['selected_macros'] = [kwargs['selected_macros']]
-        kwargs['selected_macros'] = '\n'.join(kwargs['selected_macros'])
-        kwargs['output_lfns'] = ''
+        macro_list = kwargs['selected_macros']
+        if not isinstance(macro_list, list):
+            macro_list = [macro_list]
+        kwargs['selected_macros'] = []
+        for m in macro_list:
+            path, njobs, nevents, seed = m.split()
+            kwargs['selected_macros'].append(SelectedMacro(path,
+                                                           os.path.splitext(os.path.basename(path))[0],
+                                                           int(njobs),
+                                                           int(nevents),
+                                                           int(seed),
+                                                           'Requested',
+                                                           None))
         with db_session(self.dburl) as session:
             session.add(Requests(requester_id=cherrypy.request.verified_user.id, **kwargs))
         return self.GET()

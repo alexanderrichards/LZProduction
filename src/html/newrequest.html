@@ -86,8 +86,14 @@ $(document).ready(function() {
     
     var sel_list = $("#selected_macros");
     $("#macros :selected").each(function(i, selected) {
-	var macro_path = [selected.getAttribute("path"), selected.value].join("/");
-        sel_list.append($("<option>", { text: [selected.value, $("#njobs").val(), $("#nevents").val(), $("#seed").val()].join(" "), path: selected.getAttribute("path")}));
+        var njobs = $("#njobs").val();
+        var nevents = $("#nevents").val();
+        var seed = $("#seed").val();
+        sel_list.append($("<option>", { text: [selected.value, njobs, nevents, seed].join(" "),
+                                        path: selected.getAttribute("path"),
+                                        njobs: $("#njobs").val(),
+                                        nevents: $("#nevents").val(),
+                                        seed: $("#seed").val() }));
     });
     sel_list.prop("disabled", false);
   });
@@ -109,7 +115,10 @@ $(document).ready(function() {
     // can serialize them
     $("#selected_macros option").prop("selected", true);
     $("#selected_macros option").each(function(i, selected) {
-         selected.value = [selected.getAttribute("path"), selected.value].join("/");
+         selected.value = [selected.getAttribute("path"),
+                           selected.getAttribute("njobs"),
+                           selected.getAttribute("nevents"),
+                           selected.getAttribute("seed")].join(" ");
     });
 
 // the below waited to close the fancybox till after the table refreshed and after the ajax call

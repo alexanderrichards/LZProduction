@@ -1,12 +1,13 @@
 """Git tag service."""
 import os
 import threading
+from collections import namedtuple
 import cherrypy
-import html
 import pylru
 from git import Git, Repo
 from natsort import natsorted
 
+Macro = namedtuple('Macro', ('name', 'path'))
 
 @cherrypy.popargs('tagid')
 class GitTagMacros(object):
@@ -17,13 +18,15 @@ class GitTagMacros(object):
     or returning list of available tags.
     """
 
-    def __init__(self, repo, git_dir):
+    def __init__(self, repo, git_dir, template_env):
         """Initialisation."""
         if not os.path.isdir(git_dir):
             Git().clone(repo, git_dir)
+        Git(git_dir).fetch()  # this introduces a slight delay if done in index. May be acceptible
         self.git_dir = git_dir
         self.fs_lock = threading.Lock()
         self.tag_cache = pylru.lrucache(50)
+        self.template = template_env.get_template("html/gittags.html")
 
     @cherrypy.expose
     def index(self, tagid=None):
@@ -32,20 +35,18 @@ class GitTagMacros(object):
         if tagid in self.tag_cache:
             return self.tag_cache[tagid]
 
-        html_ = html.HTML()
         if tagid is None:
-            tags = natsorted(tag.name for tag in Repo(self.git_dir).tags)
-            for tag in tags:
-                html_.option(tag)
-            # print "returning:", str(html_)
-            return str(html_)
+            tags = natsorted((tag.name for tag in Repo(self.git_dir).tags), reverse=True)
+            return self.template.render({'tags': tags})
 
         with self.fs_lock:
             Git(self.git_dir).checkout(tagid)
-            for root, _, files in os.walk(os.path.join(self.git_dir, 'BackgroundMacros')):
-                for file_ in files:
-                    if file_.endswith('.mac'):
-                        html_.option(file_, path=os.path.relpath(root, self.git_dir))
-            # print "returning:", str(html_)
-            self.tag_cache[tagid] = str(html_)
-            return str(html_)
+            macros = (Macro(name=os.path.splitext(file_)[0],
+                            path=os.path.relpath(os.path.join(root, file_), self.git_dir))
+                      for root, _, files in os.walk(os.path.join(self.git_dir, 'BackgroundMacros'))
+                      for file_ in files if file_.endswith('.mac'))
+
+            html = self.template.render({'macros': macros})
+            # print "returning:", str(html)
+            self.tag_cache[tagid] = html
+            return html

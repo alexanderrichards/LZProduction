@@ -35,7 +35,7 @@ $(document).ready(function() {
                                       return json.data;
                                   }
                                  },
-                           order: [[4, "asc"], [5, "asc"]],
+                           order: [[4, "asc"], [5, "desc"], [1, "desc"]],
                            autoWidth: false,
                            columnDefs: [{ targets: "_all", className: "dt-body-left dt-head-left",
                                           render: function(data, type, row){
@@ -72,14 +72,20 @@ $(document).ready(function() {
     };
     
     $("#tableBody tbody").on("click", "tr td span.details-control", function() {
+	var datatable = $("#tableBody").DataTable();
 	var tr = $(this).closest("tr");
-	var row = $("#tableBody").DataTable().row(tr);
+	var row = datatable.row(tr);
+	var request_id = datatable.cell(row, $("td.rowid", tr)).data();
 	if (row.child.isShown()){
             row.child.hide();
             //tr.removeClass("shown");
 	}
 	else{
-            row.child("<div class='jumbotron'>Hello World</div>").show();
+	    $.ajax({url: '/details/' + request_id,
+		   type: "GET",
+		   success: function(data) {
+		       row.child(data).show();
+		   }});
             //tr.addClass("shown");
 	}
 	$(this).toggleClass("glyphicon-plus-sign")

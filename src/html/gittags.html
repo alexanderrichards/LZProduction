@@ -1,0 +1,9 @@
+{% if tags is defined %}
+    {% for tag in tags %}
+        <option>{{ tag }}</option>
+    {% endfor %}
+{% elif macros is defined %}
+    {% for macro in macros %}
+        <option path={{ macro.path }}>{{ macro.name }}</option>
+    {% endfor %}
+{% endif %}

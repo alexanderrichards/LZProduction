@@ -1,5 +1,5 @@
 """Requests Table."""
-from sqlalchemy import Column, Integer, String, Text, ForeignKeyConstraint
+from sqlalchemy import Column, Integer, String, Text, PickleType, ForeignKeyConstraint
 from sqlalchemy_utils import SQLTableBase
 
 
@@ -21,6 +21,5 @@ class Requests(SQLTableBase):
     status = Column(String(250), nullable=False)
     timestamp = Column(String(250), nullable=False)
     description = Column(String(250), nullable=False)
-    selected_macros = Column(Text())
-    output_lfns = Column(Text())
+    selected_macros = Column(PickleType(), nullable=False)
     ForeignKeyConstraint(['requester_id'], ['users.id'])

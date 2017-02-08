@@ -48,7 +48,7 @@ def daemon_main(args):
                                                   ['LUXSim', 'BACCARAT', 'TDRAnalysis']),
                         '/appversion',
                         {'/': {'request.dispatch': apache_utils.CredentialDispatcher(args.dburl, cherrypy.dispatch.Dispatcher())}})
-    cherrypy.tree.mount(services.GitTagMacros(args.git_repo, args.git_dir),
+    cherrypy.tree.mount(services.GitTagMacros(args.git_repo, args.git_dir, template_env),
                         '/tags',
                         {'/': {'request.dispatch':  apache_utils.CredentialDispatcher(args.dburl, cherrypy.dispatch.Dispatcher())}})
     cherrypy.tree.mount(services.Admins(args.dburl, template_env),

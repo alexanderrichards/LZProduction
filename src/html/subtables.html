@@ -19,7 +19,15 @@
       <td>{{ macro.njobs }}</td>
       <td>{{ macro.nevents }}</td>
       <td>{{ macro.seed }}</td>
-      <td>{{ macro.output }}</td>
+      <td>
+	{% if macro.output is not none %}
+	  {% for lfn in macro.output %}
+	    {{ lfn }}<br>
+	  {% endfor %}
+	{% else %}
+	  {{ macro.output }}
+	{% endif %}
+      </td>
       <td>{{ macro.status }}</td>
     </tr>
     {% endfor %}

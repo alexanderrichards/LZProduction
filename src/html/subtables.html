@@ -22,7 +22,7 @@
       <td>
 	{% if macro.output is not none %}
 	  {% for lfn in macro.output %}
-	    <p>{{ lfn }}</p>
+	    {{ lfn }}<br>
 	  {% endfor %}
 	{% else %}
 	  {{ macro.output }}

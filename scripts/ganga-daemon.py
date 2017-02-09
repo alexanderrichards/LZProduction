@@ -205,17 +205,15 @@ class GangaDaemon(Daemonize):
             with sqlalchemy_utils.db_subsession(session):
                 macros = []
                 for macro, job in ganga_utils.ganga_macro_jobs(request, ganga_request):
-                    output = ''
+                    output = []
                     for subjob in job.subjobs:
                         if subjob.status == "completed":
                             try:
                                 with dirac_utils.dirac_server("http://localhost:8000/") as dirac:
-                                    output += '\n'.join(dirac.getJobOutputLFNs(subjob.backend.id)\
-                                                             .get('Value', []))
+                                    output.extend(dirac.getJobOutputLFNs(subjob.backend.id)\
+                                                       .get('Value', []))
                             except Exception:
                                 logger.exception("Problem returning the LFNs for job: %s", subjob.fqid)
-                            else:
-                                output += '\n'
                     macros.append(SelectedMacro(macro.path,
                                                 macro.name,
                                                 macro.njobs,

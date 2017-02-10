@@ -33,8 +33,10 @@ $(document).ready(function() {
   });
 
   $("#tags").change(function() {
-    $.ajax({url: "/tags/" + $(this).val(),
+    $.ajax({url: "/tags",
             type: "GET",
+            data: {tagid: $(this).val(),
+                   app: $("#app").val()},
             success: function(result) {
                        $("#macros").html(result);
                        $("#macros").prop("disabled", false);
@@ -63,7 +65,17 @@ $(document).ready(function() {
     }
     app_version.selectpicker("refresh");
     request.selectpicker("refresh");
-
+    var tags = $("#tags");
+    if (tags.val()){
+        $.ajax({url: "/tags",
+                type: "GET",
+                data: {tagid: tags.val(),
+                       app: $(this).val()},
+                success: function(result) {
+                           $("#macros").html(result);
+                         }
+                });
+    }
   });
 
   $("#add").click(function() {

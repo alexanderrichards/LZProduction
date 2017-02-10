@@ -60,6 +60,10 @@ $(document).ready(function() {
                           });
     });
     
+    setInterval(function() {
+	$("#tableBody").DataTable().ajax.reload();
+    }, 300000);  // 5 mins
+
     $.fn.dataTable.ext.type.order['request-status-pre'] = function ( d ) {
 	switch ( d ) {
         case 'Requested':    return 1;

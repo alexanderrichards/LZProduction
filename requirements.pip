@@ -1,12 +1,12 @@
-CherryPy==8.8.0
+CherryPy==10.1.0
 daemonize==2.4.7
 enum34==1.1.6
 GitPython==2.1.1
 html==1.16
-jinja2==2.9.4
-natsort==5.0.1
+jinja2==2.9.5
+natsort==5.0.2
 pylru==1.0.9
 PyMySQL==0.7.9
-requests==2.12.4
-SQLAlchemy==1.1.4
+requests==2.13.0
+SQLAlchemy==1.1.5
 suds==0.4

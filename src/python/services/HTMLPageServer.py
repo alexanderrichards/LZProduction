@@ -2,7 +2,7 @@
 from datetime import datetime
 import cherrypy
 from sqlalchemy_utils import create_db, db_session
-from tables import Services, Requests
+from tables import Services, ParametricJobs
 
 MINS = 60
 SERVICE_COLOUR_MAP = {'up': 'brightgreen',
@@ -50,9 +50,9 @@ class HTMLPageServer(object):
     @cherrypy.expose
     def details(self, id):
         with db_session(self.dburl) as session:
-            macros = session.query(Requests.selected_macros)\
-                            .filter(Requests.id == id)\
-                            .one_or_none()
-            if macros is None:
+            macros = session.query(ParametricJobs)\
+                            .filter(ParametricJobs.request_id == id)\
+                            .all()
+            if not macros:
                 return "Error: No macro information!"
-            return self.template_env.get_template('html/subtables.html').render({'macros': macros[0]})
+            return self.template_env.get_template('html/subtables.html').render({'macros': macros})

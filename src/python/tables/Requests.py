@@ -1,5 +1,6 @@
 """Requests Table."""
-from sqlalchemy import Column, Integer, String, Text, PickleType, ForeignKeyConstraint
+from datetime import datetime
+from sqlalchemy import Column, Integer, String, TIMESTAMP, Text, PickleType, ForeignKeyConstraint
 from sqlalchemy_utils import SQLTableBase
 
 
@@ -19,7 +20,6 @@ class Requests(SQLTableBase):
     reduction_version = Column(String(250), nullable=False)
     sim_lead = Column(String(250), nullable=False)
     status = Column(String(250), nullable=False)
-    timestamp = Column(String(250), nullable=False)
+    timestamp = Column(TIMESTAMP, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
     description = Column(String(250), nullable=False)
-    selected_macros = Column(PickleType(), nullable=False)
     ForeignKeyConstraint(['requester_id'], ['users.id'])

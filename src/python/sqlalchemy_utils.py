@@ -30,6 +30,11 @@ class _IterableBase(object):
                                   lambda value: isinstance(value, InstrumentedAttribute)):
             yield name, getattr(self, name)
 
+    def __getitem__(self, item):
+        """Access instrumented attributes as a dict."""
+        instrumented_attrs = dict(iter(self))
+        return instrumented_attrs[item]
+
 SQLTableBase = declarative_base(cls=_IterableBase)  # pylint: disable=C0103
 
 

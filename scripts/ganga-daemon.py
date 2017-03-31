@@ -211,8 +211,11 @@ def temporary_runscript(request):
         templates_dir = os.path.join(lzprod_root, 'src', 'bash')
         with open(os.path.join(templates_dir, 'Simulation.bash'), 'rb') as file_:
             sim_template = Template(file_.read())
-        with tempfile.NamedTemporaryFile() as tmpfile:
-            tmpfile.write(sim_template.safe_substitute(request))
+        with tempfile.NamedTemporaryFile(prefix='runscript_', suffix='.sh') as tmpfile:
+            tmpfile.write(sim_template.safe_substitute(request,
+                                                       root_version='5.34.32',
+                                                       root_arch='slc6_gcc44_x86_64',
+                                                       g4_version='4.10.02.b01'))
             tmpfile.flush()
             yield tmpfile
 
@@ -232,7 +235,8 @@ def temporary_macro(tag, macro, app, nevents):
     if not os.path.isfile(macro):
         raise Exception("Macro file '%s' doesn't exist in tag %s" % (macro, tag))
 
-    with tempfile.NamedTemporaryFile() as tmpfile:
+    with tempfile.NamedTemporaryFile(prefix=os.path.splitext(os.path.basename(macro))[0] + '_',
+                                     suffix='.mac') as tmpfile:
         with open(macro, 'rb') as macro_file:
             tmpfile.write(macro_file.read())
         tmpfile.write(macro_extras.safe_substitute(app=app, nevents=nevents))

@@ -29,6 +29,7 @@ status_map = {'Done': 'Completed',
               'Failed': 'Failed',
               'Waiting': 'Submitted',
               'Queued': 'Submitted',
+              'Running': 'Running'
               'Received': 'Requested',
               'Killed': 'Killed',
               'Deleted': 'Deleted'}
@@ -163,7 +164,7 @@ class GangaDaemon(Daemonize):
                           .filter(ParametricJobs.request_id == request.id)\
                           .all()
             request_status_accumulator = status_accumulator(init_status="Requested",
-                                                            priority=('Deleted', 'Killed', 'Completed', 'Requested', 'Approved', 'Submitted', 'Failed'))
+                                                            priority=('Deleted', 'Killed', 'Completed', 'Failed', 'Requested', 'Approved', 'Submitted', 'Running'))
             with sqlalchemy_utils.db_subsession(session),\
                  dirac_utils.dirac_server("http://localhost:8000/") as dirac,\
                  temporary_runscript(request) as runscript:
@@ -181,7 +182,7 @@ class GangaDaemon(Daemonize):
                     # could have used reduce function instead of coroutine but would
                     # need the whole list already so would mean a double loop.
                     job_status_accumulator = status_accumulator(init_status='Received',
-                                                                priority=('Deleted', 'Killed', 'Done', 'Received', 'Queued', 'Waiting', 'Failed'))
+                                                                priority=('Deleted', 'Killed', 'Done', 'Failed', 'Received', 'Queued', 'Waiting', 'Running'))
                     for subjob, subjob_info in job.dirac_jobs.iteritems():
                         status = subjob_info['Status']
                         job.status = status_map.get(job_status_accumulator.send(status), 'Unknown')

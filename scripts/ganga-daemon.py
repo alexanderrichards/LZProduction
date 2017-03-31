@@ -29,7 +29,7 @@ status_map = {'Done': 'Completed',
               'Failed': 'Failed',
               'Waiting': 'Submitted',
               'Queued': 'Submitted',
-              'Running': 'Running'
+              'Running': 'Running',
               'Received': 'Requested',
               'Killed': 'Killed',
               'Deleted': 'Deleted'}

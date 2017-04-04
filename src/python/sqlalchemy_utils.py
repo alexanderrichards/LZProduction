@@ -5,17 +5,22 @@ Contains helper classes and functions for working
 with SQLAlchemy.
 """
 import logging
+from abc import ABCMeta
+from collections import Mapping
 from inspect import getmembers
 from contextlib import contextmanager
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.attributes import InstrumentedAttribute
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.ext.declarative.api import DeclarativeMeta
 
 logger = logging.getLogger(__name__)
 
+class DeclarativeABCMeta(DeclarativeMeta, ABCMeta):
+    pass
 
-class _IterableBase(object):
+class _IterableBase(Mapping):
     """
     Iterable base class.
 
@@ -28,14 +33,17 @@ class _IterableBase(object):
         """Get an iterator over instrumented attributes."""
         for name, _ in getmembers(self.__class__,
                                   lambda value: isinstance(value, InstrumentedAttribute)):
-            yield name, getattr(self, name)
+            yield name
 
     def __getitem__(self, item):
         """Access instrumented attributes as a dict."""
-        instrumented_attrs = dict(iter(self))
+        instrumented_attrs = {k: getattr(self, k) for k in self}
         return instrumented_attrs[item]
 
-SQLTableBase = declarative_base(cls=_IterableBase)  # pylint: disable=C0103
+    def __len__(self):
+        return len(iter(self))
+
+SQLTableBase = declarative_base(cls=_IterableBase, metaclass=DeclarativeABCMeta)  # pylint: disable=C0103
 
 
 def create_db(url):

@@ -79,7 +79,7 @@ class RequestsDB(object):
 
 
         with db_session(self.dburl) as session:
-            request = Requests(requester_id=cherrypy.request.verified_user.id, **kwargs)
+            request = Requests(requester_id=cherrypy.request.verified_user.id, request_date=kwargs['request_date'], source=kwargs['source'], detector=kwargs['detector'], sim_lead=kwargs['sim_lead'], status=kwargs['status'], description=kwargs['description'])
             session.add(request)
             session.flush()
             session.refresh(request)
@@ -87,8 +87,8 @@ class RequestsDB(object):
             macros = []
             for macro in selected_macros:
                 path, njobs, nevents, seed = macro.split()
-                macros.append(ParametricJobs(request_id=request.id, status="Requested", macro=path,
-                                           reduced_lfns=[], njobs=njobs, nevents=nevents, seed=seed,
+                macros.append(ParametricJobs(request_id=request.id, status="Requested", macro=path, tag=kwargs.pop('tag'), app=kwargs.pop('app'), request=kwargs.pop('request', None), reduction_version=kwargs.pop('reduction_version'),
+                                             reduced_lfns=[], njobs=njobs, nevents=nevents, seed=seed, app_version=kwargs.pop('app_version'),
                                            dirac_jobs={}))
 
             session.add_all(macros)

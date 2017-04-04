@@ -67,7 +67,7 @@ class DiracDaemon(Daemonize):
         j.setParameterSequence("args", [str(i) for i in xrange(starting_seed, starting_seed + njobs)], addToWorkflow=True)
         j.setPlatform(platform)
 
-        return self._dirac_api.submit(j)
+        return self.status(self._dirac_api.submit(j).get("Value", []))
 
 
 

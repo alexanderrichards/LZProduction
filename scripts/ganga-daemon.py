@@ -156,95 +156,19 @@ class GangaDaemon(Daemonize):
         create new Ganga tasks for new requests.
         """
         monitored_requests = session.query(Requests)\
+                                    .filter(Requests.status != 'Failed')\
                                     .filter(Requests.status != 'Completed')\
                                     .filter(Requests.status != 'Requested')\
                                     .all()
 
         for request in monitored_requests:
-            jobs = session.query(ParametricJobs)\
-                          .filter(ParametricJobs.request_id == request.id)\
-                          .all()
-            request_status_accumulator = status_accumulator(init_status="Requested",
-                                                            priority=('Deleted', 'Killed', 'Completed', 'Failed', 'Requested', 'Approved', 'Submitted', 'Running'))
-            with sqlalchemy_utils.db_subsession(session),\
-                 dirac_utils.dirac_server("http://localhost:8000/") as dirac,\
-                 temporary_runscript(request) as runscript:
-
-                for job in jobs:
-                    job_ids = job.dirac_jobs.keys()
-                    if request.status == "Approved":
-                        with temporary_macro(request.tag, job.macro, request.app, job.nevents) as macro:
-                            job_ids = dirac.submit_job(request.id, runscript.name, macro.name, job.seed, job.njobs).get("Value", [])
-                        self.logger.info("%d DIRAC job(s) created: %s", len(job_ids), job_ids)
-
-                    # ids cast to strings to force them through the xmlrpc socket, convert back
-                    job.dirac_jobs = {int(k): v for k, v in dirac.status(job_ids).iteritems()}
-
-                    # could have used reduce function instead of coroutine but would
-                    # need the whole list already so would mean a double loop.
-                    job_status_accumulator = status_accumulator(init_status='Received',
-                                                                priority=('Deleted', 'Killed', 'Done', 'Failed', 'Received', 'Queued', 'Waiting', 'Running'))
-                    for subjob, subjob_info in job.dirac_jobs.iteritems():
-                        status = subjob_info['Status']
-                        job.status = status_map.get(job_status_accumulator.send(status), 'Unknown')
-                        if  status == 'Done':
-                            subjob_info['output_lfns'] = dirac.getJobOutputLFNs(subjob)\
-                                                              .get('Value', [])
-#                    job.status =
-#                request.status =
-                    request.status = request_status_accumulator.send(job.status)
+            with sqlalchemy_utils.db_subsession(session):
+                if request.status == "Approved":
+                    request.submit(session)
+                request.update_status(session)
 
 
-
-    def create_runscript(self, request, tmpfile):
-        templates_dir = os.path.join(lzprod_root, 'src', 'bash')
-        with open(os.path.join(templates_dir, 'Simulation.bash'), 'rb') as file_:
-            sim_template = Template(file_.read())
-
-        tmpfile.write(sim_template.safe_substitute(request))
-        tmpfile.flush()
-        return tmpfile.name
-
-@contextmanager
-def temporary_runscript(request):
-    if request.status != "Approved":
-        yield
-    else:
-        templates_dir = os.path.join(lzprod_root, 'src', 'bash')
-        with open(os.path.join(templates_dir, 'Simulation.bash'), 'rb') as file_:
-            sim_template = Template(file_.read())
-        with tempfile.NamedTemporaryFile(prefix='runscript_', suffix='.sh') as tmpfile:
-            tmpfile.write(sim_template.safe_substitute(request,
-                                                       root_version='5.34.32',
-                                                       root_arch='slc6_gcc44_x86_64',
-                                                       g4_version='4.10.02.b01'))
-            tmpfile.flush()
-            yield tmpfile
-
-@contextmanager
-def temporary_macro(tag, macro, app, nevents):
-    macro_extras = Template(dedent("""
-        /control/getEnv SEED
-        /$app/randomSeed {SEED}
-        /$app/beamOn $nevents
-        exit
-        """))
-    git_dir = os.path.join(lzprod_root, 'git', 'TDRAnalysis')
-    macro = os.path.join(git_dir, macro)
-    git = Git(git_dir)
-    git.fetch('origin')
-    git.checkout(tag)
-    if not os.path.isfile(macro):
-        raise Exception("Macro file '%s' doesn't exist in tag %s" % (macro, tag))
-
-    with tempfile.NamedTemporaryFile(prefix=os.path.splitext(os.path.basename(macro))[0] + '_',
-                                     suffix='.mac') as tmpfile:
-        with open(macro, 'rb') as macro_file:
-            tmpfile.write(macro_file.read())
-        tmpfile.write(macro_extras.safe_substitute(app=app, nevents=nevents))
-        tmpfile.flush()
-        yield tmpfile
-"""
+        """
         # Approved Requests
         # ####################################################################################
         for request in approved_requests:

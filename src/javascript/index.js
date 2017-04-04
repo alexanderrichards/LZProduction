@@ -68,9 +68,10 @@ $(document).ready(function() {
 	switch ( d ) {
         case 'Requested':    return 1;
         case 'Approved': return 2;
-        case 'Running': return 3;
-        case 'Failed':   return 4;
-        case 'Completed':   return 5;
+        case 'Submitted': return 3;
+        case 'Running': return 4;
+        case 'Failed':   return 5;
+        case 'Completed':   return 6;
 	}
 	return 0;
     };

@@ -8,13 +8,17 @@ G4_DIR=/cvmfs/lz.opensciencegrid.org/geant4/
 G4_VER=geant$g4_version
 
 #extract the name of the output file from the LUXSim macro
+export OUTPUT_DIR=$(pwd)
 OUTPUT_FILE=$(awk '/^\/$app\/io\/outputName/ {print $2}' $1 | tail -1)$2.bin
 
 
 # move into the LUXSim directory, set G4 env, and run the macro
+# the executable must be run from within it's dir!
+cd $APP_DIR
 source $G4_DIR/etc/geant4env.sh $G4_VER
-$APP_DIR/${app}Executable $MACRO_FILE
+$APP_DIR/${app}Executable $OUTPUT_DIR/$MACRO_FILE
 
+cd $OUTPUT_DIR
 # after macro has run, rootify
 source $ROOT_DIR/bin/thisroot.sh
 `ls $APP_DIR/tools/*RootReader` $OUTPUT_FILE

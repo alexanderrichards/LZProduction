@@ -8,5 +8,5 @@ natsort==5.0.2
 pylru==1.0.9
 PyMySQL==0.7.10
 requests==2.13.0
-SQLAlchemy==1.1.8
+SQLAlchemy==1.1.9
 suds==0.4

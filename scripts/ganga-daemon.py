@@ -11,52 +11,15 @@ import sys
 import time
 import argparse
 import importlib
-import tempfile
 import logging
 from logging.handlers import TimedRotatingFileHandler
-from textwrap import dedent
 from datetime import datetime
-from string import Template
-from contextlib import contextmanager
-#from itertools import repeat
 
 import requests
 from daemonize import Daemonize
 from git import Git
 
 MINS = 60
-status_map = {'Done': 'Completed',
-              'Failed': 'Failed',
-              'Waiting': 'Submitted',
-              'Queued': 'Submitted',
-              'Checking': 'Submitted',
-              'Running': 'Running',
-              'Received': 'Requested',
-              'Killed': 'Killed',
-              'Deleted': 'Deleted'}
-
-class coroutine(object):
-    def __init__(self, func):
-        self._func = func
-    def __call__(self, *args, **kwargs):
-        cr = self._func(*args, **kwargs)
-        cr.next()
-        return cr
-
-@coroutine
-def status_accumulator(init_status, priority):
-    status = priority[0]#init_status
-    status_priority = priority
-    while True:
-        new_status = (yield status)
-        status = status_priority[max(status_priority.index(status),
-                                     status_priority.index(new_status))]
-
-#def status_accumulator(status1, status2):
-#    status_priority = ['Done', 'Queued', 'Waiting', 'Failed']
-#    return status_priority[max(status_priority.index(status1),
-#                               status_priority.index(status2))]
-
 
 class GangaDaemon(Daemonize):
     """Ganga Daemon."""

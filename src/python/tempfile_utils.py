@@ -18,6 +18,7 @@ def temporary_runscript(**kwargs):
 
 @contextmanager
 def temporary_macro(tag, macro, app, nevents):
+    app_map = {'BACCARAT': 'Bacc'}
     macro_extras = Template(dedent("""
         /control/getEnv SEED
         /$app/randomSeed {SEED}
@@ -37,7 +38,7 @@ def temporary_macro(tag, macro, app, nevents):
                             suffix='.mac') as tmpfile:
         with open(macro, 'rb') as macro_file:
             tmpfile.write(macro_file.read())
-        tmpfile.write(macro_extras.safe_substitute(app=app, nevents=nevents))
+        tmpfile.write(macro_extras.safe_substitute(app=app_map.get(app, app), nevents=nevents))
         tmpfile.flush()
         yield tmpfile
 

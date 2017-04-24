@@ -9,7 +9,7 @@ G4_VER=geant$g4_version
 
 #extract the name of the output file from the LUXSim macro
 export OUTPUT_DIR=$(pwd)
-OUTPUT_FILE=$(awk '/^\/$app\/io\/outputName/ {print $2}' $1 | tail -1)$2.bin
+OUTPUT_FILE=$(awk '/^\/$app_short\/io\/outputName/ {print $2}' $1 | tail -1)$2.bin
 
 
 # move into the LUXSim directory, set G4 env, and run the macro
@@ -22,11 +22,11 @@ cd $OUTPUT_DIR
 # after macro has run, rootify
 source $ROOT_DIR/bin/thisroot.sh
 `ls $APP_DIR/tools/*RootReader` $OUTPUT_FILE
-SIM_OUTPUT_FILE=$(basename $OUTPUT_FILE .bin).root
+#SIM_OUTPUT_FILE=$(basename $OUTPUT_FILE .bin).root
 
 # get MC truth
-`ls $APP_DIR/tools/*MCTruth` $SIM_OUTPUT_FILE
-MCTRUTH_OUTPUT_FILE=$(ls *_mctruth.root)
+#`ls $APP_DIR/tools/*MCTruth` $SIM_OUTPUT_FILE
+#MCTRUTH_OUTPUT_FILE=$(ls *_mctruth.root)
 
 ## FILE UPLOAD
 ######################################################################

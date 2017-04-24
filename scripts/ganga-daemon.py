@@ -17,9 +17,9 @@ from datetime import datetime
 
 import requests
 from daemonize import Daemonize
+from git import Git
 
 MINS = 60
-
 
 class GangaDaemon(Daemonize):
     """Ganga Daemon."""
@@ -58,7 +58,7 @@ class GangaDaemon(Daemonize):
         """Daemon main function."""
         # import ganga within the daemon process as problem with file
         # descriptors otherwise
-        ganga = importlib.import_module("ganga")
+#        ganga = importlib.import_module("ganga")
         GangaDaemon.reset_loggers()  # use only the root loggers handler.
 
         try:
@@ -68,12 +68,12 @@ class GangaDaemon(Daemonize):
         else:
             logger.debug("Connected to DB.")
 
-        try:
-            ganga.enableMonitoring()
-        except Exception:
-            logger.exception("Failed to enable the Ganga monitoring.")
-        else:
-            logger.debug("Ganga monitoring enabled.")
+#        try:
+#            ganga.enableMonitoring()
+#        except Exception:
+#            logger.exception("Failed to enable the Ganga monitoring.")
+#        else:
+#            logger.debug("Ganga monitoring enabled.")
 
         try:
             while True:
@@ -118,118 +118,83 @@ class GangaDaemon(Daemonize):
         Check the status of ongoing DB requests and either update them or
         create new Ganga tasks for new requests.
         """
-        ganga = importlib.import_module("ganga")
-        ganga_utils = importlib.import_module('ganga_utils')
         monitored_requests = session.query(Requests)\
+                                    .filter(Requests.status != 'Failed')\
                                     .filter(Requests.status != 'Completed')\
                                     .filter(Requests.status != 'Requested')\
                                     .all()
 
-        approved_requests = ganga_utils.ganga_request_task(monitored_requests, status="Approved")
-        paused_requests = ganga_utils.ganga_request_task(monitored_requests, status="Pause")
-        running_requests = ganga_utils.ganga_request_task(monitored_requests, status="Running")
+        for request in monitored_requests:
+            with sqlalchemy_utils.db_subsession(session):
+                if request.status == "Approved":
+                    request.submit(session)
+                request.update_status(session)
 
+
+        """
         # Approved Requests
         # ####################################################################################
-        for request, ganga_request in approved_requests:
+        for request in approved_requests:
+            jobs = session.query(ParametricJobs)\
+                          .filter(ParametricJobs.request_id == request.id)\
+                          .all()
             with sqlalchemy_utils.db_subsession(session):
-                if ganga_request is not None:
-                    # why is it still approved?
-                    logger.error("Approved request %s already has an associated task, id: %i.",
-                                 request.id, ganga_request.id)
-                    session.query(Requests)\
-                           .filter(Requests.id == request.id)\
-                           .update({'status': ganga_request.status.capitalize()})
-                    continue
+                for job in jobs:
+                    with dirac_utils.dirac_server("http://localhost:8000/") as dirac:
+                        job_ids = submit_job(request.id, blah, job.macro, job.seed, job.njobs)
+                    job.dirac_jobs = dict(zip(job_ids, repeat({'status': "Submitted"}, len(job_ids))))
+                    job.status = "Submitted"
+                request.status = "Submitted"
 
-                with ganga_utils.removing_request() as t:
-                    t.requestdb_id = int(request.id)
-                    tr = ganga.CoreTransform(backend=ganga.LZDirac())
-                    tr.application = ganga.LZApp(app=request.app,
-                                                 app_version=request.app_version,
-                                                 reduction_version=request.reduction_version,
-                                                 tag=request.tag,
-                                                 requestid=str(request.id))
-                    tr.outputfiles = [ganga.DiracFile(namePattern="*.root",
-                                                      remoteDir='%i' % request.id,
-                                                      defaultSE='UKI-LT2-IC-HEP-disk')]
-                    macros, _, njobs, nevents, seeds, _, _ = zip(*(m for m in request.selected_macros))
-                    tr.unit_splitter = ganga.GenericSplitter()
-                    tr.unit_splitter.multi_attrs = {'application.macro': macros,
-                                                    'application.njobs': njobs,
-                                                    'application.nevents': nevents,
-                                                    'application.seed': seeds}
-                    t.appendTransform(tr)
-                    t.float = 100
-                    t.run()
-                    logger.info("Created task %i for newly approved request %s.", t.id, request.id)
-                    session.query(Requests)\
-                           .filter(Requests.id == request.id)\
-                           .update({'status': t.status.capitalize(),
-                                    'selected_macros': [SelectedMacro(m.path,
-                                                                      m.name,
-                                                                      m.njobs,
-                                                                      m.nevents,
-                                                                      m.seed,
-                                                                      "Submitted",
-                                                                      None) for m in request.selected_macros]})
+## below will work but the above IF it works will be nicer
+#        for request in approved_requests:
+#            jobs = session.query(ParametricJobs)\
+#                          .filter(ParametricJobs.request_id == request.id)\
+#                          .all()
+#            with sqlalchemy_utils.db_subsession(session):
+#                dirac_jobs = {}
+#                for job in jobs:
+#                    with dirac_utils.dirac_server("http://localhost:8000/") as dirac:
+#                        job_ids = submit_job(request.id, blah, job.macro, job.seed, job.njobs)
+#                    dirac_jobs = dict(zip(job_ids, repeat("Submitted", len(job_ids))))
+#                    
+#                    session.query(ParametricJobs)\
+#                           .filter(ParametricJobs.id == job.id)\
+#                           .update({'status': "Submitted",
+#                                    'dirac_jobs': dirac_jobs})
+#                session.query(Requests).filter(Requests.id == request.id).update({'status': "Submitted"})
 
-        # Paused Requests
+        # Submitted Requests
         # ####################################################################################
-        for request, ganga_request in paused_requests:
-            if ganga_request is None:
-                logger.error("Request %i has gone missing!", request.id)
-                continue
+        for request in submitted_requests:
+            with sqlalchemy_utils.db_subsession(session):
+                jobs = session.query(ParametricJobs)\
+                              .filter(ParametricJobs.request_id == request.id)\
+                              .filter(ParametricJobs.status in ("Submitted", "Running"))\
+                              .all()
+                for job in jobs:
+                    job.status = reduce(accumulate_status, (subjob['status'] for subjob in job.dirac_jobs.itervalues()))
+                request.status = reduce(accumulate_status, (job.status for job in jobs))
 
-            if ganga_request.status != "pause":
-                logger.warning("Request %s (task %i) moved to status Pause.",
-                               request.id, ganga_request.id)
-                with sqlalchemy_utils.db_subsession(session):
-                    session.query(Requests)\
-                           .filter(Requests.id == request.id)\
-                           .update({'status': ganga_request.status.capitalize()})
 
         # Running Requests
         # ####################################################################################
         for request, ganga_request in running_requests:
-            if ganga_request is None:
-                logger.error("Request %i has gone missing!", request.id)
-                continue
-
-            if ganga_request.status not in ['running', 'pause', 'completed']:
-                logger.error("Ganga reports 'Running' request %i in state: %s",
-                             request.id, ganga_request.status)
-                continue
-
-            logger.info("Monitoring task %i (request %s).", ganga_request.id, request.id)
+            jobs = session.query(ParametricJobs)\
+                          .filter(ParametricJobs.request_id == request.id)\
+                          .all()
             with sqlalchemy_utils.db_subsession(session):
-                macros = []
-                for macro, job in ganga_utils.ganga_macro_jobs(request, ganga_request):
-                    output = []
-                    for subjob in job.subjobs:
-                        if subjob.status == "completed":
-                            try:
-                                with dirac_utils.dirac_server("http://localhost:8000/") as dirac:
-                                    output.extend(dirac.getJobOutputLFNs(subjob.backend.id)\
-                                                       .get('Value', []))
-                            except Exception:
-                                logger.exception("Problem returning the LFNs for job: %s", subjob.fqid)
-                    macros.append(SelectedMacro(macro.path,
-                                                macro.name,
-                                                macro.njobs,
-                                                macro.nevents,
-                                                macro.seed,
-                                                job.status.capitalize(),
-                                                output or None))
-
-                if not macros:
-                    continue  # task probably just created so no jobs yet.
-
-                session.query(Requests)\
-                       .filter(Requests.id == request.id)\
-                       .update({'status': ganga_request.status.capitalize(),
-                                'selected_macros': macros})
-
+                for job in jobs:
+                    for subjob, subjob_info in job.dirac_jobs.iteritems():
+                        with dirac_utils.dirac_server("http://localhost:8000/") as dirac:
+                            status = dirac.status(subjob)
+                            subjob_info['status'] = status
+                            if status == "Completed":
+                                subjob_info['output_lfn'] = dirac.getJobOutputLFNs(subjob.backend.id)\
+                                                                 .get('Value', [])
+                    job.status = reduce()
+                request.status = reduce()
+"""
 
 if __name__ == '__main__':
     app_name = os.path.splitext(os.path.basename(__file__))[0]
@@ -287,6 +252,7 @@ if __name__ == '__main__':
     # do the imports
     Requests = importlib.import_module('tables').Requests
     Services = importlib.import_module('tables').Services
+    ParametricJobs = importlib.import_module('tables').ParametricJobs
     logging_utils = importlib.import_module('logging_utils')
     SelectedMacro = importlib.import_module('services.RequestsDB').SelectedMacro  # includes the cherrypy logger as imports cherrypy. We should move SelectedMacro elsewhere probably with the table!
     sqlalchemy_utils = importlib.import_module('sqlalchemy_utils')
@@ -318,6 +284,11 @@ if __name__ == '__main__':
     # setup the main app logger
     logger = logging.getLogger(app_name)
     logger.debug("Script called with args: %s", args)
+
+    # TDRAnalysis git repo setup
+    git_dir = os.path.join(lzprod_root, 'git', 'TDRAnalysis')
+    if not os.path.isdir(git_dir):
+        Git().clone('git@lz-git.ua.edu:sim/TDRAnalysis.git', git_dir)
 
     # Daemon setup
     ###########################################################################

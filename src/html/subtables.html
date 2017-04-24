@@ -15,17 +15,17 @@
     </tr>
     {% for macro in macros %}
     <tr>
-      <td>{{ macro.name }}</td>
+      <td>{{ macro.macro }}</td>
       <td>{{ macro.njobs }}</td>
       <td>{{ macro.nevents }}</td>
       <td>{{ macro.seed }}</td>
       <td>
-	{% if macro.output is not none %}
-	  {% for lfn in macro.output %}
+	{% if macro.reduced_lfns is not none %}
+	  {% for lfn in macro.reduced_lfns %}
 	    {{ lfn }}<br>
 	  {% endfor %}
 	{% else %}
-	  {{ macro.output }}
+	  {{ macro.reduced_lfns }}
 	{% endif %}
       </td>
       <td>{{ macro.status }}</td>

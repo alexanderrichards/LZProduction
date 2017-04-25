@@ -9,7 +9,10 @@ G4_VER=geant$g4_version
 
 #extract the name of the output file from the LUXSim macro
 export OUTPUT_DIR=$(pwd)
-OUTPUT_FILE=$(awk '/^\/$app_short\/io\/outputName/ {print $2}' $1 | tail -1)$2.bin
+OUTPUT_FILE=$(awk '/^\/$app\/io\/outputName/ {print $2}' $1 | tail -1)$2.bin
+if [ "$app" == "BACCARAT" ]; then
+    OUTPUT_FILE=$(awk '/^\/Bacc\/io\/outputName/ {print $2}' $1 | tail -1)$2.bin
+fi
 
 
 # move into the LUXSim directory, set G4 env, and run the macro
@@ -21,7 +24,11 @@ $APP_DIR/${app}Executable $OUTPUT_DIR/$MACRO_FILE
 cd $OUTPUT_DIR
 # after macro has run, rootify
 source $ROOT_DIR/bin/thisroot.sh
-`ls $APP_DIR/tools/*RootReader` $OUTPUT_FILE
+if [ "$app" == "BACCARAT" ]; then
+    $APP_DIR/tools/BaccRootConverter $OUTPUT_FILE
+else
+    $APP_DIR/tools/LUXRootReader $OUTPUT_FILE
+fi
 #SIM_OUTPUT_FILE=$(basename $OUTPUT_FILE .bin).root
 
 # get MC truth

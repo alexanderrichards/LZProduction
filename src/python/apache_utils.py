@@ -44,9 +44,10 @@ def apache_client_convert(client_dn, client_ca=None):
     Returns:
         tuple: The converted client (DN, CA)
     """
-    client_dn = '/' + '/'.join(reversed(client_dn.split(',')))
-    if client_ca is not None:
-        client_ca = '/' + '/'.join(reversed(client_ca.split(',')))
+    if not client_dn.startswith('/'):
+        client_dn = '/' + '/'.join(reversed(client_dn.split(',')))
+        if client_ca is not None:
+            client_ca = '/' + '/'.join(reversed(client_ca.split(',')))
     return client_dn, client_ca
 
 

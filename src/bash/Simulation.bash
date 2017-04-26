@@ -2,33 +2,34 @@
 #Prepare some variables based on the inputs
 MACRO_FILE=$1
 export SEED=$2 # an integer that will label the output file
-APP_DIR=/cvmfs/lz.opensciencegrid.org/$app/release-$app_version
-ROOT_DIR=/cvmfs/lz.opensciencegrid.org/ROOT/v$root_version/$root_arch/root
+APP_DIR=/cvmfs/lz.opensciencegrid.org/{{ app }}/release-{{ app_version }}
+ROOT_DIR=/cvmfs/lz.opensciencegrid.org/ROOT/v{{ root_version }}/{{ root_arch }}/root
 G4_DIR=/cvmfs/lz.opensciencegrid.org/geant4/
-G4_VER=geant$g4_version
+G4_VER=geant{{ g4_version }}
 
 #extract the name of the output file from the LUXSim macro
 export OUTPUT_DIR=$(pwd)
-OUTPUT_FILE=$(awk '/^\/$app\/io\/outputName/ {print $2}' $1 | tail -1)$2.bin
-if [ "$app" == "BACCARAT" ]; then
-    OUTPUT_FILE=$(awk '/^\/Bacc\/io\/outputName/ {print $2}' $1 | tail -1)$2.bin
-fi
+{% if app == 'BACCARAT' %}
+OUTPUT_FILE=$(awk '/^\/Bacc\/io\/outputName/ {print $2}' $1 | tail -1)$2.bin
+{% else%}
+OUTPUT_FILE=$(awk '/^\/{{ app }}\/io\/outputName/ {print $2}' $1 | tail -1)$2.bin
+{% endif %}
 
 
 # move into the LUXSim directory, set G4 env, and run the macro
 # the executable must be run from within it's dir!
 cd $APP_DIR
 source $G4_DIR/etc/geant4env.sh $G4_VER
-$APP_DIR/${app}Executable $OUTPUT_DIR/$MACRO_FILE
+$APP_DIR/{{ app }}Executable $OUTPUT_DIR/$MACRO_FILE
 
 cd $OUTPUT_DIR
 # after macro has run, rootify
 source $ROOT_DIR/bin/thisroot.sh
-if [ "$app" == "BACCARAT" ]; then
-    $APP_DIR/tools/BaccRootConverter $OUTPUT_FILE
-else
-    $APP_DIR/tools/LUXRootReader $OUTPUT_FILE
-fi
+{% if app == 'BACCARAT' %}
+$APP_DIR/tools/BaccRootConverter $OUTPUT_FILE
+{% else %}
+`ls $APP_DIR/tools/*RootReader` $OUTPUT_FILE
+{% endif %}
 #SIM_OUTPUT_FILE=$(basename $OUTPUT_FILE .bin).root
 
 # get MC truth

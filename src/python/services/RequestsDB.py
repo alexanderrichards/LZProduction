@@ -61,7 +61,7 @@ class RequestsDB(object):
             table = html.HTML().table(border='1')
             request = session.query(Requests).filter(Requests.id == reqid).first()
             if request is not None:
-                for colname, value in request:
+                for colname, value in request.iteritems():
                     row = table.tr()
                     row.td(colname)
                     row.td(str(value))

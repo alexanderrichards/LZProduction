@@ -3,15 +3,15 @@ from textwrap import dedent
 from string import Template
 from tempfile import NamedTemporaryFile
 from contextlib import contextmanager
+import jinja2
 from git import Git
 
 @contextmanager
 def temporary_runscript(**kwargs):
     templates_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'bash')
-    with open(os.path.join(templates_dir, 'Simulation.bash'), 'rb') as file_:
-        sim_template = Template(file_.read())
+    template_env = jinja2.Environment(loader=jinja2.FileSystemLoader(searchpath=templates_dir))
     with NamedTemporaryFile(prefix='runscript_', suffix='.sh') as tmpfile:
-        tmpfile.write(sim_template.safe_substitute(**kwargs))
+        tmpfile.write(template_env.get_template('Simulation.bash').render(**kwargs))
         tmpfile.flush()
         yield tmpfile
 

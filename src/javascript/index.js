@@ -116,6 +116,7 @@ $(document).ready(function() {
 	title: "Submit New Request"
     });
     /////////////////////////////////////////////////////
+	
     // Double click a row
     /////////////////////////////////////////////////////
     $("#tableBody tbody").on("dblclick", "tr", function(e){

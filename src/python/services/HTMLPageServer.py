@@ -96,7 +96,7 @@ class HTMLPageServer(object):
     	    for row in rows:
                 writer.writerow(
                      dict(
-                        (k, v.encode('utf-8') if type(v) is unicode else v) for k, v in row.iteritems()
+                        (k, v.encode('utf-8') if isinstance(v, unicode) else v) for k, v in row.iteritems()
                      )
                 )
             csvfile.seek(0)

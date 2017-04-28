@@ -1,8 +1,11 @@
 """Certificate authenticated web server."""
 from datetime import datetime
 import cherrypy
+from cherrypy.lib.static import serve_fileobj
 from sqlalchemy_utils import create_db, db_session
-from tables import Services, ParametricJobs
+from apache_utils import name_from_dn
+from tables import Services, ParametricJobs, Users, Requests
+import csv, cStringIO
 
 MINS = 60
 SERVICE_COLOUR_MAP = {'up': 'brightgreen',
@@ -56,3 +59,44 @@ class HTMLPageServer(object):
             if not macros:
                 return "Error: No macro information!"
             return self.template_env.get_template('html/subtables.html').render({'macros': macros})
+
+    @cherrypy.expose
+    def csv_export(self):
+        """Return .csv of Requests and ParametricJobs tables"""
+        with db_session(self.dburl) as session:
+            query = session.query(Requests.id,
+                                  Users.dn,
+                                  Requests.request_date,
+                                  Requests.sim_lead,
+                                  Requests.description,
+                                  Requests.detector,
+                                  Requests.source,
+                                  ParametricJobs.id,
+                                  ParametricJobs.macro,
+                                  ParametricJobs.app,
+                                  ParametricJobs.app_version,
+                                  ParametricJobs.njobs,
+                                  ParametricJobs.nevents,
+                                  ParametricJobs.seed,
+                                  ParametricJobs.status,
+                                  ParametricJobs.reduced_lfns)\
+                                  .join(ParametricJobs, Requests.id == ParametricJobs.request_id)\
+                                  .join(Users, Users.id == Requests.requester_id)\
+
+            if not query:
+                return "Error: No data"
+            rows = []
+            header = ['request_id', 'requester', 'request_date', 'sim_lead', 'description', 'detector', 'source', 'job_id', 'macro', 'app', 'app_version', 'njobs', 'nevents', 'seed', 'job_status', 'lfn']
+            csvfile = cStringIO.StringIO()
+            writer = csv.DictWriter(csvfile, header)
+        for request in query.all():
+            tmp = dict(zip(header, request))
+            tmp['requester'] = name_from_dn(tmp['requester'])
+            rows.append(tmp)
+            writer.writeheader()
+        for row in rows:
+            writer.writerow(
+                dict((k, v.encode('utf-8') if isinstance(v, unicode) else v) for k, v in row.iteritems())
+            )
+        csvfile.seek(0)
+        return serve_fileobj(csvfile, disposition='attachment', content_type='text/csv', name='requests.csv')

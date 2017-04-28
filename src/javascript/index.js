@@ -24,11 +24,12 @@ $(document).ready(function() {
                                       Chart.defaults.global.maintainAspectRatio = false;
                                       var keys = $.map(charts_data, function(value, key) { return key });
                                       var values = $.map(charts_data, function(value, key) { return value });
-                                      var colours = $.map(Object.keys(charts_data), function(key, i) {return "hsl(" + (360.*i/Object.keys(charts_data).length) + ", 100%, 50%)"});
+                                      // Define status colours: Approved, Completed, Failed, Requested, Running
+                                      var colours = ["#377eb8", "#4daf4a", "#e41a1c", "#984ea3", "ffff33"]
                                       if (myChart != null) {
                                           myChart.destroy();
                                       }
-                                      myChart = new Chart($("#myChart"), {type: "pie",
+                                      myChart = new Chart($("#myChart"), {type: "doughnut",
                                                                           data: {labels: keys,
                                                                                  datasets: [{data: values,
                                                                                              backgroundColor: colours}]

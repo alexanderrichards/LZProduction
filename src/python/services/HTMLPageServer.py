@@ -79,7 +79,7 @@ class HTMLPageServer(object):
                                   ParametricJobs.nevents,
                                   ParametricJobs.seed,
                                   ParametricJobs.status,
-                                  ParametricJobs.reduced_lfns)\
+                                  ParametricJobs.outputdir_lfns)\
                                   .join(ParametricJobs, Requests.id == ParametricJobs.request_id)\
                                   .join(Users, Users.id == Requests.requester_id)\
 

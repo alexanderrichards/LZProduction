@@ -59,9 +59,10 @@ class HTMLPageServer(object):
             if not macros:
                 return "Error: No macro information!"
             return self.template_env.get_template('html/subtables.html').render({'macros': macros})
-    
+
     @cherrypy.expose
-    def csv_export(self, filter=None):
+    def csv_export(self):
+        """Return .csv of Requests and ParametricJobs tables"""
         with db_session(self.dburl) as session:
             query = session.query(Requests.id,
                                   Users.dn,
@@ -88,16 +89,14 @@ class HTMLPageServer(object):
             header = ['request_id', 'requester', 'request_date', 'sim_lead', 'description', 'detector', 'source', 'job_id', 'macro', 'app', 'app_version', 'njobs', 'nevents', 'seed', 'job_status', 'lfn']
             csvfile = cStringIO.StringIO()
             writer = csv.DictWriter(csvfile, header)
-	    for request in query.all():
-	        tmp = dict(zip(header, request))
-                tmp['requester'] = name_from_dn(tmp['requester'])
-	        rows.append(tmp)
+        for request in query.all():
+            tmp = dict(zip(header, request))
+            tmp['requester'] = name_from_dn(tmp['requester'])
+            rows.append(tmp)
             writer.writeheader()
-    	    for row in rows:
-                writer.writerow(
-                     dict(
-                        (k, v.encode('utf-8') if isinstance(v, unicode) else v) for k, v in row.iteritems()
-                     )
-                )
-            csvfile.seek(0)
-            return serve_fileobj(csvfile, disposition='attachment', content_type='text/csv', name='requests.csv')
+        for row in rows:
+            writer.writerow(
+                dict((k, v.encode('utf-8') if isinstance(v, unicode) else v) for k, v in row.iteritems())
+            )
+        csvfile.seek(0)
+        return serve_fileobj(csvfile, disposition='attachment', content_type='text/csv', name='requests.csv')

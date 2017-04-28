@@ -93,7 +93,7 @@ class HTMLPageServer(object):
             tmp = dict(zip(header, request))
             tmp['requester'] = name_from_dn(tmp['requester'])
             rows.append(tmp)
-            writer.writeheader()
+        writer.writeheader()
         for row in rows:
             writer.writerow(
                 dict((k, v.encode('utf-8') if isinstance(v, unicode) else v) for k, v in row.iteritems())

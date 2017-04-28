@@ -1,6 +1,8 @@
 $(document).ready(function() {
     var myChart = null;
-    
+
+    // DataTable setup
+    /////////////////////////////////////////////////////
     $(".display").each(function(index){
 	$(this).DataTable({ajax: {url: $(this).attr("data-source"),
                                   type: "GET",
@@ -60,21 +62,28 @@ $(document).ready(function() {
                           });
     });
     
+    // Reload table ajax every 5 mins
+    /////////////////////////////////////////////////////
     setInterval(function() {
 	$("#tableBody").DataTable().ajax.reload();
     }, 300000);  // 5 mins
 
+    // Custom sort order for request Status field
+    /////////////////////////////////////////////////////
     $.fn.dataTable.ext.type.order['request-status-pre'] = function ( d ) {
 	switch ( d ) {
         case 'Requested':    return 1;
         case 'Approved': return 2;
-        case 'Running': return 3;
-        case 'Failed':   return 4;
-        case 'Completed':   return 5;
+        case 'Submitted': return 3;
+        case 'Running': return 4;
+        case 'Failed':   return 5;
+        case 'Completed':   return 6;
 	}
 	return 0;
     };
     
+    // Table row details subtable show/hide
+    /////////////////////////////////////////////////////
     $("#tableBody tbody").on("click", "tr td span.details-control", function() {
 	var datatable = $("#tableBody").DataTable();
 	var tr = $(this).closest("tr");
@@ -97,28 +106,36 @@ $(document).ready(function() {
 	$(this).toggleClass("text-primary")
 	$(this).toggleClass("text-danger")
     });
-    
+    /////////////////////////////////////////////////////
+
     // New request button
+    /////////////////////////////////////////////////////
     $("#NewRequest").fancybox({
 	type: "iframe",
 	href: "/newrequest.html",
 	title: "Submit New Request"
     });
-    
+    /////////////////////////////////////////////////////
+
+    // Double click a row
+    /////////////////////////////////////////////////////
     $("#tableBody tbody").on("dblclick", "tr", function(e){
 	$.fancybox({
             type: "ajax",
             href: "/api/" + $("#tableBody").DataTable().cell($(this), $("td.rowid", this)).data()
-	    //        href: "/api/" + $("#tableBody").DataTable().cell($(this), 0).data()
 	});
     });
-    
+    /////////////////////////////////////////////////////
+
+    // Admins button
+    /////////////////////////////////////////////////////
     $("#Admins").fancybox({
 	type: "ajax",
 	href: "/admins",
 	title: "Admin Management",
 	afterClose: function(){location.reload();}
     });
+    /////////////////////////////////////////////////////
     
     // Table row selection
     /////////////////////////////////////////////////////
@@ -166,7 +183,6 @@ $(document).ready(function() {
 	var table = $("#tableBody").DataTable();
 	selected.each(function() {
             ids.push(table.cell($(this), $("td.rowid", this)).data());
-	    //        ids.push(table.cell($(this), 0).data());
 	});
 	
 	var contextmenu = $("#contextmenu");
@@ -250,7 +266,6 @@ $(document).ready(function() {
 		var table = $("#tableBody").DataTable();
 		selected.each(function() {
 		    var id = table.cell($(this), $("td.rowid", this)).data();
-		    //            var id = table.cell($(this), 0).data();
 		    ajax_calls.push($.ajax({url: "/api/" + id,
 					    type: "DELETE"}));
 		});
@@ -264,7 +279,8 @@ $(document).ready(function() {
     /////////////////////////////////////////////////////
     
     
-    
+    // floating alertbox
+    /////////////////////////////////////////////////////
     bootstrap_alert = function(status, message, level){
 	// the below pops the notification into existence immediately
 	// hence we add the hide to allow fadeIn once filled with html

@@ -91,15 +91,13 @@ class HTMLPageServer(object):
 	    for request in query.all():
 	        tmp = dict(zip(header, request))
                 tmp['requester'] = name_from_dn(tmp['requester'])
-		rows.append(tmp)
+	        rows.append(tmp)
             writer.writeheader()
     	    for row in rows:
-                 writer.writerow(
+                writer.writerow(
                      dict(
                         (k, v.encode('utf-8') if type(v) is unicode else v) for k, v in row.iteritems()
                      )
-                 )
+                )
             csvfile.seek(0)
             return serve_fileobj(csvfile, disposition='attachment', content_type='text/csv', name='requests.csv')
- 
-

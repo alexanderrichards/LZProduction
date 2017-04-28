@@ -40,6 +40,7 @@ $(document).ready(function() {
             success: function(result) {
                        $("#macros").html(result);
                        $("#macros").prop("disabled", false);
+                       $("#macros").selectpicker("refresh");
                      }
             });
   });
@@ -73,6 +74,7 @@ $(document).ready(function() {
                        app: $(this).val()},
                 success: function(result) {
                            $("#macros").html(result);
+                           $("#macros").selectpicker("refresh");
                          }
                 });
     }
@@ -289,7 +291,7 @@ $(document).ready(function() {
 	      <div class="col-xs-8">
 		<div class="input-group macro-selection">
 		  <!-- having no name attribute means it's not submitted as part of the form -->
-		  <select id="macros" class="form-control macro-selection" size=10 multiple disabled></select>
+		  <select id="macros" class="selectpicker form-control" data-size="6" width="100%" data-selected-text-format="count > 1" data-live-search="true" data-live-search-style="startsWith" data-dropup-auto="false" data-live-search-placeholder="Search..." title="Macros" multiple disabled></select>
 		</div>
 	      </div>
 

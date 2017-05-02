@@ -30,7 +30,7 @@ $APP_DIR/tools/BaccRootConverter $OUTPUT_FILE
 {% else %}
 `ls $APP_DIR/tools/*RootReader` $OUTPUT_FILE
 {% endif %}
-#SIM_OUTPUT_FILE=$(basename $OUTPUT_FILE .bin).root
+SIM_OUTPUT_FILE=$(basename $OUTPUT_FILE .bin).root
 
 # get MC truth
 #`ls $APP_DIR/tools/*MCTruth` $SIM_OUTPUT_FILE

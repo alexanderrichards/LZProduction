@@ -34,7 +34,8 @@ class ParametricJobs(SQLTableBase):
         with DiracClient("http://localhost:8000/") as dirac,\
              temporary_runscript(root_version='5.34.32',
                                  root_arch='slc6_gcc44_x86_64',
-                                 g4_version='4.9.5.p02', **self) as runscript,\
+                                 g4_version='4.9.5.p02',
+                                 libnest_version='3.1.1', **self) as runscript,\
              temporary_macro(self.tag, self.macro, self.app, self.nevents) as macro:
             self.status, self.dirac_jobs = dirac.submit_job(self.request_id,
                                                             runscript.name,

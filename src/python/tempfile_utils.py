@@ -12,6 +12,7 @@ def temporary_runscript(**kwargs):
     template_env = jinja2.Environment(loader=jinja2.FileSystemLoader(searchpath=templates_dir))
     with NamedTemporaryFile(prefix='runscript_', suffix='.sh') as tmpfile:
         tmpfile.write(template_env.get_template('Simulation.bash').render(**kwargs))
+        tmpfile.write('\n')
         tmpfile.write(template_env.get_template('Reduction.bash').render(**kwargs))
         tmpfile.flush()
         yield tmpfile

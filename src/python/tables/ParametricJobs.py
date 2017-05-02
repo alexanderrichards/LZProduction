@@ -1,4 +1,5 @@
 """Requests Table."""
+import os
 from datetime import datetime
 from sqlalchemy import Column, Integer, String, PickleType, TIMESTAMP, ForeignKeyConstraint
 from sqlalchemy_utils import SQLTableBase
@@ -19,7 +20,7 @@ class ParametricJobs(SQLTableBase):
     app_version = Column(String(250))
     request = Column(String(250))
     reduction_version = Column(String(250), nullable=False)
-    reduced_lfns = Column(PickleType())
+    outputdir_lfns = Column(PickleType())
     njobs = Column(Integer, nullable=False)
     nevents = Column(Integer, nullable=False)
     seed = Column(Integer, nullable=False)
@@ -46,4 +47,9 @@ class ParametricJobs(SQLTableBase):
     def update_status(self):
         with DiracClient("http://localhost:8000/") as dirac:
             self.status, self.dirac_jobs = dirac.status(self.dirac_jobs.keys())
+            if self.status == "Completed":
+                dir_lfns = set()
+                for dirac_id in self.dirac_jobs.iterkeys():
+                    dir_lfns.update(dirac.getJobOutputLFNs(dirac_id).get("Value", []))
+                self.outputdir_lfns = list(os.path.dirname(lfn) for lfn in dir_lfns)
         return self.status

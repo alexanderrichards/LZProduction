@@ -6,6 +6,9 @@ APP_DIR=/cvmfs/lz.opensciencegrid.org/{{ app }}/release-{{ app_version }}
 ROOT_DIR=/cvmfs/lz.opensciencegrid.org/ROOT/v{{ root_version }}/{{ root_arch }}/root
 G4_DIR=/cvmfs/lz.opensciencegrid.org/geant4/
 G4_VER=geant{{ g4_version }}
+LFN_ROOT=/lz/user/l/lzproduser.grid.hep.ph.ic.ac.uk
+SIM_LFN_DIR=$LFN_ROOT/{{ app }}_{{ app_version }}_$G4_VER/$(basename $MACRO_FILE _parametric.mac)
+SE=UKI-LT2-IC-HEP-disk
 
 #extract the name of the output file from the LUXSim macro
 export OUTPUT_DIR=$(pwd)
@@ -36,9 +39,4 @@ SIM_OUTPUT_FILE=$(basename $OUTPUT_FILE .bin).root
 #`ls $APP_DIR/tools/*MCTruth` $SIM_OUTPUT_FILE
 #MCTRUTH_OUTPUT_FILE=$(ls *_mctruth.root)
 
-## FILE UPLOAD
-######################################################################
-#DATA_STORE_PATH=/lz/data
-#DATA_STORE_SE=UKI-LT2-IC-HEP-disk
-#BIGROOT_STORE_PATH=$DATA_STORE_PATH/LUXSim_$(basename $LUXSIM_DIR)_$G4VER/$(basename $MACRO_FILE _parametric.mac)
-#dirac-dms-add-file $BIGROOT_STORE_PATH/$OUTPUT_ROOT_FILE $OUTPUT_DIR/$OUTPUT_ROOT_FILE $DATA_STORE_SE
+dirac-dms-add-file $SIM_LFN_DIR/$SIM_OUTPUT_FILE $OUTPUT_DIR/$SIM_OUTPUT_FILE $SE

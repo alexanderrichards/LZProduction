@@ -45,7 +45,7 @@ def daemon_main(args):
                         '/api',
                         {'/': {'request.dispatch': apache_utils.CredentialDispatcher(args.dburl, cherrypy.dispatch.MethodDispatcher())}})
     cherrypy.tree.mount(services.CVMFSAppVersions('/cvmfs/lz.opensciencegrid.org',
-                                                  ['LUXSim', 'BACCARAT', 'TDRAnalysis']),
+                                                  ['LUXSim', 'BACCARAT', 'TDRAnalysis', 'fastNEST']),
                         '/appversion',
                         {'/': {'request.dispatch': apache_utils.CredentialDispatcher(args.dburl, cherrypy.dispatch.Dispatcher())}})
     cherrypy.tree.mount(services.GitTagMacros(args.git_repo, args.git_dir, template_env),

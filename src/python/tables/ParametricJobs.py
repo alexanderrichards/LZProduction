@@ -17,8 +17,8 @@ class ParametricJobs(SQLTableBase):
     macro = Column(String(250), nullable=False)
     tag = Column(String(250), nullable=False)
     app = Column(String(250), nullable=False)
-    app_version = Column(String(250))
-    request = Column(String(250))
+    app_version = Column(String(250), nullable=False)
+    fastnest_version = Column(String(250), nullable=False)
     reduction_version = Column(String(250), nullable=False)
     outputdir_lfns = Column(PickleType())
     njobs = Column(Integer, nullable=False)
@@ -43,8 +43,7 @@ class ParametricJobs(SQLTableBase):
                                  g4_version='4.9.5.p02',
                                  se='UKI-LT2-IC-HEP-disk',
                                  sim_lfn_dir=sim_lfn_dir,
-                                 reduction_lfn_dir=reduction_lfn_dir,
-                                 libnest_version='3.1.1', **self) as runscript,\
+                                 reduction_lfn_dir=reduction_lfn_dir, **self) as runscript,\
              temporary_macro(self.tag, self.macro, self.app, self.nevents) as macro:
             self.status, self.dirac_jobs = dirac.submit_job(runscript,
                                                             macro,

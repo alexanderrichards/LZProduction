@@ -41,12 +41,11 @@ class DiracDaemon(Daemonize):
         """
         return {str(k): v for k, v in self._dirac_api.status(ids).get("Value", {}).iteritems()}
 
-    def submit_job(self, request_id, executable, macro, starting_seed=8000000, njobs=10, platform='ANY', output_log='lzproduction_output.log'):
+    def submit_job(self, executable, macro, starting_seed=8000000, njobs=10, platform='ANY', output_log='lzproduction_output.log'):
         """
         Submit LZProduction job to DIRAC.
 
         Args:
-            request_id (int): The id number of the associated request
             executable (str): The full path to the executable job script
             macro (str): The full path to the macro for this job
             starting_seed (int): The random seed for the first of the parametric jobs

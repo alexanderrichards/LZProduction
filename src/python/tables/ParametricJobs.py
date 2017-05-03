@@ -37,8 +37,7 @@ class ParametricJobs(SQLTableBase):
                                  g4_version='4.9.5.p02',
                                  libnest_version='3.1.1', **self) as runscript,\
              temporary_macro(self.tag, self.macro, self.app, self.nevents) as macro:
-            self.status, self.dirac_jobs = dirac.submit_job(self.request_id,
-                                                            runscript.name,
+            self.status, self.dirac_jobs = dirac.submit_job(runscript.name,
                                                             macro.name,
                                                             self.seed,
                                                             self.njobs)

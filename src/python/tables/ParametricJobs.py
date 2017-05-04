@@ -31,6 +31,11 @@ class ParametricJobs(SQLTableBase):
     ForeignKeyConstraint(['request_id'], ['requests.id'])
 
     def submit(self):
+        lfn_root = os.path.join('/lz/user/l/lzproduser.grid.hep.ph.ic.ac.uk',
+                                '_'.join((self.app, self.app_version, 'geant4.9.5.p02')))
+        macro_name = os.path.splitext(os.path.basename(self.macro))[0]
+        self.outputdir_lfns = [os.path.join(output_root, macro_name),
+                               os.path.join(output_root, 'reduced_v' + self.reduction_version, macro_name)]
         with DiracClient("http://localhost:8000/") as dirac,\
              temporary_runscript(root_version='5.34.32',
                                  root_arch='slc6_gcc44_x86_64',
@@ -47,9 +52,4 @@ class ParametricJobs(SQLTableBase):
     def update_status(self):
         with DiracClient("http://localhost:8000/") as dirac:
             self.status, self.dirac_jobs = dirac.status(self.dirac_jobs.keys())
-            if self.status == "Completed":
-                dir_lfns = set()
-                for dirac_id in self.dirac_jobs.iterkeys():
-                    dir_lfns.update(dirac.getJobOutputLFNs(dirac_id).get("Value", []))
-                self.outputdir_lfns = list(os.path.dirname(lfn) for lfn in dir_lfns)
         return self.status

@@ -10,13 +10,14 @@ from git import Git
 def temporary_runscript(**kwargs):
     templates_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'bash')
     template_env = jinja2.Environment(loader=jinja2.FileSystemLoader(searchpath=templates_dir))
-    with NamedTemporaryFile(prefix='runscript_', suffix='.sh') as tmpfile:
-        tmpfile.write(template_env.get_template('Simulation.bash').render(**kwargs))
-        tmpfile.write('\n')
-        tmpfile.write(template_env.get_template('Reduction.bash').render(**kwargs))
-        tmpfile.flush()
-        yield tmpfile
-
+    with open('/tmp/runscript.sh', 'wb') as runscript:
+        runscript.write(template_env.get_template('Simulation.bash').render(**kwargs))
+        runscript.write('\n')
+        runscript.write(template_env.get_template('Reduction.bash').render(**kwargs))
+    try:
+        yield runscript.name
+    finally:
+        os.remove(runscript.name)
 
 @contextmanager
 def temporary_macro(tag, macro, app, nevents):
@@ -36,11 +37,12 @@ def temporary_macro(tag, macro, app, nevents):
     if not os.path.isfile(macro):
         raise Exception("Macro file '%s' doesn't exist in tag %s" % (macro, tag))
 
-    with NamedTemporaryFile(prefix=os.path.splitext(os.path.basename(macro))[0] + '_',
-                            suffix='.mac') as tmpfile:
-        with open(macro, 'rb') as macro_file:
-            tmpfile.write(macro_file.read())
-        tmpfile.write(macro_extras.safe_substitute(app=app_map.get(app, app), nevents=nevents))
-        tmpfile.flush()
-        yield tmpfile
+    with open(os.path.join('/tmp', os.path.basename(macro)), 'wb') as tmp_macro, \
+         open(macro, 'rb') as macro_file:
+        tmp_macro.write(macro_file.read())
+        tmp_macro.write(macro_extras.safe_substitute(app=app_map.get(app, app), nevents=nevents))
+    try:
+        yield tmp_macro.name
+    finally:
+        os.remove(tmp_macro.name)
 

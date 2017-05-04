@@ -41,19 +41,16 @@ class DiracDaemon(Daemonize):
         """
         return {str(k): v for k, v in self._dirac_api.status(ids).get("Value", {}).iteritems()}
 
-    def submit_job(self, request_id, executable, macro, starting_seed=8000000, njobs=10, platform='ANY',
-                   output_data_site='UKI-LT2-IC-HEP-disk', output_log='lzproduction_output.log'):
+    def submit_job(self, executable, macro, starting_seed=8000000, njobs=10, platform='ANY', output_log='lzproduction_output.log'):
         """
         Submit LZProduction job to DIRAC.
 
         Args:
-            request_id (int): The id number of the associated request
             executable (str): The full path to the executable job script
             macro (str): The full path to the macro for this job
             starting_seed (int): The random seed for the first of the parametric jobs
             njobs (int): The number of parametric jobs to create
             platform (str): The required platform
-            output_data_site (str): The name of the grid site to store the output data at
             output_log (str): The file name for the output log file
 
         Returns:
@@ -63,7 +60,6 @@ class DiracDaemon(Daemonize):
         j.setName(os.path.splitext(os.path.basename(macro))[0] + '%(args)s')
         j.setExecutable(os.path.basename(executable), os.path.basename(macro) + ' %(args)s', output_log)
         j.setInputSandbox([executable, macro])
-        j.setOutputData('*.root', output_data_site, str(request_id))
         j.setParameterSequence("args", [str(i) for i in xrange(starting_seed, starting_seed + njobs)], addToWorkflow=True)
         j.setPlatform(platform)
 

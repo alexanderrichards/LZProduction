@@ -6,9 +6,8 @@ APP_DIR=/cvmfs/lz.opensciencegrid.org/{{ app }}/release-{{ app_version }}
 ROOT_DIR=/cvmfs/lz.opensciencegrid.org/ROOT/v{{ root_version }}/{{ root_arch }}/root
 G4_DIR=/cvmfs/lz.opensciencegrid.org/geant4/
 G4_VER=geant{{ g4_version }}
-LFN_ROOT=/lz/user/l/lzproduser.grid.hep.ph.ic.ac.uk
-SIM_LFN_DIR=$LFN_ROOT/{{ app }}_{{ app_version }}_$G4_VER/$(basename $MACRO_FILE _parametric.mac)
-SE=UKI-LT2-IC-HEP-disk
+SIM_LFN_DIR={{ sim_lfn_dir }}
+SE={{ se }}
 
 #extract the name of the output file from the LUXSim macro
 export OUTPUT_DIR=$(pwd)

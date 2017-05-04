@@ -34,12 +34,16 @@ class ParametricJobs(SQLTableBase):
         lfn_root = os.path.join('/lz/user/l/lzproduser.grid.hep.ph.ic.ac.uk',
                                 '_'.join((self.app, self.app_version, 'geant4.9.5.p02')))
         macro_name = os.path.splitext(os.path.basename(self.macro))[0]
-        self.outputdir_lfns = [os.path.join(output_root, macro_name),
-                               os.path.join(output_root, 'reduced_v' + self.reduction_version, macro_name)]
+        sim_lfn_dir = os.path.join(lfn_root, macro_name)
+        reduction_lfn_dir = os.path.join(lfn_root, 'reduced_v' + self.reduction_version, macro_name)
+        self.outputdir_lfns = [sim_lfn_dir, reduction_lfn_dir]
         with DiracClient("http://localhost:8000/") as dirac,\
              temporary_runscript(root_version='5.34.32',
                                  root_arch='slc6_gcc44_x86_64',
                                  g4_version='4.9.5.p02',
+                                 se='UKI-LT2-IC-HEP-disk',
+                                 sim_lfn_dir=sim_lfn_dir,
+                                 reduction_lfn_dir=reduction_lfn_dir,
                                  libnest_version='3.1.1', **self) as runscript,\
              temporary_macro(self.tag, self.macro, self.app, self.nevents) as macro:
             self.status, self.dirac_jobs = dirac.submit_job(runscript.name,

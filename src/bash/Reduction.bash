@@ -1,6 +1,6 @@
 LIBNEST_DIR=/cvmfs/lz.opensciencegrid.org/fastNEST/release-{{ libnest_version }}
 REDUCTION_DIR=/cvmfs/lz.opensciencegrid.org/TDRAnalysis/release-{{ reduction_version }}
-REDUCTION_LFN_DIR=$LFN_ROOT/{{ app }}_{{ app_version }}_$G4_VER/reduced_v{{ reduction_version }}/$(basename $MACRO_FILE _parametric.mac)
+REDUCTION_LFN_DIR={{ reduction_lfn_dir }}
 
 # reduce and then copy both to our central storage.
 source $LIBNEST_DIR/libNEST/thislibNEST.sh

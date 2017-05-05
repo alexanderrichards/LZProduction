@@ -1,4 +1,4 @@
-LIBNEST_DIR=/cvmfs/lz.opensciencegrid.org/fastNEST/release-{{ libnest_version }}
+LIBNEST_DIR=/cvmfs/lz.opensciencegrid.org/fastNEST/release-{{ fastnest_version }}
 REDUCTION_DIR=/cvmfs/lz.opensciencegrid.org/TDRAnalysis/release-{{ reduction_version }}
 REDUCTION_LFN_DIR={{ reduction_lfn_dir }}
 

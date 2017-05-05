@@ -32,6 +32,14 @@ $(document).ready(function() {
                    }
   });
 
+  $.ajax({url: "/appversion/fastNEST",
+          type: "GET",
+          success: function(result) {
+                     $("#fastnest_version").html(result);
+                     $("#fastnest_version").selectpicker("refresh");
+                   }
+  });
+
   $("#tags").change(function() {
     $.ajax({url: "/tags",
             type: "GET",
@@ -48,24 +56,15 @@ $(document).ready(function() {
 
   $("#app").change(function() {
     var app_version = $("#app_version");
-    var request = $("#request");
-    if ($(this).val() == "Reduction Only") {
-      app_version.prop("disabled", true);
-      request.prop("disabled", false);
-    }
-    else {
-      $.ajax({url: "/appversion/" + $("#app option:selected").text(),
-              type: "GET",
-              success: function(result) {
-                         app_version.html(result);
-                         app_version.prop("disabled", false);
-                         app_version.selectpicker("refresh");
-                       }
-      });
-      request.prop("disabled", true);
-    }
+    $.ajax({url: "/appversion/" + $("#app option:selected").text(),
+            type: "GET",
+            success: function(result) {
+                       app_version.html(result);
+                       app_version.prop("disabled", false);
+                       app_version.selectpicker("refresh");
+                     }
+    });
     app_version.selectpicker("refresh");
-    request.selectpicker("refresh");
     var tags = $("#tags");
     if (tags.val()){
         $.ajax({url: "/tags",
@@ -227,7 +226,6 @@ $(document).ready(function() {
 			  <select id="app" name="app" class="selectpicker form-control" data-live-search="true" data-live-search-style="startsWith" data-size="10" data-width="150px" data-dropup-auto="false" data-live-search-placeholder="Search..." title="Application" required>
 			    <option>LUXSim</option>
 			    <option>BACCARAT</option>
-			    <option>Reduction Only</option>
 			  </select>
 			</div>
 		      </div>
@@ -236,7 +234,6 @@ $(document).ready(function() {
 			<label for="app_version">Select Application Version:</label>
 			<div class="input-group">
 			  <select id="app_version" name="app_version" class="selectpicker form-control" data-live-search="true" data-live-search-style="startsWith" data-size="10" data-width="150px" data-dropup-auto="false" data-live-search-placeholder="Search..." title="Version" required disabled>
-			    <option>test</option>
 			  </select>
 			</div>
 		      </div>
@@ -249,10 +246,9 @@ $(document).ready(function() {
 		    <br>
 		    <div class="row">
 		      <div class="col-xs-6">
-			<label for="request">Select Request</label>
+			<label for="fastnest_version">Select fastNEST Version</label>
 			<div class="input-group">
-			  <select id="request" name="request" class="selectpicker form-control" data-live-search="true" data-live-search-style="startsWith" data-size="10" data-width="150px" data-dropup-auto="false" data-live-search-placeholder="Search..." title="Request" required disabled>
-			    <option>test</option>
+			  <select id="fastnest_version" name="fastnest_version" class="selectpicker form-control" data-live-search="true" data-live-search-style="startsWith" data-size="10" data-width="150px" data-dropup-auto="false" data-live-search-placeholder="Search..." title="Version" required>
 			  </select>			    
 			</div>
 		      </div>

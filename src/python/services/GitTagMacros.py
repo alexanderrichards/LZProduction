@@ -10,7 +10,7 @@ from natsort import natsorted
 Macro = namedtuple('Macro', ('name', 'path'))
 
 macro_dir_map = {'LUXSim': 'BackgroundMacros',
-                 'BACCARAT': 'BaccValidationMacros'}
+                 'BACCARAT': 'BaccMacros'}
 
 @cherrypy.popargs('tagid', 'app')
 class GitTagMacros(object):

@@ -87,7 +87,7 @@ class RequestsDB(object):
             macros = []
             for macro in selected_macros:
                 path, njobs, nevents, seed = macro.split()
-                macros.append(ParametricJobs(request_id=request.id, status="Requested", macro=path, tag=kwargs['tag'], app=kwargs['app'], request=kwargs.get('request', None), reduction_version=kwargs['reduction_version'],
+                macros.append(ParametricJobs(request_id=request.id, status="Requested", macro=path, tag=kwargs['tag'], app=kwargs['app'], fastnest_version=kwargs.get('fastnest_version', None), reduction_version=kwargs['reduction_version'],
                                              outputdir_lfns=[], njobs=njobs, nevents=nevents, seed=seed, app_version=kwargs['app_version'],
                                            dirac_jobs={}))
 

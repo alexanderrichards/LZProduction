@@ -31,7 +31,7 @@ class ParametricJobs(SQLTableBase):
     ForeignKeyConstraint(['request_id'], ['requests.id'])
 
     def submit(self):
-        lfn_root = os.path.join('/lz/user/l/lzproduser.grid.hep.ph.ic.ac.uk',
+        lfn_root = os.path.join('/lz/data',
                                 '_'.join((self.app, self.app_version, 'geant4.9.5.p02')))
         macro_name = os.path.splitext(os.path.basename(self.macro))[0]
         sim_lfn_dir = os.path.join(lfn_root, macro_name)

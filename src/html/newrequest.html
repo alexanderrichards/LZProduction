@@ -13,8 +13,15 @@
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.10.0/css/bootstrap-select.min.css">
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.10.0/js/bootstrap-select.min.js"></script>
+<!-- TiTaToggle CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/titatoggle/1.2.11/titatoggle-dist-min.css">
 <script>
 $(document).ready(function() {
+
+  $(".toggle").change(function(){
+    $(".togglable[toggle='" + this.id + "']").prop("disabled", !this.checked);
+    $("select[toggle='" + this.id + "']").selectpicker("refresh");
+  });
 
   $.ajax({url: "/tags",
           type: "GET",
@@ -37,6 +44,22 @@ $(document).ready(function() {
           success: function(result) {
                      $("#fastnest_version").html(result);
                      $("#fastnest_version").selectpicker("refresh");
+                   }
+  });
+
+  $.ajax({url: "/appversion/DER",
+          type: "GET",
+          success: function(result) {
+                     $("#der_version").html(result);
+                     $("#der_version").selectpicker("refresh");
+                   }
+  });
+
+  $.ajax({url: "/appversion/LZap",
+          type: "GET",
+          success: function(result) {
+                     $("#lzap_version").html(result);
+                     $("#lzap_version").selectpicker("refresh");
                    }
   });
 
@@ -211,141 +234,192 @@ $(document).ready(function() {
 	      <ul class="nav nav-tabs">
 		<li role="presentation" class="active"><a href="#simulation" role="tab" data-toggle="tab">Simulation</a></li>
                 <li role="presentation"><a href="#reduction" role="tab" data-toggle="tab">Reduction</a></li>
-                </ul>
+                <li role="presentation"><a href="#der" role="tab" data-toggle="tab">DER</a></li>
+                <li role="presentation"><a href="#lzap" role="tab" data-toggle="tab">LZap</a></li>
+              </ul>
 
-                <!-- Tab Content -->
-		<!-- Simulation -->
+              <!-- Tab Content -->
+	      <!-- Simulation -->
+	      <!-- ---------- -->
+	      <div class="tab-content">
+		<div role="tabpanel" class="tab-pane fade in active" id="simulation">
+		  <div class="checkbox checkbox-slider-info checkbox-slider--b">
+		    <label>
+		      <input type="checkbox" class="toggle" id="sim_toggle" checked><span></span>
+		    </label>
+		    <span class="glyphicon glyphicon-off text-primary"></span> Off/On
+		  </div>
+		  <div class="row">
+		    <div class="col-xs-6">
+		      <label for="luxsim_version">Select Application Type:</label>
+		      <div class="input-group">
+			<select id="app" name="app" class="selectpicker form-control togglable" toggle="sim_toggle" data-live-search="true" data-live-search-style="startsWith" data-size="10" data-width="150px" data-dropup-auto="false" data-live-search-placeholder="Search..." title="Application" required>
+			  <option>LUXSim</option>
+			  <option>BACCARAT</option>
+			</select>
+		      </div>
+		    </div>
+
+		    <div class="col-xs-6">
+		      <label for="app_version">Select Application Version:</label>
+		      <div class="input-group">
+			<select id="app_version" name="app_version" class="selectpicker form-control" data-live-search="true" data-live-search-style="startsWith" data-size="10" data-width="150px" data-dropup-auto="false" data-live-search-placeholder="Search..." title="Version" required disabled>
+			</select>
+		      </div>
+		    </div>
+		  </div>
+
+		  <!-- Macro Setup-->
+		  <br>
+		  <fieldset>
+		    <legend>Request Macro Information</legend>
+
+		    <br>
+		    <label for="tag"><span class="glyphicon glyphicon-tag"></span> Select Tag:</label>
+		    <div class="input-group">
+		      <select id="tags" class="selectpicker form-control" data-live-search="true" data-live-search-style="startsWith" data-size="10" data-width="100px" data-dropup-auto="false" data-live-search-placeholder="Search..." title="Tag" name="tag" required>
+		      </select>
+		    </div>
+
+		    <br>
+		    <label for="macros">Select Macros:</label>
+		    <div class="row">
+		      <div class="col-xs-8">
+			<div class="input-group macro-selection">
+			  <!-- having no name attribute means it's not submitted as part of the form -->
+			  <select id="macros" class="selectpicker form-control" data-size="6" width="100%" data-selected-text-format="count > 1" data-live-search="true" data-dropup-auto="false" data-live-search-placeholder="Search..." title="Macros" multiple disabled></select>
+			</div>
+		      </div>
+
+		      <div class="col-xs-4">
+			<div class="row">
+			  <div class="col-xs-12">
+			    <label for="njobs">Number of Jobs/Files:</label>
+			    <div class="input-group">
+			      <input id="njobs" class="form-control" type="text">
+			    </div>
+			  </div>
+
+			  <div class="col-xs-12">
+			    <label for="nevents">Beam On Events:</label>
+			    <div class="input-group">
+			      <input id="nevents" class="form-control" type="text">
+			    </div>
+			  </div>
+
+			  <div class="col-xs-12">
+			    <label for="seed">Initial Seed:</label>
+			    <div class="input-group">
+			      <input id="seed" class="form-control" type="text" value="9000000">
+			    </div>
+			  </div>
+			</div>
+		      </div>
+		    </div>
+		    <br>
+		    <div class="row">
+
+		      <div class="col-xs-8">
+		      </div>
+		      <div class="col-xs-4">
+			<button id="add" type="button" class="btn btn-default">
+			  <span class="glyphicon glyphicon-plus-sign text-primary"></span> Add
+			</button>
+		      </div>
+
+		    </div>
+
+		    <br>
+		    <label for="selected_macros">Selected Macros:</label>
+
+		    <div class="row">
+		      <div class="col-xs-8">
+			<div class="input-group macro-selection">
+			  <select id="selected_macros" name="selected_macros" class="form-control macro-selection" size=10 multiple disabled></select>
+			</div>
+		      </div>
+
+		      <div class="col-xs-4">
+			<button id="remove" type="button" class="btn btn-default">
+			  <span class="glyphicon glyphicon-minus-sign text-danger"></span> Remove
+			</button>
+		      </div>
+		    </div>
+		  </fieldset>
+		</div>
+
+		<!-- Reduction -->
+		<!-- --------- -->
+		<div role="tabpanel" class="tab-pane fade" id="reduction">
+		  <div class="checkbox checkbox-slider-info checkbox-slider--b">
+		    <label>
+		      <input type="checkbox" class="toggle" id="reduction_toggle" checked><span></span>
+		    </label>
+		    <span class="glyphicon glyphicon-off text-primary"></span> Off/On
+		  </div>
+		  <div class="row">
+		    <div class="col-xs-6">
+		      <label for="fastnest_version">Select fastNEST Version</label>
+		      <div class="input-group">
+			<select id="fastnest_version" name="fastnest_version" class="selectpicker form-control togglable" toggle="reduction_toggle" data-live-search="true" data-live-search-style="startsWith" data-size="10" data-width="150px" data-dropup-auto="false" data-live-search-placeholder="Search..." title="Version" required>
+			</select>
+		      </div>
+		    </div>
+
+		    <div class="col-xs-6">
+		      <label for="reduction_version">Select Reduction Version:</label>
+		      <div class="input-group">
+			<select id="reduction_version" name="reduction_version" class="selectpicker form-control togglable" toggle="reduction_toggle" data-live-search="true" data-live-search-style="startsWith" data-size="10" data-width="150px" data-dropup-auto="false" data-live-search-placeholder="Search..." title="Version" required>
+			  <option>test</option>
+			</select>
+		      </div>
+		    </div>
+		  </div>
+		</div>
+		<!-- DER        -->
 		<!-- ---------- -->
-		<div class="tab-content">
-		  <div role="tabpanel" class="tab-pane fade in active" id="simulation">
-		    <br>
-		    <div class="row">
-		      <div class="col-xs-6">
-			<label for="luxsim_version">Select Application Type:</label>
-			<div class="input-group">
-			  <select id="app" name="app" class="selectpicker form-control" data-live-search="true" data-live-search-style="startsWith" data-size="10" data-width="150px" data-dropup-auto="false" data-live-search-placeholder="Search..." title="Application" required>
-			    <option>LUXSim</option>
-			    <option>BACCARAT</option>
-			  </select>
-			</div>
-		      </div>
-		      
-		      <div class="col-xs-6">
-			<label for="app_version">Select Application Version:</label>
-			<div class="input-group">
-			  <select id="app_version" name="app_version" class="selectpicker form-control" data-live-search="true" data-live-search-style="startsWith" data-size="10" data-width="150px" data-dropup-auto="false" data-live-search-placeholder="Search..." title="Version" required disabled>
-			  </select>
-			</div>
-		      </div>
-		    </div>
+		<div role="tabpanel" class="tab-pane fade" id="der">
+		  <div class="checkbox checkbox-slider-info checkbox-slider--b">
+		    <label>
+		      <input type="checkbox" class="toggle" id="der_toggle"><span></span>
+		    </label>
+		    <span class="glyphicon glyphicon-off text-primary"></span> Off/On
 		  </div>
-
-		  <!-- Reduction -->
-		  <!-- --------- -->
-		  <div role="tabpanel" class="tab-pane fade" id="reduction">
-		    <br>
-		    <div class="row">
-		      <div class="col-xs-6">
-			<label for="fastnest_version">Select fastNEST Version</label>
-			<div class="input-group">
-			  <select id="fastnest_version" name="fastnest_version" class="selectpicker form-control" data-live-search="true" data-live-search-style="startsWith" data-size="10" data-width="150px" data-dropup-auto="false" data-live-search-placeholder="Search..." title="Version" required>
-			  </select>			    
-			</div>
-		      </div>
-		      
-		      <div class="col-xs-6">
-			<label for="reduction_version">Select Reduction Version:</label>
-			<div class="input-group">
-			  <select id="reduction_version" name="reduction_version" class="selectpicker form-control" data-live-search="true" data-live-search-style="startsWith" data-size="10" data-width="150px" data-dropup-auto="false" data-live-search-placeholder="Search..." title="Version" required>
-			    <option>test</option>
-			  </select>			    
-			</div>
+		  <div class="row">
+		    <div class="col-xs-12">
+		      <label for="app_version">Select DER Version:</label>
+		      <div class="input-group">
+			<select id="der_version" name="der_version" class="selectpicker form-control togglable" toggle="der_toggle" data-live-search="true" data-live-search-style="startsWith" data-size="10" data-width="150px" data-dropup-auto="false" data-live-search-placeholder="Search..." title="Version" required disabled>
+			</select>
 		      </div>
 		    </div>
 		  </div>
 		</div>
-              </nav>
-<!--	      </div>
-	      </div>-->
+
+		<!-- LZap       -->
+		<!-- ---------- -->
+		<div role="tabpanel" class="tab-pane fade" id="lzap">
+		  <div class="checkbox checkbox-slider-info checkbox-slider--b">
+		    <label>
+		      <input type="checkbox" class="toggle" id="lzap_toggle"><span></span>
+		    </label>
+		    <span class="glyphicon glyphicon-off text-primary"></span> Off/On
+		  </div>
+		  <div class="row">
+		    <div class="col-xs-12">
+		      <label for="app_version">Select LZap Version:</label>
+		      <div class="input-group">
+			<select id="lzap_version" name="lzap_version" class="selectpicker form-control togglable" toggle="lzap_toggle" data-live-search="true" data-live-search-style="startsWith" data-size="10" data-width="150px" data-dropup-auto="false" data-live-search-placeholder="Search..." title="Version" required disabled>
+			</select>
+		      </div>
+		    </div>
+		  </div>
+		</div>
+	      </div>
+            </nav>
 	  </fieldset>
 
-	  <!-- Macro Setup-->
-	  <br>
-	  <fieldset>
-	    <legend>Request Macro Information</legend>
 
-	    <br>
-	    <label for="tag"><span class="glyphicon glyphicon-tag"></span> Select Tag:</label>
-            <div class="input-group">
-	      <select id="tags" class="selectpicker form-control" data-live-search="true" data-live-search-style="startsWith" data-size="10" data-width="100px" data-dropup-auto="false" data-live-search-placeholder="Search..." title="Tag" name="tag" required>
-	      </select>
-	    </div>
-
-	    <br>
-	    <label for="macros">Select Macros:</label>	    
-	    <div class="row">
-	      <div class="col-xs-8">
-		<div class="input-group macro-selection">
-		  <!-- having no name attribute means it's not submitted as part of the form -->
-		  <select id="macros" class="selectpicker form-control" data-size="6" width="100%" data-selected-text-format="count > 1" data-live-search="true" data-dropup-auto="false" data-live-search-placeholder="Search..." title="Macros" multiple disabled></select>
-		</div>
-	      </div>
-
-	      <div class="col-xs-4">
-		<div class="row">
-		  <div class="col-xs-12">
-		    <label for="njobs">Number of Jobs/Files:</label>
-		    <div class="input-group">
-		      <input id="njobs" class="form-control" type="text">
-		    </div>
-		  </div>
-
-		  <div class="col-xs-12">
-		    <label for="nevents">Beam On Events:</label>
-		    <div class="input-group">
-		      <input id="nevents" class="form-control" type="text">
-		    </div>
-		  </div>
-
-		  <div class="col-xs-12">
-		    <label for="seed">Initial Seed:</label>
-		    <div class="input-group">
-		      <input id="seed" class="form-control" type="text" value="9000000">
-		    </div>
-		  </div>
-		</div>
-	      </div>
-	    </div>
-	    <br>
-	    <div class="row">
-	      
-	      <div class="col-xs-8">
-	      </div>
-	      <div class="col-xs-4">
-		<button id="add" type="button" class="btn btn-default">
-		  <span class="glyphicon glyphicon-plus-sign text-primary"></span> Add
-		</button>
-	      </div>
-	      
-	    </div>
-
-	    <br>
-	    <label for="selected_macros">Selected Macros:</label>
-	    	    
-	    <div class="row">
-	      <div class="col-xs-8">
-		<div class="input-group macro-selection">
-		  <select id="selected_macros" name="selected_macros" class="form-control macro-selection" size=10 multiple disabled></select>
-		</div>
-	      </div>
-	      
-	      <div class="col-xs-4">
-		<button id="remove" type="button" class="btn btn-default">
-		  <span class="glyphicon glyphicon-minus-sign text-danger"></span> Remove
-		</button>
-	      </div>
-	    </div>
-	  </fieldset>
 
 	  <br>
 	  <button type="submit" class="btn btn-primary">

@@ -38,7 +38,7 @@ class ParametricJobs(SQLTableBase):
                                 '_'.join((self.app, self.app_version, 'geant4.9.5.p02')))
         macro_name = os.path.splitext(os.path.basename(self.macro))[0]
         sim_lfn_dir = os.path.join(lfn_root, macro_name)
-        reduction_lfn_dir = os.path.join(lfn_root, 'reduced_v' + (self.reduction_version of ''), macro_name)
+        reduction_lfn_dir = os.path.join(lfn_root, 'reduced_v' + (self.reduction_version or ''), macro_name)
         der_lfn_dir = os.path.join(lfn_root, 'DER-' + (self.der_version or ''), macro_name)
         lzap_lfn_dir = os.path.join(lfn_root, 'DER-' + (self.der_version or ''),
                                     'LZap-' + (self.lzap_version or ''), macro_name)

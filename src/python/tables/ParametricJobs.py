@@ -38,10 +38,10 @@ class ParametricJobs(SQLTableBase):
                                 '_'.join((self.app, self.app_version, 'geant4.9.5.p02')))
         macro_name = os.path.splitext(os.path.basename(self.macro))[0]
         sim_lfn_dir = os.path.join(lfn_root, macro_name)
-        reduction_lfn_dir = os.path.join(lfn_root, 'reduced_v' + self.reduction_version, macro_name)
-        der_lfn_dir = os.path.join(lfn_root, 'DER-' + self.der_version, macro_name)
-        lzap_lfn_dir = os.path.join(lfn_root, 'DER-' + self.der_version,
-                                    'LZap-' + self.lzap_version, macro_name)
+        reduction_lfn_dir = os.path.join(lfn_root, 'reduced_v' + (self.reduction_version of ''), macro_name)
+        der_lfn_dir = os.path.join(lfn_root, 'DER-' + (self.der_version or ''), macro_name)
+        lzap_lfn_dir = os.path.join(lfn_root, 'DER-' + (self.der_version or ''),
+                                    'LZap-' + (self.lzap_version or ''), macro_name)
         self.outputdir_lfns = list(compress([sim_lfn_dir, reduction_lfn_dir, der_lfn_dir, lzap_lfn_dir],
                                             [app_version, reduction_version, der_version, lzap_version]))
         with DiracClient("http://localhost:8000/") as dirac,\

@@ -43,7 +43,7 @@ class ParametricJobs(SQLTableBase):
         lzap_lfn_dir = os.path.join(lfn_root, 'DER-' + (self.der_version or ''),
                                     'LZap-' + (self.lzap_version or ''), macro_name)
         self.outputdir_lfns = list(compress([sim_lfn_dir, reduction_lfn_dir, der_lfn_dir, lzap_lfn_dir],
-                                            [app_version, reduction_version, der_version, lzap_version]))
+                                            [self.app_version, self.reduction_version, self.der_version, self.lzap_version]))
         with DiracClient("http://localhost:8000/") as dirac,\
              temporary_runscript(root_version='5.34.32',
                                  root_arch='slc6_gcc44_x86_64',

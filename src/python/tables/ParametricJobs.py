@@ -51,8 +51,8 @@ class ParametricJobs(SQLTableBase):
                                  se='UKI-LT2-IC-HEP-disk',
                                  sim_lfn_dir=sim_lfn_dir,
                                  reduction_lfn_dir=reduction_lfn_dir,
-                                 der_lfn_dir=der_lfn_der,
-                                 lzap_lfn_dir=lzap_lfn_der, **self) as runscript,\
+                                 der_lfn_dir=der_lfn_dir,
+                                 lzap_lfn_dir=lzap_lfn_dir, **self) as runscript,\
              temporary_macro(self.tag, self.macro, self.app, self.nevents) as macro:
             self.status, self.dirac_jobs = dirac.submit_job(runscript,
                                                             macro,

@@ -1,4 +1,3 @@
-#!/bin/bash
 #Prepare some variables based on the inputs
 MACRO_FILE=$1
 export SEED=$2 # an integer that will label the output file
@@ -7,6 +6,7 @@ ROOT_DIR=/cvmfs/lz.opensciencegrid.org/ROOT/v{{ root_version }}/{{ root_arch }}/
 G4_DIR=/cvmfs/lz.opensciencegrid.org/geant4/
 G4_VER=geant{{ g4_version }}
 SIM_LFN_DIR={{ sim_lfn_dir }}
+MCTRUTH_LFN_DIR={{ mctruth_lfn_dir }}
 SE={{ se }}
 
 #extract the name of the output file from the LUXSim macro
@@ -33,9 +33,12 @@ $APP_DIR/tools/BaccRootConverter $OUTPUT_FILE
 `ls $APP_DIR/tools/*RootReader` $OUTPUT_FILE
 {% endif %}
 SIM_OUTPUT_FILE=$(basename $OUTPUT_FILE .bin).root
+`ls $APP_DIR/tools/*MCTruth` $SIM_OUTPUT_FILE
+MCTRUTH_OUTPUT_FILE=$(ls *_mctruth.root)
 
 # get MC truth
 #`ls $APP_DIR/tools/*MCTruth` $SIM_OUTPUT_FILE
 #MCTRUTH_OUTPUT_FILE=$(ls *_mctruth.root)
 
 dirac-dms-add-file $SIM_LFN_DIR/$SIM_OUTPUT_FILE $OUTPUT_DIR/$SIM_OUTPUT_FILE $SE
+dirac-dms-add-file $MCTRUTH_LFN_DIR/$MCTRUTH_OUTPUT_FILE $OUTPUT_DIR/$MCTRUTH_OUTPUT_FILE $SE

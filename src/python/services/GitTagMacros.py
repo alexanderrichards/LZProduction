@@ -9,8 +9,8 @@ from natsort import natsorted
 
 Macro = namedtuple('Macro', ('name', 'path'))
 
-macro_dir_map = {'LUXSim': 'BackgroundMacros',
-                 'BACCARAT': 'BaccValidationMacros'}
+macro_dir_map = {'LUXSim': ['BackgroundMacros'],
+                 'BACCARAT': ['BaccMacros', 'MDC1Macros']}
 
 @cherrypy.popargs('tagid', 'app')
 class GitTagMacros(object):
@@ -50,7 +50,8 @@ class GitTagMacros(object):
             Git(self.git_dir).checkout(tagid)
             macros = (Macro(name=os.path.splitext(file_)[0],
                             path=os.path.relpath(os.path.join(root, file_), self.git_dir))
-                      for root, _, files in os.walk(os.path.join(self.git_dir, macro_dir_map[app]))
+                      for macro_dir in macro_dir_map[app]
+                      for root, _, files in os.walk(os.path.join(self.git_dir, macro_dir))
                       for file_ in files if file_.endswith('.mac'))
 
             html = self.template.render({'macros': macros})

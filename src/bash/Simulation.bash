@@ -1,4 +1,3 @@
-#!/bin/bash
 #Prepare some variables based on the inputs
 MACRO_FILE=$1
 export SEED=$2 # an integer that will label the output file
@@ -6,6 +5,9 @@ APP_DIR=/cvmfs/lz.opensciencegrid.org/{{ app }}/release-{{ app_version }}
 ROOT_DIR=/cvmfs/lz.opensciencegrid.org/ROOT/v{{ root_version }}/{{ root_arch }}/root
 G4_DIR=/cvmfs/lz.opensciencegrid.org/geant4/
 G4_VER=geant{{ g4_version }}
+SIM_LFN_DIR={{ sim_lfn_dir }}
+MCTRUTH_LFN_DIR={{ mctruth_lfn_dir }}
+SE={{ se }}
 
 #extract the name of the output file from the LUXSim macro
 export OUTPUT_DIR=$(pwd)
@@ -30,15 +32,13 @@ $APP_DIR/tools/BaccRootConverter $OUTPUT_FILE
 {% else %}
 `ls $APP_DIR/tools/*RootReader` $OUTPUT_FILE
 {% endif %}
-#SIM_OUTPUT_FILE=$(basename $OUTPUT_FILE .bin).root
+SIM_OUTPUT_FILE=$(basename $OUTPUT_FILE .bin).root
+`ls $APP_DIR/tools/*MCTruth` $SIM_OUTPUT_FILE
+MCTRUTH_OUTPUT_FILE=$(ls *_mctruth.root)
 
 # get MC truth
 #`ls $APP_DIR/tools/*MCTruth` $SIM_OUTPUT_FILE
 #MCTRUTH_OUTPUT_FILE=$(ls *_mctruth.root)
 
-## FILE UPLOAD
-######################################################################
-#DATA_STORE_PATH=/lz/data
-#DATA_STORE_SE=UKI-LT2-IC-HEP-disk
-#BIGROOT_STORE_PATH=$DATA_STORE_PATH/LUXSim_$(basename $LUXSIM_DIR)_$G4VER/$(basename $MACRO_FILE _parametric.mac)
-#dirac-dms-add-file $BIGROOT_STORE_PATH/$OUTPUT_ROOT_FILE $OUTPUT_DIR/$OUTPUT_ROOT_FILE $DATA_STORE_SE
+dirac-dms-add-file $SIM_LFN_DIR/$SIM_OUTPUT_FILE $OUTPUT_DIR/$SIM_OUTPUT_FILE $SE
+dirac-dms-add-file $MCTRUTH_LFN_DIR/$MCTRUTH_OUTPUT_FILE $OUTPUT_DIR/$MCTRUTH_OUTPUT_FILE $SE

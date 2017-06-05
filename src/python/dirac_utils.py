@@ -48,6 +48,9 @@ class DiracClient(xmlrpclib.ServerProxy):
     def auto_reschedule(self, ids):
         return self._status_accumulate(xmlrpclib.ServerProxy.__getattr__(self, 'auto_reschedule')(ids))
 
+    def reschedule(self, ids):
+        return self._status_accumulate(xmlrpclib.ServerProxy.__getattr__(self, 'reschedule')(ids))
+
 '''
 @contextmanager
 def dirac_server(url):

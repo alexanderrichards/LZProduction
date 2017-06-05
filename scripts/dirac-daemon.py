@@ -29,6 +29,7 @@ class DiracDaemon(Daemonize):
         # override Dirac().status to make sure that the keys are strings.
         dirac_server.register_function(self.status)
         dirac_server.register_function(self.submit_job)
+        dirac_server.register_function(self.reschedule)
         dirac_server.register_function(self.auto_reschedule)
         dirac_server.serve_forever()
 
@@ -65,6 +66,16 @@ class DiracDaemon(Daemonize):
         j.setPlatform(platform)
 
         return self.status(self._dirac_api.submit(j).get("Value", []))
+
+    def reschedule(self, ids):
+        """
+        Reschedule all jobsin state Failed.
+        """
+        failed_jobs = [k for k, v in self._dirac_api.status(ids).get("Value", {}).iteritems()
+                       if v['Status'] == "Failed"]
+        if failed_jobs:
+            self._dirac_api.reschedule(failed_jobs)
+        return self.status(ids)
 
     def auto_reschedule(self, ids):
         """

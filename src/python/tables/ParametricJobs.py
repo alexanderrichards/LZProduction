@@ -62,6 +62,9 @@ class ParametricJobs(SQLTableBase):
 
 
     def update_status(self):
+        dirac_ids = self.dirac_jobs.keys()
         with DiracClient("http://localhost:8000/") as dirac:
-            self.status, self.dirac_jobs = dirac.status(self.dirac_jobs.keys())
+            self.status, self.dirac_jobs = dirac.status(dirac_ids)
+        if self.status == 'Failed':
+            self.status, self.dirac_jobs = dirac.auto_reschedule(dirac_ids)
         return self.status

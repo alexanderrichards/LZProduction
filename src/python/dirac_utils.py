@@ -33,7 +33,7 @@ class DiracClient(xmlrpclib.ServerProxy):
         ret = {}
         status = "Unknown"
         status_acc = status_accumulator(('Deleted', 'Killed', 'Done', 'Failed', 'Received',
-                                         'Queued', 'Waiting', 'Running'))
+                                         'Checking', 'Queued', 'Waiting', 'Running'))
         for k, v in status_dict.iteritems():
             ret[int(k)] = v
             status = status_acc.send(v['Status'])

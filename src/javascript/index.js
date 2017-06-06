@@ -90,6 +90,7 @@ $(document).ready(function() {
 	$.ajax({url: '/reschedule/' + macro_id,
 		type: "GET",
 		success: function() {
+		    $("#tableBody").DataTable().ajax.reload();
 		    var datatable = $("#tableBody").DataTable();
 		    var row_id = $("tr td.rowid:contains('"+ request_id +"')");
 		    var tr = row_id.closest("tr");

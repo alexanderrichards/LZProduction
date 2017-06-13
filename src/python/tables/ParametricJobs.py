@@ -1,6 +1,7 @@
 """Requests Table."""
 import os
 import time
+import calendar
 import re
 from itertools import compress
 from datetime import datetime
@@ -47,7 +48,7 @@ class ParametricJobs(SQLTableBase):
         match = unixdate.search(macro_name)
         if match is not None:
             month, day, year = match.groups()
-            unixtime = str(int(time.mktime(datetime(int(year), int(month), int(day), 0, 0).timetuple())))
+            unixtime = str(int(calendar.timegm(datetime(int(year), int(month), int(day), 0, 0).utctimetuple())))
         sim_lfn_dir = os.path.join(lfn_root, macro_name)
         reduction_lfn_dir = os.path.join(lfn_root, 'reduced_v' + (self.reduction_version or ''), macro_name)
         der_lfn_dir = os.path.join(sim_lfn_dir, 'DER')

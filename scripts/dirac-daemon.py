@@ -58,14 +58,18 @@ class DiracDaemon(Daemonize):
         Returns:
            list: The list of created parametric job DIRAC ids
         """
-        j=Job()
-        j.setName(os.path.splitext(os.path.basename(macro))[0] + '%(args)s')
-        j.setExecutable(os.path.basename(executable), os.path.basename(macro) + ' %(args)s', output_log)
-        j.setInputSandbox([executable, macro])
-        j.setParameterSequence("args", [str(i) for i in xrange(starting_seed, starting_seed + njobs)], addToWorkflow=True)
-        j.setPlatform(platform)
-
-        return self.status(self._dirac_api.submit(j).get("Value", []))
+        dirac_jobs = {}
+        for i in xrange(starting_seed, starting_seed + njobs, 1000):
+            j=Job()
+            j.setName(os.path.splitext(os.path.basename(macro))[0] + '%(args)s')
+            j.setExecutable(os.path.basename(executable), os.path.basename(macro) + ' %(args)s', output_log)
+            j.setInputSandbox([executable, macro])
+            j.setParameterSequence("args",
+                                   map(str, xrange(i, min(i + 1000, starting_seed + njobs))),
+                                   addToWorkflow=True)
+            j.setPlatform(platform)
+            dirac_jobs.update(self.status(self._dirac_api.submit(j).get("Value", [])))
+        return dirac_jobs
 
     def reschedule(self, ids):
         """

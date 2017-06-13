@@ -22,7 +22,7 @@ class Requests(SQLTableBase):
 
 
     def submit(self, session):
-        status_acc = status_accumulator(('Deleted', 'Killed', 'Completed', 'Failed', 'Requested', 'Approved', 'Submitted', 'Running'))
+        status_acc = status_accumulator(('Unknown', 'Deleted', 'Killed', 'Completed', 'Failed', 'Requested', 'Approved', 'Submitted', 'Running'))
         # with sqlalchemy_utils.db_session(self.dburl) as session:
         jobs = session.query(ParametricJobs).filter(ParametricJobs.request_id == self.id).all()
         for job in jobs:
@@ -31,7 +31,7 @@ class Requests(SQLTableBase):
 
 
     def update_status(self, session):
-        status_acc = status_accumulator(('Deleted', 'Killed', 'Completed', 'Failed', 'Requested', 'Approved', 'Submitted', 'Running'))
+        status_acc = status_accumulator(('Unknown', 'Deleted', 'Killed', 'Completed', 'Failed', 'Requested', 'Approved', 'Submitted', 'Running'))
         # with sqlalchemy_utils.db_session(self.dburl) as session:
         jobs = session.query(ParametricJobs).filter(ParametricJobs.request_id == self.id).all()
         for job in jobs:

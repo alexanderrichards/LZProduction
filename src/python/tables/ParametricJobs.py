@@ -2,7 +2,7 @@
 import os
 from itertools import compress
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, PickleType, TIMESTAMP, ForeignKeyConstraint
+from sqlalchemy import Column, Integer, Boolean, String, PickleType, TIMESTAMP, ForeignKeyConstraint
 from sqlalchemy_utils import SQLTableBase
 from dirac_utils import DiracClient
 from tempfile_utils import temporary_runscript, temporary_macro
@@ -28,6 +28,7 @@ class ParametricJobs(SQLTableBase):
     nevents = Column(Integer, nullable=False)
     seed = Column(Integer, nullable=False)
     dirac_jobs = Column(PickleType(), nullable=False)
+    reschedule = Column(Boolean, nullable=False)
     timestamp = Column(TIMESTAMP, nullable=False,
                        default=datetime.utcnow,
                        onupdate=datetime.utcnow)
@@ -62,6 +63,13 @@ class ParametricJobs(SQLTableBase):
 
 
     def update_status(self):
+        dirac_ids = self.dirac_jobs.keys()
         with DiracClient("http://localhost:8000/") as dirac:
-            self.status, self.dirac_jobs = dirac.status(self.dirac_jobs.keys())
+            if self.reschedule:
+                self.status, self.dirac_jobs = dirac.reschedule(dirac_ids)
+                self.reschedule = False
+            else:
+                self.status, self.dirac_jobs = dirac.status(dirac_ids)
+        if self.status == 'Failed':
+            self.status, self.dirac_jobs = dirac.auto_reschedule(dirac_ids)
         return self.status

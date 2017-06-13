@@ -29,6 +29,8 @@ class DiracDaemon(Daemonize):
         # override Dirac().status to make sure that the keys are strings.
         dirac_server.register_function(self.status)
         dirac_server.register_function(self.submit_job)
+        dirac_server.register_function(self.reschedule)
+        dirac_server.register_function(self.auto_reschedule)
         dirac_server.serve_forever()
 
     def status(self, ids):
@@ -65,7 +67,36 @@ class DiracDaemon(Daemonize):
 
         return self.status(self._dirac_api.submit(j).get("Value", []))
 
+    def reschedule(self, ids):
+        """
+        Reschedule all jobsin state Failed.
+        """
+        failed_jobs = [k for k, v in self._dirac_api.status(ids).get("Value", {}).iteritems()
+                       if v['Status'] == "Failed"]
+        if failed_jobs:
+            self._dirac_api.reschedule(failed_jobs)
+        return self.status(ids)
 
+    def auto_reschedule(self, ids):
+        """
+        Automatically reschedule jobs that meet certain criteria.
+
+        This method will reschedule jobs from a list that are in state failed,
+        so long as:
+        1) There is at least one job in the list in the Done state
+        2) The job hasn't reached a reschedule count of 5
+        """
+        status_map = {}
+        for k, v in self._dirac_api.status(ids).get("Value", {}).iteritems():
+            status_map.setdefault(v['Status'], []).append(k)
+
+        failed_jobs = [job for job in status_map.get('Failed')
+                       if int(self._dirac_api.attributes(job)\
+                                             .get('Value', {})\
+                                             .get('RescheduleCounter', 0)) < 5]
+        if failed_jobs and status_map.get('Done'):
+            self._dirac_api.reschedule(failed_jobs)
+        return self.status(ids)
 
 if __name__ == '__main__':
     app_name = os.path.splitext(os.path.basename(__file__))[0]

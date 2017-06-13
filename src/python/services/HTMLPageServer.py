@@ -61,6 +61,22 @@ class HTMLPageServer(object):
             return self.template_env.get_template('html/subtables.html').render({'macros': macros})
 
     @cherrypy.expose
+    def reschedule(self, id):
+        with db_session(self.dburl) as session:
+            macro = session.query(ParametricJobs)\
+                           .filter(ParametricJobs.id == int(id))\
+                           .one_or_none()
+            if macro is not None:
+                macro.reschedule = True
+                macro.status = "Submitted"
+                request = session.query(Requests)\
+                                 .filter(Requests.id == macro.request_id)\
+                                 .one_or_none()
+                if request is not None:
+                    request.status = "Submitted"
+
+
+    @cherrypy.expose
     def csv_export(self):
         """Return .csv of Requests and ParametricJobs tables"""
         with db_session(self.dburl) as session:

@@ -81,6 +81,28 @@ $(document).ready(function() {
 	}
 	return 0;
     };
+
+    // Reschedule macros
+    /////////////////////////////////////////////////////
+    $("#tableBody tbody").on("click", "span.reschedule", function(){
+	var macro_id = $(this).attr('macroid');
+	var request_id = $(this).attr('requestid');
+	$.ajax({url: '/reschedule/' + macro_id,
+		type: "GET",
+		success: function() {
+		    $("#tableBody").DataTable().ajax.reload();
+		    var datatable = $("#tableBody").DataTable();
+		    var row_id = $("tr td.rowid:contains('"+ request_id +"')");
+		    var tr = row_id.closest("tr");
+		    var row = datatable.row(tr);
+		    $.ajax({url: '/details/' + request_id,
+			    type: "GET",
+			    success: function(data) {
+				row.child(data).show();
+			    }});
+		}});
+
+    });
     
     // Table row details subtable show/hide
     /////////////////////////////////////////////////////

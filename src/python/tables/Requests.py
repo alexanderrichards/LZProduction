@@ -1,7 +1,7 @@
 """Requests Table."""
 from datetime import datetime
 from sqlalchemy import Column, Integer, String, TIMESTAMP, Text, PickleType, ForeignKeyConstraint
-from sqlalchemy_utils import SQLTableBase
+from sqlalchemy_utils import SQLTableBase, nonexpiring, continuing
 from tables import ParametricJobs
 from coroutine_utils import status_accumulator
 
@@ -21,19 +21,30 @@ class Requests(SQLTableBase):
     ForeignKeyConstraint(['requester_id'], ['users.id'])
 
 
-    def submit(self, session):
+    def submit(self, scoped_session):
         status_acc = status_accumulator(('Unknown', 'Deleted', 'Killed', 'Completed', 'Failed', 'Requested', 'Approved', 'Submitted', 'Running'))
         # with sqlalchemy_utils.db_session(self.dburl) as session:
-        jobs = session.query(ParametricJobs).filter(ParametricJobs.request_id == self.id).all()
+        with nonexpiring(scoped_session) as session:
+            jobs = session.query(ParametricJobs).filter(ParametricJobs.request_id == self.id).all()
+
         for job in jobs:
             # with sqlalchemy_utils.db_subsession(session):
             self.status = status_acc.send(job.submit())
 
+        with continuing(scoped_session) as session:
+            for job in jobs:
+                session.merge(job)
 
-    def update_status(self, session):
+    def update_status(self, scoped_session):
         status_acc = status_accumulator(('Unknown', 'Deleted', 'Killed', 'Completed', 'Failed', 'Requested', 'Approved', 'Submitted', 'Running'))
         # with sqlalchemy_utils.db_session(self.dburl) as session:
-        jobs = session.query(ParametricJobs).filter(ParametricJobs.request_id == self.id).all()
+        with nonexpiring(scoped_session) as session:
+            jobs = session.query(ParametricJobs).filter(ParametricJobs.request_id == self.id).all()
+
         for job in jobs:
             # with sqlalchemy_utils.db_subsession(session):
             self.status = status_acc.send(job.update_status())
+
+        with continuing(scoped_session) as session:
+            for job in jobs:
+                session.merge(job)

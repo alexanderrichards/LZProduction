@@ -5,12 +5,18 @@ import calendar
 import re
 from itertools import compress
 from datetime import datetime
+from sqlalchemy.dialects.mysql import LONGBLOB
 from sqlalchemy import Column, Integer, Boolean, String, PickleType, TIMESTAMP, ForeignKeyConstraint
 from sqlalchemy_utils import SQLTableBase
 from dirac_utils import DiracClient
 from tempfile_utils import temporary_runscript, temporary_macro
 
 unixdate = re.compile(r'(?P<month>[0-9]{2})-(?P<day>[0-9]{2})-(?P<year>[0-9]{4})$')
+
+
+class LongPickleType(PickleType):
+    impl = LONGBLOB
+
 
 class ParametricJobs(SQLTableBase):
     """Jobs SQL Table."""
@@ -31,7 +37,7 @@ class ParametricJobs(SQLTableBase):
     njobs = Column(Integer, nullable=False)
     nevents = Column(Integer, nullable=False)
     seed = Column(Integer, nullable=False)
-    dirac_jobs = Column(PickleType(), nullable=False)
+    dirac_jobs = Column(LongPickleType(), nullable=False)
     reschedule = Column(Boolean, nullable=False)
     timestamp = Column(TIMESTAMP, nullable=False,
                        default=datetime.utcnow,

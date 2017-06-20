@@ -69,7 +69,7 @@ def nonexpiring(scoped_session):
         yield scoped_session(expire_on_commit=False)
         scoped_session.commit()
     except:
-        logger.error("Problem with DB session, rolling back.")
+        logger.exception("Problem with DB session, rolling back.")
         scoped_session.rollback()
         raise
     finally:
@@ -81,7 +81,7 @@ def reraising(scoped_session):
         yield scoped_session()
         scoped_session.commit()
     except:
-        logger.error("Problem with DB session, rolling back.")
+        logger.exception("Problem with DB session, rolling back.")
         scoped_session.rollback()
         raise
     finally:
@@ -93,7 +93,7 @@ def continuing(scoped_session):
         yield scoped_session()
         scoped_session.commit()
     except:
-        logger.error("Problem with DB session, rolling back.")
+        logger.exception("Problem with DB session, rolling back.")
         scoped_session.rollback()
     finally:
         scoped_session.remove()

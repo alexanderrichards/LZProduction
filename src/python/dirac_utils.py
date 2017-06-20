@@ -13,8 +13,11 @@ status_map = {'Done': 'Completed',
               'Queued': 'Submitted',
               'Checking': 'Submitted',
               'Running': 'Running',
-              'Received': 'Requested',
+              'Completed': 'Running',
+              'Received': 'Submitted',
+              'Stalled': 'Failed',
               'Unknown': 'Unknown',
+              'Matched': 'Submitted',
               'Killed': 'Killed',
               'Deleted': 'Deleted'}
 
@@ -33,7 +36,7 @@ class DiracClient(xmlrpclib.ServerProxy):
     def _status_accumulate(self, status_dict):
         ret = {}
         status = "Unknown"
-        status_acc = status_accumulator(('Unknown', 'Deleted', 'Killed', 'Done', 'Failed', 'Received',
+        status_acc = status_accumulator(('Unknown', 'Deleted', 'Killed', 'Done', 'Failed', 'Stalled', 'Completed', 'Received', 'Matched',
                                          'Checking', 'Queued', 'Waiting', 'Running'))
         for k, v in status_dict.iteritems():
             ret[int(k)] = v

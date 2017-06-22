@@ -1,5 +1,6 @@
 """Requests Table."""
 import os
+import logging
 import time
 import calendar
 import re
@@ -7,10 +8,11 @@ from itertools import compress
 from datetime import datetime
 from sqlalchemy.dialects.mysql import LONGBLOB
 from sqlalchemy import Column, Integer, Boolean, String, PickleType, TIMESTAMP, ForeignKeyConstraint
-from sqlalchemy_utils import SQLTableBase
+from sqlalchemy_utils import SQLTableBase, continuing
 from dirac_utils import DiracClient
 from tempfile_utils import temporary_runscript, temporary_macro
 
+logger = logging.getLogger(__name__)
 unixdate = re.compile(r'(?P<month>[0-9]{2})-(?P<day>[0-9]{2})-(?P<year>[0-9]{4})$')
 
 
@@ -44,7 +46,7 @@ class ParametricJobs(SQLTableBase):
                        onupdate=datetime.utcnow)
     ForeignKeyConstraint(['request_id'], ['requests.id'])
 
-    def submit(self):
+    def submit(self, scoped_session):
         lfn_root = os.path.join('/lz/data/MDC1', '_'.join(('-'.join((self.app, self.app_version)),
                                                            '-'.join(('DER', self.der_version)))))
         macro_name = os.path.splitext(os.path.basename(self.macro))[0]
@@ -76,14 +78,28 @@ class ParametricJobs(SQLTableBase):
                                  unixtime=unixtime,
                                  livetimeperjob=livetimeperjob, **self) as runscript,\
              temporary_macro(self.tag, self.macro, self.app, self.nevents) as macro:
+            logger.info("Submitting ParametricJob %s, macro: %s to DIRAC", self.id, self.macro)
             self.status, self.dirac_jobs = dirac.submit_job(runscript,
                                                             macro,
                                                             self.seed,
                                                             self.njobs)
+
+        with continuing(scoped_session) as session:
+            this = session.query(ParametricJobs).filter(ParametricJobs.id == self.id).first()
+            if this is not None:
+                this.status = self.status
+                this.outputdir_lfns = self.outputdir_lfns
+                this.dirac_jobs = self.dirac_jobs
         return self.status
 
 
-    def update_status(self):
+    def reset(self):
+        dirac_ids = self.dirac_ids.keys()
+        with DiracClient("http://localhost:8000/") as dirac:
+            logger.info("Removing Dirac jobs %s from ParametricJob %s", dirac_ids, self.id)
+            dirac.kill(dirac_ids)
+
+    def update_status(self, scoped_session):
         dirac_ids = self.dirac_jobs.keys()
         with DiracClient("http://localhost:8000/") as dirac:
             if self.reschedule:
@@ -93,4 +109,10 @@ class ParametricJobs(SQLTableBase):
                 self.status, self.dirac_jobs = dirac.status(dirac_ids)
         if self.status == 'Failed':
             self.status, self.dirac_jobs = dirac.auto_reschedule(dirac_ids)
+
+        with continuing(scoped_session) as session:
+            this = session.query(ParametricJobs).filter(ParametricJobs.id == self.id).first()
+            if this is not None:
+                this.status = self.status
+                this.dirac_jobs = self.dirac_jobs
         return self.status

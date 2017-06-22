@@ -134,8 +134,6 @@ class GangaDaemon(Daemonize):
                 request.submit(self.session)
             request.update_status(self.session)
 
-            with sqlalchemy_utils.continuing(self.session) as session:
-                session.merge(request)
 
         """
         # Approved Requests

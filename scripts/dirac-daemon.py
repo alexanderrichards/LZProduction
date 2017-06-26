@@ -5,10 +5,27 @@ import sys
 import argparse
 import logging
 from SimpleXMLRPCServer import SimpleXMLRPCServer
+from enum import IntEnum, unique
 from daemonize import Daemonize
 from DIRAC.Core.Base import Script
 from DIRAC.Interfaces.API.Dirac import Dirac
 from DIRAC.Interfaces.API.Job import Job
+
+@unique
+class DIRACSTATUS(IntEnum):
+    Unknown = 0
+    Deleted = 1
+    Killed = 2
+    Done = 3
+    Completed = 4
+    Failed = 5
+    Stalled = 6
+    Running = 7
+    Received = 8
+    Queued = 9
+    Waiting = 10
+    Checking = 11
+    Matched = 12
 
 class DiracDaemon(Daemonize):
     """Dirac Daemon."""
@@ -44,7 +61,9 @@ class DiracDaemon(Daemonize):
         keys which are the ids of the jobs are cast to strings such that they can be sent
         over xmlrpc socket.
         """
-        return {str(k): v for k, v in self._dirac_api.status(ids).get("Value", {}).iteritems()}
+        return reduce(max, (DIRACSTATUS[info['Status']] for info in self._dirac_api.status(ids)\
+                                                                                   .get("Value", {})\
+                                                                                   .itervalues())).name
 
     def submit_job(self, executable, macro, starting_seed=8000000, njobs=10, platform='ANY', output_log='lzproduction_output.log'):
         """
@@ -61,7 +80,7 @@ class DiracDaemon(Daemonize):
         Returns:
            list: The list of created parametric job DIRAC ids
         """
-        dirac_jobs = {}
+        dirac_jobs = set()
         for i in xrange(starting_seed, starting_seed + njobs, 1000):
             j=Job()
             j.setName(os.path.splitext(os.path.basename(macro))[0] + '%(args)s')
@@ -71,12 +90,13 @@ class DiracDaemon(Daemonize):
                                    map(str, xrange(i, min(i + 1000, starting_seed + njobs))),
                                    addToWorkflow=True)
             j.setPlatform(platform)
-            dirac_jobs.update(self.status(self._dirac_api.submit(j).get("Value", [])))
-        return dirac_jobs
+            dirac_jobs.update(self._dirac_api.submit(j).get("Value", []))
+        dirac_jobs = list(dirac_jobs)
+        return self.status(dirac_jobs), dirac_jobs
 
     def reschedule(self, ids):
         """
-        Reschedule all jobsin state Failed.
+        Reschedule all jobs in state Failed.
         """
         failed_jobs = [k for k, v in self._dirac_api.status(ids).get("Value", {}).iteritems()
                        if v['Status'] == "Failed"]

@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 """Dirac daemon run script."""
 import os
+import sys
 import argparse
 import logging
 from SimpleXMLRPCServer import SimpleXMLRPCServer
 from daemonize import Daemonize
 from DIRAC.Core.Base import Script
-Script.parseCommandLine(ignoreErrors=True)
 from DIRAC.Interfaces.API.Dirac import Dirac
 from DIRAC.Interfaces.API.Job import Job
 
@@ -21,6 +21,9 @@ class DiracDaemon(Daemonize):
 
     def main(self):
         """Daemon main."""
+        # DIRAC will parse our command line args unless we remove them
+        sys.argv = sys.argv[:1]
+        Script.parseCommandLine(ignoreErrors=True)
         # Defer creation of server to inside the daemon context otherwise the socket will be
         # closed when daemonising
         dirac_server = SimpleXMLRPCServer(self._address)

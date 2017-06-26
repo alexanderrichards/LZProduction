@@ -27,6 +27,7 @@ class GangaDaemon(Daemonize):
     def __init__(self, dburl, delay, cert, verify=False, **kwargs):
         """Initialisation."""
         super(GangaDaemon, self).__init__(action=self.main, **kwargs)
+        self.session = None
         self.dburl = dburl
         self.delay = delay
         self.cert = cert
@@ -34,7 +35,7 @@ class GangaDaemon(Daemonize):
 
     def exit(self):
         """Update the gangad status on exit."""
-        with sqlalchemy_utils.db_session(self.dburl) as session:
+        with sqlalchemy_utils.continuing(self.session) as session:
             session.query(Services)\
                    .filter(Services.name == "gangad")\
                    .update({'status': 'down',
@@ -61,12 +62,15 @@ class GangaDaemon(Daemonize):
 #        ganga = importlib.import_module("ganga")
         GangaDaemon.reset_loggers()  # use only the root loggers handler.
 
-        try:
-            sqlalchemy_utils.create_db(self.dburl)
-        except Exception:
-            logger.exception("Failed to connect to/create DB.")
-        else:
-            logger.debug("Connected to DB.")
+        # Setup scoped_session within the daemon otherwise the file descriptor
+        # will be closed
+        self.session = sqlalchemy_utils.setup_session(self.dburl)
+#        try:
+#            sqlalchemy_utils.create_db(self.dburl)
+#        except Exception:
+#            logger.exception("Failed to connect to/create DB.")
+#        else:
+#            logger.debug("Connected to DB.")
 
 #        try:
 #            ganga.enableMonitoring()
@@ -77,58 +81,58 @@ class GangaDaemon(Daemonize):
 
         try:
             while True:
-                with sqlalchemy_utils.db_session(self.dburl) as session:
-                    self.check_services(session)
-                    self.monitor_requests(session)
+                self.check_services()
+                self.monitor_requests()
                 time.sleep(self.delay * MINS)
         except Exception:
             logger.exception("Unhandled exception while running daemon.")
 
-    def check_services(self, session):
+    def check_services(self):
         """
         Check the status of the services.
 
         This function checks the status of the DIRAC status as well as updating the
         timestamp for the current gangad service.
         """
-        query = session.query(Services)
+        with sqlalchemy_utils.reraising(self.session) as session:
+            query = session.query(Services)
 
-        # DIRAC
-        query_dirac = query.filter(Services.name == "DIRAC")
-        status = 'down'
-        if requests.get("https://dirac.gridpp.ac.uk/DIRAC/", cert=self.cert, verify=self.verify)\
-                   .status_code == 200:
-            status = 'up'
-        if query_dirac.one_or_none() is None:
-            session.add(Services(name='DIRAC', status=status, timestamp=datetime.now()))
-        else:
-            query_dirac.update({'status': status, 'timestamp': datetime.now()})
+            # DIRAC
+            query_dirac = query.filter(Services.name == "DIRAC")
+            status = 'down'
+            if requests.get("https://dirac.gridpp.ac.uk/DIRAC/", cert=self.cert, verify=self.verify)\
+                       .status_code == 200:
+                status = 'up'
+            if query_dirac.one_or_none() is None:
+                session.add(Services(name='DIRAC', status=status, timestamp=datetime.now()))
+            else:
+                query_dirac.update({'status': status, 'timestamp': datetime.now()})
 
-        # gangad
-        query_gangad = query.filter(Services.name == "gangad")
-        if query_gangad.one_or_none() is None:
-            session.add(Services(name='gangad', status='up', timestamp=datetime.now()))
-        else:
-            query_gangad.update({'status': 'up', 'timestamp': datetime.now()})
+            # gangad
+            query_gangad = query.filter(Services.name == "gangad")
+            if query_gangad.one_or_none() is None:
+                session.add(Services(name='gangad', status='up', timestamp=datetime.now()))
+            else:
+                query_gangad.update({'status': 'up', 'timestamp': datetime.now()})
 
-    def monitor_requests(self, session):
+    def monitor_requests(self):
         """
         Monitor the DB requests.
 
         Check the status of ongoing DB requests and either update them or
         create new Ganga tasks for new requests.
         """
-        monitored_requests = session.query(Requests)\
-                                    .filter(Requests.status != 'Failed')\
-                                    .filter(Requests.status != 'Completed')\
-                                    .filter(Requests.status != 'Requested')\
-                                    .all()
+        with sqlalchemy_utils.nonexpiring(self.session) as session:
+            monitored_requests = session.query(Requests)\
+                                        .filter(Requests.status.in_(('Approved',
+                                                                     'Submitted',
+                                                                     'Running')))\
+                                        .all()
 
         for request in monitored_requests:
-            with sqlalchemy_utils.db_subsession(session):
-                if request.status == "Approved":
-                    request.submit(session)
-                request.update_status(session)
+            if request.status == "Approved":
+                request.submit(self.session)
+            request.update_status(self.session)
 
 
         """

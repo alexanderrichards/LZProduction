@@ -16,6 +16,7 @@ then
     echo "DER step failed with exit code: $?" >&2
     exit $?
 fi
+
 cd $OUTPUT_DIR
 DER_OUTPUT_FILE=$(ls *_raw.root)
 #DER_OUTPUT_FILE=$(basename $MCTRUTH_OUTPUT_FILE ._mctruth.root)_der.root

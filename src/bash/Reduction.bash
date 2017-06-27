@@ -19,4 +19,5 @@ then
     echo "Reduction step failed with exit code: $?" >&2
     exit $?
 fi
+
 dirac-dms-add-file $REDUCTION_LFN_DIR/$REDUCTION_OUTPUT_FILE $OUTPUT_DIR/$REDUCTION_OUTPUT_FILE $SE

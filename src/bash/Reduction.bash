@@ -14,10 +14,11 @@ $REDUCTION_DIR/ReducedAnalysisTree/Bacc2AnalysisTree $SIM_OUTPUT_FILE $REDUCTION
 {% else %}
 $REDUCTION_DIR/ReducedAnalysisTree/LZSim2AnalysisTree $SIM_OUTPUT_FILE $REDUCTION_OUTPUT_FILE
 {% endif %}
-if [ $? -ne 0 ]
+ret=$?
+if [ $ret -ne 0 ]
 then
-    echo "Reduction step failed with exit code: $?" >&2
-    exit $?
+    echo "Reduction step failed with exit code: $ret" >&2
+    exit $ret
 fi
 
 dirac-dms-add-file $REDUCTION_LFN_DIR/$REDUCTION_OUTPUT_FILE $OUTPUT_DIR/$REDUCTION_OUTPUT_FILE $SE

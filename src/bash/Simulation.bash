@@ -23,10 +23,11 @@ OUTPUT_FILE=$(awk '/^\/{{ app }}\/io\/outputName/ {print $2}' $1 | tail -1)$2.bi
 cd $APP_DIR
 source $G4_DIR/etc/geant4env.sh $G4_VER
 $APP_DIR/{{ app }}Executable $OUTPUT_DIR/$MACRO_FILE
-if [ $? -ne 0 ]
+ret=$?
+if [ $ret -ne 0 ]
 then
-    echo "Simulation step failed with exit code: $?" >&2
-    exit $?
+    echo "Simulation step failed with exit code: $ret" >&2
+    exit $ret
 fi
 
 cd $OUTPUT_DIR
@@ -39,10 +40,11 @@ $APP_DIR/tools/BaccRootConverter $OUTPUT_FILE
 {% endif %}
 SIM_OUTPUT_FILE=$(basename $OUTPUT_FILE .bin).root
 `ls $APP_DIR/tools/*MCTruth` $SIM_OUTPUT_FILE
-if [ $? -ne 0 ]
+ret=$?
+if [ $ret -ne 0 ]
 then
-    echo "MCTruth step failed with exit code: $?" >&2
-    exit $?
+    echo "MCTruth step failed with exit code: $ret" >&2
+    exit $ret
 fi
 MCTRUTH_OUTPUT_FILE=$(ls *_mctruth.root)
 

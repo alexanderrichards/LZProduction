@@ -4,11 +4,36 @@ import os
 import sys
 import argparse
 import logging
+from logging.handlers import TimedRotatingFileHandler
 from SimpleXMLRPCServer import SimpleXMLRPCServer
+from enum import IntEnum, unique
 from daemonize import Daemonize
 from DIRAC.Core.Base import Script
+# DIRAC will parse our command line args unless we remove them
+tmp, sys.argv = sys.argv, sys.argv[:1]
+Script.parseCommandLine(ignoreErrors=True)
+sys.argv = tmp
 from DIRAC.Interfaces.API.Dirac import Dirac
 from DIRAC.Interfaces.API.Job import Job
+
+@unique
+class DIRACSTATUS(IntEnum):
+    Unknown = 0
+    Deleted = 1
+    Killed = 2
+    Done = 3
+    Completed = 4
+    Failed = 5
+    Stalled = 6
+    Running = 7
+    Received = 8
+    Queued = 9
+    Waiting = 10
+    Checking = 11
+    Matched = 12
+
+class DiracError(RuntimeError):
+    pass
 
 class DiracDaemon(Daemonize):
     """Dirac Daemon."""
@@ -21,9 +46,6 @@ class DiracDaemon(Daemonize):
 
     def main(self):
         """Daemon main."""
-        # DIRAC will parse our command line args unless we remove them
-        sys.argv = sys.argv[:1]
-        Script.parseCommandLine(ignoreErrors=True)
         # Defer creation of server to inside the daemon context otherwise the socket will be
         # closed when daemonising
         dirac_server = SimpleXMLRPCServer(self._address)
@@ -44,7 +66,15 @@ class DiracDaemon(Daemonize):
         keys which are the ids of the jobs are cast to strings such that they can be sent
         over xmlrpc socket.
         """
-        return {str(k): v for k, v in self._dirac_api.status(ids).get("Value", {}).iteritems()}
+        dirac_answer = self._dirac_api.status(ids)
+        if not dirac_answer['OK']:
+            raise DiracError(dirac_answer['Message'])
+        dirac_statuses = dirac_answer['Value']
+        if not dirac_statuses:
+            logger.warning("Returning status 'Unknown' as no information in DIRAC for ids: %s", ids)
+        return reduce(max,
+                      (DIRACSTATUS[info['Status']] for info in dirac_statuses.itervalues()),
+                      DIRACSTATUS.Unknown).name
 
     def submit_job(self, executable, macro, starting_seed=8000000, njobs=10, platform='ANY', output_log='lzproduction_output.log'):
         """
@@ -61,7 +91,7 @@ class DiracDaemon(Daemonize):
         Returns:
            list: The list of created parametric job DIRAC ids
         """
-        dirac_jobs = {}
+        dirac_jobs = set()
         for i in xrange(starting_seed, starting_seed + njobs, 1000):
             j=Job()
             j.setName(os.path.splitext(os.path.basename(macro))[0] + '%(args)s')
@@ -71,12 +101,13 @@ class DiracDaemon(Daemonize):
                                    map(str, xrange(i, min(i + 1000, starting_seed + njobs))),
                                    addToWorkflow=True)
             j.setPlatform(platform)
-            dirac_jobs.update(self.status(self._dirac_api.submit(j).get("Value", [])))
-        return dirac_jobs
+            dirac_jobs.update(self._dirac_api.submit(j).get("Value", []))
+        dirac_jobs = list(dirac_jobs)
+        return self.status(dirac_jobs), dirac_jobs
 
     def reschedule(self, ids):
         """
-        Reschedule all jobsin state Failed.
+        Reschedule all jobs in state Failed.
         """
         failed_jobs = [k for k, v in self._dirac_api.status(ids).get("Value", {}).iteritems()
                        if v['Status'] == "Failed"]
@@ -120,14 +151,48 @@ if __name__ == '__main__':
                         help="The dirac environment API port [default: %(default)s]")
     parser.add_argument('-f', '--pid-file', default=os.path.join(lzprod_root, app_name + '.pid'),
                         help="The pid file used by the daemon [default: %(default)s]")
+    parser.add_argument('-l', '--log-dir', default=os.path.join(lzprod_root, 'log'),
+                        help="Path to the log directory. Will be created if doesn't exist "
+                             "[default: %(default)s]")
+    parser.add_argument('-v', '--verbose', action='count',
+                        help="Increase the logged verbosite, can be used twice")
     parser.add_argument('--debug-mode', action='store_true', default=False,
                         help="Run the daemon in a debug interactive monitoring mode. "
                              "(debugging only)")
     args = parser.parse_args()
+
+    # Logging setup
+    ###########################################################################
+    # check and create logging dir
+    if not os.path.isdir(args.log_dir):
+        if os.path.exists(args.log_dir):
+            raise Exception("%s path already exists and is not a directory so cant make log dir"
+                            % args.log_dir)
+        os.mkdir(args.log_dir)
+
+    # setup the handler
+    fhandler = TimedRotatingFileHandler(os.path.join(args.log_dir, 'dirac-daemon.log'),
+                                        when='midnight', backupCount=5)
+    if args.debug_mode:
+        fhandler = logging.StreamHandler()
+    fhandler.setFormatter(logging.Formatter("[%(asctime)s] %(name)15s : %(levelname)8s : %(message)s"))
+
+    # setup the root logger
+    root_logger = logging.getLogger()
+    root_logger.handlers = [fhandler]
+    root_logger.setLevel({None: logging.INFO,
+                          1: logging.INFO,
+                          2: logging.DEBUG}.get(args.verbose, logging.DEBUG))
+
+    # setup the main app logger
+    logger = logging.getLogger(app_name)
+    logger.debug("Script called with args: %s", args)
 
     # Daemon setup
     ###########################################################################
     DiracDaemon(address=(args.host, args.port),
                 app=app_name,
                 pid=args.pid_file,
+                logger=logger,
+                keep_fds=[fhandler.stream.fileno()],
                 foreground=args.debug_mode).start()

@@ -94,25 +94,24 @@ class ParametricJobs(SQLTableBase):
 
 
     def reset(self):
-        dirac_ids = self.dirac_ids.keys()
+        dirac_ids = self.dirac_jobs
         with DiracClient("http://localhost:8000/") as dirac:
             logger.info("Removing Dirac jobs %s from ParametricJob %s", dirac_ids, self.id)
             dirac.kill(dirac_ids)
 
     def update_status(self, scoped_session):
-        dirac_ids = self.dirac_jobs.keys()
+        dirac_ids = self.dirac_jobs
         with DiracClient("http://localhost:8000/") as dirac:
             if self.reschedule:
-                self.status, self.dirac_jobs = dirac.reschedule(dirac_ids)
+                self.status = dirac.reschedule(dirac_ids)
                 self.reschedule = False
             else:
-                self.status, self.dirac_jobs = dirac.status(dirac_ids)
+                self.status = dirac.status(dirac_ids)
         if self.status == 'Failed':
-            self.status, self.dirac_jobs = dirac.auto_reschedule(dirac_ids)
+            self.status = dirac.auto_reschedule(dirac_ids)
 
         with continuing(scoped_session) as session:
             this = session.query(ParametricJobs).filter(ParametricJobs.id == self.id).first()
             if this is not None:
                 this.status = self.status
-                this.dirac_jobs = self.dirac_jobs
         return self.status

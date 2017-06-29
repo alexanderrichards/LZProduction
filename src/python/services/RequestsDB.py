@@ -114,4 +114,7 @@ class RequestsDB(object):
                 session.query(Requests)\
                        .filter(Requests.id == reqid)\
                        .delete(synchronize_session=False)
+                session.query(ParametricJobs)\
+                       .filter(ParametricJobs.request_id == reqid)\
+                       .delete(synchronize_session=False)
         return self.GET()

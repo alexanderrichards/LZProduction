@@ -23,4 +23,5 @@ DER_OUTPUT_FILE=$(ls *_raw.root)
 #DER_OUTPUT_FILE=$(basename $MCTRUTH_OUTPUT_FILE ._mctruth.root)_der.root
 #mv $(ls lz_*DER*.root) $DER_OUTPUT_FILE
 
-dirac-dms-add-file $DER_LFN_DIR/$DER_OUTPUT_FILE $OUTPUT_DIR/$DER_OUTPUT_FILE $SE
+ls -l *.root
+dirac-dms-add-file -ddd $DER_LFN_DIR/$DER_OUTPUT_FILE $OUTPUT_DIR/$DER_OUTPUT_FILE $SE

@@ -94,7 +94,7 @@ class DiracDaemon(Daemonize):
         dirac_jobs = set()
         for i in xrange(starting_seed, starting_seed + njobs, 1000):
             j=Job()
-            j.setName(os.path.splitext(os.path.basename(macro))[0] + '%(args)s')
+            j.setName(os.path.splitext(os.path.basename(macro))[0] + '-%(args)s')
             j.setExecutable(os.path.basename(executable), os.path.basename(macro) + ' %(args)s', output_log)
             j.setInputSandbox([executable, macro])
             j.setParameterSequence("args",

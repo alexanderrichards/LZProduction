@@ -11,6 +11,12 @@ cd $DER_DIR
 source $DER_DIR/DERenv.sh
 #time $DER_DIR/DER  --fileSeqNum DER --UserCheck false --SkipLargeDeltaT true --outDir ${OUTPUT_DIR}/ ${OUTPUT_DIR}/${MCTRUTH_OUTPUT_FILE}
 $DER_DIR/DER --UserCheck false --SkipLargeDeltaT true --FileTimeStamp ${UNIXTIME} --fileSeqNum ${i_job} --SignalChain SAMPLED --outDir ${OUTPUT_DIR}/ ${OUTPUT_DIR}/${MCTRUTH_OUTPUT_FILE}
+ret=$?
+if [ $ret -ne 0 ]
+then
+    echo "DER step failed with exit code: $ret" >&2
+    exit $ret
+fi
 
 cd $OUTPUT_DIR
 DER_OUTPUT_FILE=$(ls *_raw.root)

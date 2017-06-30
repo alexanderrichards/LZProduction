@@ -257,10 +257,10 @@ if __name__ == '__main__':
     Requests = importlib.import_module('tables').Requests
     Services = importlib.import_module('tables').Services
     ParametricJobs = importlib.import_module('tables').ParametricJobs
-    logging_utils = importlib.import_module('logging_utils')
-    SelectedMacro = importlib.import_module('services.RequestsDB').SelectedMacro  # includes the cherrypy logger as imports cherrypy. We should move SelectedMacro elsewhere probably with the table!
-    sqlalchemy_utils = importlib.import_module('sqlalchemy_utils')
-    dirac_utils = importlib.import_module('dirac_utils')
+    logging_utils = importlib.import_module('utils.logging_utils')
+    SelectedMacro = importlib.import_module('frontend.RequestsDB').SelectedMacro  # includes the cherrypy logger as imports cherrypy. We should move SelectedMacro elsewhere probably with the table!
+    sqlalchemy_utils = importlib.import_module('utils.sqlalchemy_utils')
+    dirac_utils = importlib.import_module('utils.dirac_utils')
 
     # Logging setup
     ###########################################################################

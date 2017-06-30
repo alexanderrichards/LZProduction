@@ -8,9 +8,9 @@ from itertools import compress
 from datetime import datetime
 from sqlalchemy.dialects.mysql import LONGBLOB
 from sqlalchemy import Column, Integer, Boolean, String, PickleType, TIMESTAMP, ForeignKeyConstraint
-from sqlalchemy_utils import SQLTableBase, continuing
-from dirac_utils import DiracClient
-from tempfile_utils import temporary_runscript, temporary_macro
+from utils.sqlalchemy_utils import SQLTableBase, continuing
+from utils.dirac_utils import DiracClient
+from utils.tempfile_utils import temporary_runscript, temporary_macro
 
 logger = logging.getLogger(__name__)
 unixdate = re.compile(r'(?P<month>[0-9]{2})-(?P<day>[0-9]{2})-(?P<year>[0-9]{4})$')

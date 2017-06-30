@@ -5,8 +5,8 @@ from datetime import datetime
 from collections import namedtuple
 import cherrypy
 import html
-from apache_utils import name_from_dn
-from sqlalchemy_utils import create_db, db_session
+from utils.apache_utils import name_from_dn
+from utils.sqlalchemy_utils import create_db, db_session
 from tables import Requests, Users, ParametricJobs
 
 COLUMNS = ['id', 'request_date', 'sim_lead', 'status', 'description']

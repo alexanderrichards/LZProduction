@@ -4,7 +4,7 @@ from datetime import datetime
 from sqlalchemy import Column, Integer, String, TIMESTAMP, Text, PickleType, ForeignKeyConstraint
 from sqlalchemy_utils import SQLTableBase, nonexpiring, continuing
 from tables import ParametricJobs
-from coroutine_utils import status_accumulator
+from utils.coroutine_utils import status_accumulator
 
 logger = logging.getLogger(__name__)
 

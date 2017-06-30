@@ -10,7 +10,7 @@ from collections import Mapping
 from inspect import getmembers
 from contextlib import contextmanager
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.orm.attributes import InstrumentedAttribute
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.ext.declarative.api import DeclarativeMeta
@@ -52,8 +52,51 @@ def create_db(url):
 
     Creates a DB from a given url.
     """
-    SQLTableBase.metadata.create_all(create_engine(url))
+    engine = create_engine(url)
+    SQLTableBase.metadata.create_all(engine)
+    SQLTableBase.metadata.bind = engine
 
+def setup_session(url):
+    engine = create_engine(url)
+    SQLTableBase.metadata.create_all(engine)
+    SQLTableBase.metadata.bind = engine
+    return scoped_session(sessionmaker(bind=engine))
+
+
+@contextmanager
+def nonexpiring(scoped_session):
+    try:
+        yield scoped_session(expire_on_commit=False)
+        scoped_session.commit()
+    except:
+        logger.exception("Problem with DB session, rolling back.")
+        scoped_session.rollback()
+        raise
+    finally:
+        scoped_session.remove()
+
+@contextmanager
+def reraising(scoped_session):
+    try:
+        yield scoped_session()
+        scoped_session.commit()
+    except:
+        logger.exception("Problem with DB session, rolling back.")
+        scoped_session.rollback()
+        raise
+    finally:
+        scoped_session.remove()
+
+@contextmanager
+def continuing(scoped_session):
+    try:
+        yield scoped_session()
+        scoped_session.commit()
+    except:
+        logger.exception("Problem with DB session, rolling back.")
+        scoped_session.rollback()
+    finally:
+        scoped_session.remove()
 
 @contextmanager
 def db_session(url):

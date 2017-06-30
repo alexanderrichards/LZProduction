@@ -89,7 +89,7 @@ class RequestsDB(object):
                 path, njobs, nevents, seed = macro.split()
                 macros.append(ParametricJobs(request_id=request.id, status="Requested", macro=path, tag=kwargs['tag'], app=kwargs.get('app'), fastnest_version=kwargs.get('fastnest_version'), reduction_version=kwargs.get('reduction_version'), der_version=kwargs.get('der_version'), lzap_version=kwargs.get('lzap_version'),
                                              outputdir_lfns=[], njobs=njobs, nevents=nevents, seed=seed, app_version=kwargs.get('app_version'),
-                                           dirac_jobs={}))
+                                             dirac_jobs={}, reschedule=False))
 
             session.add_all(macros)
         return self.GET()
@@ -113,5 +113,8 @@ class RequestsDB(object):
             with db_session(self.dburl) as session:
                 session.query(Requests)\
                        .filter(Requests.id == reqid)\
+                       .delete(synchronize_session=False)
+                session.query(ParametricJobs)\
+                       .filter(ParametricJobs.request_id == reqid)\
                        .delete(synchronize_session=False)
         return self.GET()

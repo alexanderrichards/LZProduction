@@ -13,7 +13,11 @@ status_map = {'Done': 'Completed',
               'Queued': 'Submitted',
               'Checking': 'Submitted',
               'Running': 'Running',
-              'Received': 'Requested',
+              'Completed': 'Running',
+              'Received': 'Submitted',
+              'Stalled': 'Failed',
+              'Unknown': 'Unknown',
+              'Matched': 'Submitted',
               'Killed': 'Killed',
               'Deleted': 'Deleted'}
 
@@ -29,21 +33,30 @@ class DiracClient(xmlrpclib.ServerProxy):
             logger.exception("Exception raised in server.")
         return False
 
-    def _status_accumulate(self, status_dict):
-        ret = {}
-        status = "Unknown"
-        status_acc = status_accumulator(('Deleted', 'Killed', 'Done', 'Failed', 'Received',
-                                         'Queued', 'Waiting', 'Running'))
-        for k, v in status_dict.iteritems():
-            ret[int(k)] = v
-            status = status_acc.send(v['Status'])
-        return status_map.get(status, "Unknown"), ret
+#    def _status_accumulate(self, status_dict):
+#        ret = {}
+#        status = "Unknown"
+#        status_acc = status_accumulator(('Unknown', 'Deleted', 'Killed', 'Done', 'Failed', 'Stalled', 'Completed', 'Received', 'Matched',
+#                                         'Checking', 'Queued', 'Waiting', 'Running'))
+#        if not status_dict:
+#            logger.warning("status dict is empty! Unknown status will be returned.")
+#        for k, v in status_dict.iteritems():
+#            ret[int(k)] = v
+#            status = status_acc.send(v['Status'])
+#        return status_map.get(status, "Unknown"), ret
 
     def submit_job(self, *args):
-        return self._status_accumulate(xmlrpclib.ServerProxy.__getattr__(self, 'submit_job')(*args))
+        status, dirac_jobs = xmlrpclib.ServerProxy.__getattr__(self, 'submit_job')(*args)
+        return status_map.get(status, "Unknown"), dirac_jobs
 
     def status(self, ids):
-        return self._status_accumulate(xmlrpclib.ServerProxy.__getattr__(self, 'status')(ids))
+        return status_map.get(xmlrpclib.ServerProxy.__getattr__(self, 'status')(ids), "Unknown")
+
+    def auto_reschedule(self, ids):
+        return status_map.get(xmlrpclib.ServerProxy.__getattr__(self, 'auto_reschedule')(ids), "Unknown")
+
+    def reschedule(self, ids):
+        return status_map.get(xmlrpclib.ServerProxy.__getattr__(self, 'reschedule')(ids), "Unknown")
 
 '''
 @contextmanager

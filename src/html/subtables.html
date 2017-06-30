@@ -12,6 +12,7 @@
       <td>Seed</td>
       <td>Output</td>
       <td>Status</td>
+      <td></td>
     </tr>
     {% for macro in macros %}
     <tr>
@@ -28,7 +29,18 @@
 	  {{ macro.outputdir_lfns }}
 	{% endif %}
       </td>
-      <td>{{ macro.status }}</td>
+      <td>
+	{% if macro.reschedule %}
+	  Rescheduled
+	{% else %}
+	  {{ macro.status }}
+	{% endif %}
+      </td>
+      <td>
+	{% if macro.status == 'Failed' %}
+	<span class="glyphicon glyphicon-repeat text-primary reschedule" style="cursor:pointer" macroid="{{ macro.id }}" requestid="{{ macro.request_id }}"></span>
+	{% endif %}
+      </td>
     </tr>
     {% endfor %}
   </table>

@@ -14,5 +14,12 @@ $REDUCTION_DIR/ReducedAnalysisTree/Bacc2AnalysisTree $SIM_OUTPUT_FILE $REDUCTION
 {% else %}
 $REDUCTION_DIR/ReducedAnalysisTree/LZSim2AnalysisTree $SIM_OUTPUT_FILE $REDUCTION_OUTPUT_FILE
 {% endif %}
+ret=$?
+if [ $ret -ne 0 ]
+then
+    echo "Reduction step failed with exit code: $ret" >&2
+    exit $ret
+fi
 
-dirac-dms-add-file $REDUCTION_LFN_DIR/$REDUCTION_OUTPUT_FILE $OUTPUT_DIR/$REDUCTION_OUTPUT_FILE $SE
+ls -l *.root
+dirac-dms-add-file -ddd $REDUCTION_LFN_DIR/$REDUCTION_OUTPUT_FILE $OUTPUT_DIR/$REDUCTION_OUTPUT_FILE $SE

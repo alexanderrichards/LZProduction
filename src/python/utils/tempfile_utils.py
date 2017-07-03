@@ -8,7 +8,7 @@ from git import Git
 
 @contextmanager
 def temporary_runscript(**kwargs):
-    templates_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'bash')
+    templates_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'bash')
     template_env = jinja2.Environment(loader=jinja2.FileSystemLoader(searchpath=templates_dir))
     with open('/tmp/runscript.sh', 'wb') as runscript:
         runscript.write("#!/bin/bash\n")
@@ -38,7 +38,7 @@ def temporary_macro(tag, macro, app, nevents):
         /$app/beamOn $nevents
         exit
         """))
-    lzprod_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+    lzprod_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
     git_dir = os.path.join(lzprod_root, 'git', 'TDRAnalysis')
     macro = os.path.join(git_dir, macro)
     git = Git(git_dir)

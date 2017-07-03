@@ -2,7 +2,7 @@
 import logging
 from datetime import datetime
 from sqlalchemy import Column, Integer, String, TIMESTAMP, Text, PickleType, ForeignKeyConstraint
-from sqlalchemy_utils import SQLTableBase, nonexpiring, continuing
+from utils.sqlalchemy_utils import SQLTableBase, nonexpiring, continuing
 from tables import ParametricJobs
 from utils.coroutine_utils import status_accumulator
 

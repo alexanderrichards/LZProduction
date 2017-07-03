@@ -2,8 +2,8 @@
 from datetime import datetime
 import cherrypy
 from cherrypy.lib.static import serve_fileobj
-from sqlalchemy_utils import create_db, db_session
-from apache_utils import name_from_dn
+from utils.sqlalchemy_utils import create_db, db_session
+from utils.apache_utils import name_from_dn
 from tables import Services, ParametricJobs, Users, Requests
 import csv, cStringIO
 

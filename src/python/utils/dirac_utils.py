@@ -3,7 +3,7 @@ import logging
 import xmlrpclib
 from contextlib import contextmanager
 
-from coroutine_utils import status_accumulator
+from utils.coroutine_utils import status_accumulator
 
 logger = logging.getLogger(__name__)
 

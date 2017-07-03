@@ -17,8 +17,8 @@ def daemon_main(args):
     # Add the python src path to the sys.path for future imports
     sys.path = [os.path.join(lzprod_root, 'src', 'python')] + sys.path
 
-    services = importlib.import_module('services')
-    apache_utils = importlib.import_module('apache_utils')
+    services = importlib.import_module('frontend')
+    apache_utils = importlib.import_module('utils.apache_utils')
     src_root = os.path.join(lzprod_root, 'src')
     template_env = jinja2.Environment(loader=jinja2.FileSystemLoader(searchpath=src_root))
 

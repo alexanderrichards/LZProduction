@@ -17,8 +17,10 @@ from sqlalchemy.ext.declarative.api import DeclarativeMeta
 
 logger = logging.getLogger(__name__)
 
+
 class DeclarativeABCMeta(DeclarativeMeta, ABCMeta):
     pass
+
 
 class _IterableBase(Mapping):
     """
@@ -43,7 +45,8 @@ class _IterableBase(Mapping):
     def __len__(self):
         return len(iter(self))
 
-SQLTableBase = declarative_base(cls=_IterableBase, metaclass=DeclarativeABCMeta)  # pylint: disable=C0103
+SQLTableBase = declarative_base(cls=_IterableBase,  # pylint: disable=C0103
+                                metaclass=DeclarativeABCMeta)
 
 
 def create_db(url):
@@ -55,6 +58,7 @@ def create_db(url):
     engine = create_engine(url)
     SQLTableBase.metadata.create_all(engine)
     SQLTableBase.metadata.bind = engine
+
 
 def setup_session(url):
     engine = create_engine(url)
@@ -75,6 +79,7 @@ def nonexpiring(scoped_session):
     finally:
         scoped_session.remove()
 
+
 @contextmanager
 def reraising(scoped_session):
     try:
@@ -87,6 +92,7 @@ def reraising(scoped_session):
     finally:
         scoped_session.remove()
 
+
 @contextmanager
 def continuing(scoped_session):
     try:
@@ -97,6 +103,7 @@ def continuing(scoped_session):
         scoped_session.rollback()
     finally:
         scoped_session.remove()
+
 
 @contextmanager
 def db_session(url):

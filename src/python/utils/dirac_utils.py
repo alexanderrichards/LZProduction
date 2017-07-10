@@ -21,6 +21,7 @@ status_map = {'Done': 'Completed',
               'Killed': 'Killed',
               'Deleted': 'Deleted'}
 
+
 class DiracClient(xmlrpclib.ServerProxy):
 
     def __enter__(self):
@@ -36,7 +37,8 @@ class DiracClient(xmlrpclib.ServerProxy):
 #    def _status_accumulate(self, status_dict):
 #        ret = {}
 #        status = "Unknown"
-#        status_acc = status_accumulator(('Unknown', 'Deleted', 'Killed', 'Done', 'Failed', 'Stalled', 'Completed', 'Received', 'Matched',
+#        status_acc = status_accumulator(('Unknown', 'Deleted', 'Killed', 'Done',
+#                                         'Failed', 'Stalled', 'Completed', 'Received', 'Matched',
 #                                         'Checking', 'Queued', 'Waiting', 'Running'))
 #        if not status_dict:
 #            logger.warning("status dict is empty! Unknown status will be returned.")
@@ -53,7 +55,8 @@ class DiracClient(xmlrpclib.ServerProxy):
         return status_map.get(xmlrpclib.ServerProxy.__getattr__(self, 'status')(ids), "Unknown")
 
     def auto_reschedule(self, ids):
-        return status_map.get(xmlrpclib.ServerProxy.__getattr__(self, 'auto_reschedule')(ids), "Unknown")
+        return status_map.get(xmlrpclib.ServerProxy.__getattr__(self, 'auto_reschedule')(ids),
+                              "Unknown")
 
     def reschedule(self, ids):
         return status_map.get(xmlrpclib.ServerProxy.__getattr__(self, 'reschedule')(ids), "Unknown")

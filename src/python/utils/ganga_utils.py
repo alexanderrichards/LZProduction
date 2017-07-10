@@ -40,6 +40,7 @@ def ganga_request(requestdb_id):
             return task
     return None
 
+
 def ganga_request_task(requests, status=None):
     tasks = ganga.tasks  # optimize, avoid lookup in each requests loop
     for request in requests:

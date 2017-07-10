@@ -6,6 +6,7 @@ from contextlib import contextmanager
 import jinja2
 from git import Git
 
+
 @contextmanager
 def temporary_runscript(**kwargs):
     templates_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'bash')
@@ -28,6 +29,7 @@ def temporary_runscript(**kwargs):
         yield runscript.name
     finally:
         os.remove(runscript.name)
+
 
 @contextmanager
 def temporary_macro(tag, macro, app, nevents):
@@ -55,4 +57,3 @@ def temporary_macro(tag, macro, app, nevents):
         yield tmp_macro.name
     finally:
         os.remove(tmp_macro.name)
-

@@ -6,6 +6,7 @@ from daemonize import Daemonize
 from DIRAC.Interfaces.API.Dirac import Dirac
 from DIRAC.Interfaces.API.Job import Job
 
+
 @unique
 class DIRACSTATUS(IntEnum):
     Unknown = 0
@@ -22,8 +23,10 @@ class DIRACSTATUS(IntEnum):
     Checking = 11
     Matched = 12
 
+
 class DiracError(RuntimeError):
     pass
+
 
 class DiracDaemon(Daemonize):
     """Dirac Daemon."""
@@ -61,12 +64,14 @@ class DiracDaemon(Daemonize):
             raise DiracError(dirac_answer['Message'])
         dirac_statuses = dirac_answer['Value']
         if not dirac_statuses:
-            self.logger.warning("Returning status 'Unknown' as no information in DIRAC for ids: %s", ids)
+            self.logger.warning("Returning status 'Unknown' as no information in DIRAC for ids: %s",
+                                ids)
         return reduce(max,
                       (DIRACSTATUS[info['Status']] for info in dirac_statuses.itervalues()),
                       DIRACSTATUS.Unknown).name
 
-    def submit_job(self, executable, macro, starting_seed=8000000, njobs=10, platform='ANY', output_log='lzproduction_output.log'):
+    def submit_job(self, executable, macro, starting_seed=8000000, njobs=10, platform='ANY',
+                   output_log='lzproduction_output.log'):
         """
         Submit LZProduction job to DIRAC.
 
@@ -83,9 +88,10 @@ class DiracDaemon(Daemonize):
         """
         dirac_jobs = set()
         for i in xrange(starting_seed, starting_seed + njobs, 1000):
-            j=Job()
+            j = Job()
             j.setName(os.path.splitext(os.path.basename(macro))[0] + '-%(args)s')
-            j.setExecutable(os.path.basename(executable), os.path.basename(macro) + ' %(args)s', output_log)
+            j.setExecutable(os.path.basename(executable), os.path.basename(macro) + ' %(args)s',
+                            output_log)
             j.setInputSandbox([executable, macro])
             j.setParameterSequence("args",
                                    map(str, xrange(i, min(i + 1000, starting_seed + njobs))),
@@ -119,8 +125,8 @@ class DiracDaemon(Daemonize):
             status_map.setdefault(v['Status'], []).append(k)
 
         failed_jobs = [job for job in status_map.get('Failed')
-                       if int(self._dirac_api.attributes(job)\
-                                             .get('Value', {})\
+                       if int(self._dirac_api.attributes(job)
+                                             .get('Value', {})
                                              .get('RescheduleCounter', 0)) < 5]
         if failed_jobs and status_map.get('Done'):
             self._dirac_api.reschedule(failed_jobs)

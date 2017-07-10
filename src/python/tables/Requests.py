@@ -8,6 +8,7 @@ from utils.coroutine_utils import status_accumulator
 
 logger = logging.getLogger(__name__)
 
+
 class Requests(SQLTableBase):
     """Requests SQL Table."""
 
@@ -22,7 +23,6 @@ class Requests(SQLTableBase):
     timestamp = Column(TIMESTAMP, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
     description = Column(String(250), nullable=False)
     ForeignKeyConstraint(['requester_id'], ['users.id'])
-
 
     def submit(self, scoped_session):
         self.status = "Submitting"
@@ -50,7 +50,6 @@ class Requests(SQLTableBase):
                 if this is not None:
                     this.status = self.status
                     logger.info("Request %s moved to state %s", self.id, self.status)
-
 
     def update_status(self, scoped_session):
         status_acc = status_accumulator(('Unknown', 'Deleted', 'Killed', 'Completed', 'Failed', 'Requested', 'Approved', 'Submitted', 'Submitting', 'Running'))

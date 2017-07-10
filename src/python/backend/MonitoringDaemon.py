@@ -9,6 +9,7 @@ from utils import logging_utils, sqlalchemy_utils
 from tables import Requests, Services
 MINS = 60
 
+
 class MonitoringDaemon(Daemonize):
     """Monitoring Daemon."""
 
@@ -71,7 +72,8 @@ class MonitoringDaemon(Daemonize):
             # DIRAC
             query_dirac = query.filter(Services.name == "DIRAC")
             status = 'down'
-            if requests.get("https://dirac.gridpp.ac.uk/DIRAC/", cert=self.cert, verify=self.verify)\
+            if requests.get("https://dirac.gridpp.ac.uk/DIRAC/",
+                            cert=self.cert, verify=self.verify)\
                        .status_code == 200:
                 status = 'up'
             if query_dirac.one_or_none() is None:

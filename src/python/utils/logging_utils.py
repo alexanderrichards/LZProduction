@@ -36,11 +36,13 @@ def loggers_not_at_level(level, root=False):
         if logger.level != level:
             yield name, logger
 
+
 def loggers_with_handlers(root=False):
     """"""
     for name, logger in all_loggers(root):
         if logger.handlers:
             yield name, logger
+
 
 def loggers_without_handlers(root=False):
     """"""

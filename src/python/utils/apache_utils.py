@@ -12,6 +12,7 @@ from tables import Users
 
 VerifiedUser = namedtuple('VerifiedUser', ('id', 'dn', 'ca', 'admin'))
 
+
 def name_from_dn(client_dn):
     """
     Get human-readable name from DN.
@@ -29,6 +30,7 @@ def name_from_dn(client_dn):
     cns = (token.strip('CN= ') for token in client_dn.split('/')
            if token.startswith('CN='))
     return sorted(cns, key=len)[-1]
+
 
 def apache_client_convert(client_dn, client_ca=None):
     """
@@ -90,7 +92,8 @@ class CredentialDispatcher(object):
                 raise cherrypy.HTTPError(403, 'Forbidden: Unknown user. user: (%s, %s)'
                                          % (client_dn, client_ca))
             if len(users) > 1:
-                raise cherrypy.HTTPError(500, 'Internal Server Error: Duplicate user detected. user: (%s, %s)'
+                raise cherrypy.HTTPError(500, 'Internal Server Error: Duplicate user detected. '
+                                              'user: (%s, %s)'
                                          % (client_dn, client_ca))
             if users[0].suspended:
                 raise cherrypy.HTTPError(403, 'Forbidden: User is suspended by VO. user: (%s, %s)'

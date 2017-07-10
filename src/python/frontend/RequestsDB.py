@@ -12,6 +12,7 @@ from tables import Requests, Users, ParametricJobs
 COLUMNS = ['id', 'request_date', 'sim_lead', 'status', 'description']
 SelectedMacro = namedtuple('SelectedMacro', ('path', 'name', 'njobs', 'nevents', 'seed', 'status', 'output'))
 
+
 class RequestsDB(object):
     """
     RequestsDB Service.
@@ -75,8 +76,6 @@ class RequestsDB(object):
         selected_macros = kwargs.pop('selected_macros', [])
         if not isinstance(selected_macros, list):
             selected_macros = [selected_macros]
-
-
 
         with db_session(self.dburl) as session:
             request = Requests(requester_id=cherrypy.request.verified_user.id, request_date=kwargs['request_date'], source=kwargs['source'], detector=kwargs['detector'], sim_lead=kwargs['sim_lead'], status=kwargs['status'], description=kwargs['description'])

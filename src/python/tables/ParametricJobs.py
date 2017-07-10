@@ -92,7 +92,6 @@ class ParametricJobs(SQLTableBase):
                 this.dirac_jobs = self.dirac_jobs
         return self.status
 
-
     def reset(self):
         dirac_ids = self.dirac_jobs
         with DiracClient("http://localhost:8000/") as dirac:

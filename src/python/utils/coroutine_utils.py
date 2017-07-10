@@ -2,13 +2,16 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class coroutine(object):
     def __init__(self, func):
         self._func = func
+
     def __call__(self, *args, **kwargs):
         cr = self._func(*args, **kwargs)
         cr.next()
         return cr
+
 
 @coroutine
 def status_accumulator(priorities):

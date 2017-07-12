@@ -12,6 +12,9 @@ from tables import Requests, Users, ParametricJobs
 COLUMNS = ['id', 'request_date', 'sim_lead', 'status', 'description']
 SelectedMacro = namedtuple('SelectedMacro', ('path', 'name', 'njobs', 'nevents', 'seed', 'status', 'output'))
 
+def masked_dict(d, mask):
+    mask = tuple(mask)  # incase it's a generator/iterator
+    return {k: v for k, v in d.iteritems() if k in mask}
 
 class RequestsDB(object):
     """
@@ -78,7 +81,10 @@ class RequestsDB(object):
             selected_macros = [selected_macros]
 
         with db_session(self.dburl) as session:
-            request = Requests(requester_id=cherrypy.request.verified_user.id, request_date=kwargs['request_date'], source=kwargs['source'], detector=kwargs['detector'], sim_lead=kwargs['sim_lead'], status=kwargs['status'], description=kwargs['description'])
+            request = Requests(requester_id=cherrypy.request.verified_user.id,
+                               request_date=datetime.now().strftime('%d/%m/%Y'),
+                               status='Requested',
+                               **masked_dict(kwargs, Requests.attributes()))
             session.add(request)
             session.flush()
             session.refresh(request)
@@ -86,9 +92,15 @@ class RequestsDB(object):
             macros = []
             for macro in selected_macros:
                 path, njobs, nevents, seed = macro.split()
-                macros.append(ParametricJobs(request_id=request.id, status="Requested", macro=path, tag=kwargs['tag'], app=kwargs.get('app'), fastnest_version=kwargs.get('fastnest_version'), reduction_version=kwargs.get('reduction_version'), der_version=kwargs.get('der_version'), lzap_version=kwargs.get('lzap_version'),
-                                             outputdir_lfns=[], njobs=njobs, nevents=nevents, seed=seed, app_version=kwargs.get('app_version'),
-                                             dirac_jobs=[], reschedule=False))
+                macros.append(ParametricJobs(request_id=request.id,
+                                             status="Requested",
+                                             macro=path,
+                                             njobs=njobs,
+                                             nevents=nevents,
+                                             seed=seed,
+                                             dirac_jobs=[],
+                                             reschedule=False,
+                                             **masked_dict(kwargs, ParametricJobs.attributes())))
 
             session.add_all(macros)
         return self.GET()

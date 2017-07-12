@@ -31,19 +31,25 @@ class _IterableBase(Mapping):
     of an SQLAlchemy declarative base.
     """
 
-    def __iter__(self):
+    @classmethod
+    def attributes(cls):
         """Get an iterator over instrumented attributes."""
-        for name, _ in getmembers(self.__class__,
+        for name, _ in getmembers(cls,
                                   lambda value: isinstance(value, InstrumentedAttribute)):
             yield name
 
+    def __iter__(self):
+        """Get an iterator over instrumented attributes."""
+        return self.__class__.attributes()
+
     def __getitem__(self, item):
         """Access instrumented attributes as a dict."""
-        instrumented_attrs = {k: getattr(self, k) for k in self}
-        return instrumented_attrs[item]
+        if not item in self:
+            raise KeyError("Invalid attribute name: %s" % item)
+        return getattr(item)
 
     def __len__(self):
-        return len(iter(self))
+        return len(list(self))
 
 SQLTableBase = declarative_base(cls=_IterableBase,  # pylint: disable=C0103
                                 metaclass=DeclarativeABCMeta)

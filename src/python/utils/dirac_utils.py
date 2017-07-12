@@ -1,9 +1,9 @@
 """DIRAC utility module."""
 import logging
 import xmlrpclib
-from contextlib import contextmanager
+#from contextlib import contextmanager
 
-from utils.coroutine_utils import status_accumulator
+#from utils.coroutine_utils import status_accumulator
 
 logger = logging.getLogger(__name__)
 
@@ -46,9 +46,16 @@ class DiracClient(xmlrpclib.ServerProxy):
 #            ret[int(k)] = v
 #            status = status_acc.send(v['Status'])
 #        return status_map.get(status, "Unknown"), ret
+    def submit_lfn_parametric_job(self, *args):
+        status, dirac_jobs = xmlrpclib.ServerProxy.__getattr__(self, 'submit_lfn_parametric_job')(*args)
+        return status_map.get(status, "Unknown"), dirac_jobs
 
-    def submit_job(self, *args):
-        status, dirac_jobs = xmlrpclib.ServerProxy.__getattr__(self, 'submit_job')(*args)
+    def submit_ranged_parametric_job(self, *args):
+        status, dirac_jobs = xmlrpclib.ServerProxy.__getattr__(self, 'submit_ranged_parametric_job')(*args)
+        return status_map.get(status, "Unknown"), dirac_jobs
+
+    def submit_parametric_job(self, *args):
+        status, dirac_jobs = xmlrpclib.ServerProxy.__getattr__(self, 'submit_parametric_job')(*args)
         return status_map.get(status, "Unknown"), dirac_jobs
 
     def status(self, ids):

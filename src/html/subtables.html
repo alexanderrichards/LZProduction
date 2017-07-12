@@ -21,13 +21,21 @@
       <td>{{ macro.nevents }}</td>
       <td>{{ macro.seed }}</td>
       <td>
-	{% if macro.outputdir_lfns is not none %}
-	  {% for lfn in macro.outputdir_lfns %}
-	    {{ lfn }}<br>
-	  {% endfor %}
-	{% else %}
-	  {{ macro.outputdir_lfns }}
-	{% endif %}
+	{% if macro.sim_lfn_outputdir is not None%}
+	{{ sim_lfn_outputdir }}<br>
+	{% elseif %}
+	{% if macro.mctruth_lfn_outputdir is not None%}
+	{{ mctruth_lfn_outputdir }}<br>
+	{% elseif %}
+	{% if macro.reduction_lfn_outputdir is not None%}
+	{{ reduction_lfn_outputdir }}<br>
+	{% elseif %}
+	{% if macro.der_lfn_outputdir is not None%}
+	{{ der_lfn_outputdir }}<br>
+	{% elseif %}
+	{% if macro.lzap_lfn_outputdir is not None%}
+	{{ lzap_lfn_outputdir }}<br>
+	{% elseif %}
       </td>
       <td>
 	{% if macro.reschedule %}

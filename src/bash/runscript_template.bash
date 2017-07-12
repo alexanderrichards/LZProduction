@@ -10,7 +10,8 @@ function stop_on_error {
 }
 
 export OUTPUT_DIR=$(pwd)
-{% if simulation %}
+SE={{ se }}
+{% if app_version %}
 ## Simulation variables
 ####################
 MACRO_FILE=$1
@@ -19,26 +20,31 @@ APP_DIR=/cvmfs/lz.opensciencegrid.org/{{ app }}/release-{{ app_version }}
 ROOT_DIR=/cvmfs/lz.opensciencegrid.org/ROOT/v{{ root_version }}/{{ root_arch }}/root
 G4_DIR=/cvmfs/lz.opensciencegrid.org/geant4/
 G4_VER=geant{{ g4_version }}
-SIM_LFN_DIR={{ sim_lfn_dir }}
-MCTRUTH_LFN_DIR={{ mctruth_lfn_dir }}
-SE={{ se }}
+SIM_LFN_DIR={{ sim_lfn_outputdir }}
+MCTRUTH_LFN_DIR={{ mctruth_lfn_outputdir }}
 {% endif %}
-{% if reduction %}
+{% if reduction_version %}
 ## Reduction variables
 ####################
+{% if not app_version %}
+SIM_OUTPUT_FILE=$2
+{% endif %}
 LIBNEST_DIR=/cvmfs/lz.opensciencegrid.org/fastNEST/release-{{ fastnest_version }}
 REDUCTION_DIR=/cvmfs/lz.opensciencegrid.org/TDRAnalysis/release-{{ reduction_version }}
-REDUCTION_LFN_DIR={{ reduction_lfn_dir }}
+REDUCTION_LFN_DIR={{ reduction_lfn_outputdir }}
 {% endif %}
-{% if der %}
+{% if der_version %}
 ## DER variables
 ####################
+{% if not app_version %}
+MCTRUTH_OUTPUT_FILE=$2
+{% endif %}
 DER_DIR=/cvmfs/lz.opensciencegrid.org/DER/release-{{ der_version }}
-DER_LFN_DIR={{ der_lfn_dir }}
+DER_LFN_DIR={{ der_lfn_outputdir }}
 {% endif %}
 
 
-{% if simulation %}
+{% if app_version %}
 ## Simulation
 ####################
 #extract the name of the output file from the LUXSim macro
@@ -67,10 +73,9 @@ SIM_OUTPUT_FILE=$(basename $OUTPUT_FILE .bin).root
 stop_on_error `ls $APP_DIR/tools/*MCTruth` $SIM_OUTPUT_FILE "MCTruth step failed!"
 MCTRUTH_OUTPUT_FILE=$(ls *_mctruth.root)
 {% endif %}
-{% if reduction %}
+{% if reduction_version %}
 ## Reduction
 ####################
-# reduce and then copy both to our central storage.
 source $LIBNEST_DIR/libNEST/thislibNEST.sh
 REDUCTION_OUTPUT_FILE=$(basename $SIM_OUTPUT_FILE .root)_analysis_tree.root
 
@@ -82,10 +87,10 @@ stop_on_error $REDUCTION_DIR/ReducedAnalysisTree/Bacc2AnalysisTree $SIM_OUTPUT_F
 stop_on_error $REDUCTION_DIR/ReducedAnalysisTree/LZSim2AnalysisTree $SIM_OUTPUT_FILE $REDUCTION_OUTPUT_FILE "Reduction step failed!"
 {% endif %}
 {% endif %}
-{% if der %}
+{% if der_version %}
 ## DER
 ####################
-i_job=$((SEED-{{ seed0 }}))
+i_job=$((SEED-{{ seed }}))
 livetimeperjob={{ livetimeperjob }}
 DT=$(awk "BEGIN {print $i_job*$livetimeperjob+0.5; exit}")
 let DDT=`echo $DT | cut -d. -f 1`
@@ -102,13 +107,17 @@ DER_OUTPUT_FILE=$(ls *_raw.root)
 ## Upload
 ###########################
 ls -l *.root
-{% if simulation %}
-#stop_on_error dirac-dms-add-file -ddd $SIM_LFN_DIR/$SIM_OUTPUT_FILE $OUTPUT_DIR/$SIM_OUTPUT_FILE $SE "Failed to upload Simulation output!"
+{% if app_version %}
+{% if sim_lfn_outputdir %}
+stop_on_error dirac-dms-add-file -ddd $SIM_LFN_DIR/$SIM_OUTPUT_FILE $OUTPUT_DIR/$SIM_OUTPUT_FILE $SE "Failed to upload Simulation output!"
+{% endif %}
+{% if mctruth_lfn_outputdir %}
 stop_on_error dirac-dms-add-file -ddd $MCTRUTH_LFN_DIR/$MCTRUTH_OUTPUT_FILE $OUTPUT_DIR/$MCTRUTH_OUTPUT_FILE $SE "Failed to upload MCTruth output!"
 {% endif %}
-{% if reduction %}
+{% endif %}
+{% if reduction_version and reduction_lfn_outputdir %}
 stop_on_error dirac-dms-add-file -ddd $REDUCTION_LFN_DIR/$REDUCTION_OUTPUT_FILE $OUTPUT_DIR/$REDUCTION_OUTPUT_FILE $SE "Failed to upload Reduction output!"
 {% endif %}
-{% if der %}
+{% if der_version and der_lfn_outputdir %}
 stop_on_error dirac-dms-add-file -ddd $DER_LFN_DIR/$DER_OUTPUT_FILE $OUTPUT_DIR/$DER_OUTPUT_FILE $SE "Failed to upload DER output!"
 {% endif %}

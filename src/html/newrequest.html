@@ -19,8 +19,14 @@
 $(document).ready(function() {
 
   $(".toggle").change(function(){
-    $(".togglable[toggle='" + this.id + "']").prop("disabled", !this.checked);
+    $(".togglable[toggle~='" + this.id + "']").prop("disabled", !this.checked);
     $("select[toggle='" + this.id + "']").selectpicker("refresh");
+    if (!this.checked){
+      $(".togglable[toggleoff~='" + this.id + "']").prop("disabled", true);    
+    }
+    else if (this.checked){
+      $(".togglable[toggleon~='" + this.id + "']").prop("disabled", false);    
+    }
   });
 
   $.ajax({url: "/tags",
@@ -268,6 +274,31 @@ $(document).ready(function() {
 		      </div>
 		    </div>
 		  </div>
+		  <br>
+		  <div class="row">
+		    <div class="col-xs-6">
+		      <label for="sim_lfn_outputdir">Simulation output LFN dir:</label>
+		      <div class="input-group">
+
+			<span class="input-group-addon" id="basic-addon1">
+			    <input type="checkbox" class="toggle togglable" toggle="sim_toggle" id="sim_lfn_outputdir_toggle">
+			</span>
+			<input id="sim_lfn_outputdir" toggleoff="sim_toggle" toggle="sim_lfn_outputdir_toggle" type="text" class="form-control togglable" placeholder="Sim output LFN dir" aria-describedby="basic-addon1" name="sim_lfn_outputdir" required disabled>
+
+		      </div>
+		    </div>
+
+		    <div class="col-xs-6">
+		      <label for="mctruth_lfn_outputdir">MCTruth output LFN dir:</label>
+		      <div class="input-group">
+			<span class="input-group-addon" id="basic-addon1">
+			    <input type="checkbox" class="toggle togglable" toggle="sim_toggle" id="mctruth_lfn_outputdir_toggle">
+			</span>
+			<input id="mctruth_lfn_outputdir" toggleoff="sim_toggle" toggle="mctruth_lfn_outputdir_toggle" type="text" class="form-control togglable" placeholder="MCTruth output LFN dir" aria-describedby="basic-addon1" name="mctruth_lfn_outputdir" required disabled>
+
+		      </div>
+		    </div>
+		  </div>
 
 		  <!-- Macro Setup-->
 		  <br>
@@ -370,8 +401,30 @@ $(document).ready(function() {
 		      <label for="reduction_version">Select Reduction Version:</label>
 		      <div class="input-group">
 			<select id="reduction_version" name="reduction_version" class="selectpicker form-control togglable" toggle="reduction_toggle" data-live-search="true" data-live-search-style="startsWith" data-size="10" data-width="150px" data-dropup-auto="false" data-live-search-placeholder="Search..." title="Version" required>
-			  <option>test</option>
 			</select>
+		      </div>
+		    </div>
+		  </div>
+
+		  <br>
+		  <div class="row">
+		    <div class="col-xs-6">
+		      <label for="reduction_lfn_inputdir">Reduction input LFN dir:</label>
+		      <div class="input-group">
+			<span class="input-group-addon" id="basic-addon1">
+			    <input type="checkbox" class="toggle togglable" toggle="reduction_toggle" id="reduction_lfn_inputdir_toggle">
+			</span>
+			<input id="reduction_lfn_inputdir" toggleoff="reduction_toggle" toggle="reduction_lfn_inputdir_toggle" type="text" class="form-control togglable" placeholder="Reduction input LFN dir" aria-describedby="basic-addon1" name="reduction_lfn_inputdir" required disabled>
+		      </div>
+		    </div>
+		    <div class="col-xs-6">
+		      <label for="reduction_lfn_outputdir">Reduction output LFN dir:</label>
+		      <div class="input-group">
+			<span class="input-group-addon" id="basic-addon1">
+			    <input type="checkbox" class="toggle togglable" toggle="reduction_toggle" id="reduction_lfn_outputdir_toggle">
+			</span>
+			<input id="reduction_lfn_outputdir" toggleoff="reduction_toggle" toggle="reduction_lfn_outputdir_toggle" type="text" class="form-control togglable" placeholder="Reduction output LFN dir" aria-describedby="basic-addon1" name="reduction_lfn_outputdir" required disabled>
+
 		      </div>
 		    </div>
 		  </div>
@@ -394,6 +447,29 @@ $(document).ready(function() {
 		      </div>
 		    </div>
 		  </div>
+
+		  <br>
+		  <div class="row">
+		    <div class="col-xs-6">
+		      <label for="der_lfn_inputdir">DER input LFN dir:</label>
+		      <div class="input-group">
+			<span class="input-group-addon" id="basic-addon1">
+			    <input type="checkbox" class="toggle togglable" toggle="der_toggle" id="der_lfn_inputdir_toggle" disabled>
+			</span>
+			<input id="der_lfn_inputdir" type="text" class="form-control togglable" toggleoff="der_toggle" toggle="der_lfn_inputdir_toggle" placeholder="DER input LFN dir" aria-describedby="basic-addon1" name="der_lfn_inputdir" required disabled>
+		      </div>
+		    </div>
+		    <div class="col-xs-6">
+		      <label for="der_lfn_outputdir">DER output LFN dir:</label>
+		      <div class="input-group">
+			<span class="input-group-addon" id="basic-addon1">
+			    <input type="checkbox" class="toggle togglable" toggle="der_toggle" id="der_lfn_outputdir_toggle" disabled>
+			</span>
+			<input id="der_lfn_outputdir" toggleoff="der_toggle" toggle="der_lfn_outputdir_toggle" type="text" class="form-control togglable" placeholder="DER output LFN dir" aria-describedby="basic-addon1" name="der_lfn_outputdir" required disabled>
+
+		      </div>
+		    </div>
+		  </div>
 		</div>
 
 		<!-- LZap       -->
@@ -411,6 +487,29 @@ $(document).ready(function() {
 		      <div class="input-group">
 			<select id="lzap_version" name="lzap_version" class="selectpicker form-control togglable" toggle="lzap_toggle" data-live-search="true" data-live-search-style="startsWith" data-size="10" data-width="150px" data-dropup-auto="false" data-live-search-placeholder="Search..." title="Version" required disabled>
 			</select>
+		      </div>
+		    </div>
+		  </div>
+
+		  <br>
+		  <div class="row">
+		    <div class="col-xs-6">
+		      <label for="lzap_lfn_inputdir">LZap input LFN dir:</label>
+		      <div class="input-group">
+			<span class="input-group-addon" id="basic-addon1">
+			    <input type="checkbox" class="toggle togglable" toggle="lzap_toggle" id="lzap_lfn_inputdir_toggle" disabled>
+			</span>
+			<input id="lzap_lfn_inputdir" type="text" class="form-control togglable" toggleoff="lzap_toggle" toggle="lzap_lfn_inputdir_toggle" placeholder="LZap input LFN dir" aria-describedby="basic-addon1" name="lzap_lfn_inputdir" disabled>
+		      </div>
+		    </div>
+		    <div class="col-xs-6">
+		      <label for="lzap_lfn_outputdir">LZap output LFN dir:</label>
+		      <div class="input-group">
+			<span class="input-group-addon" id="basic-addon1">
+			    <input type="checkbox" class="toggle togglable" toggle="lzap_toggle" id="lzap_lfn_outputdir_toggle" required disabled>
+			</span>
+			<input id="lzap_lfn_outputdir" toggleoff="lzap_toggle" toggle="lzap_lfn_outputdir_toggle" type="text" class="form-control togglable" placeholder="LZap output LFN dir" aria-describedby="basic-addon1" name="lzap_lfn_outputdir" required disabled>
+
 		      </div>
 		    </div>
 		  </div>

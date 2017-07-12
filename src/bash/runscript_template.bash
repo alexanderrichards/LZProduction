@@ -1,4 +1,15 @@
 #!/bin/bash
+function stop_on_error {
+    ${@:1:(($#-1))}
+    ret=$?
+    if [ $ret -ne 0 ]
+    then
+	echo ${@:$#} "exit code: $ret" >&2
+	exit $ret
+    fi
+}
+
+export OUTPUT_DIR=$(pwd)
 {% if simulation %}
 ## Simulation variables
 ####################
@@ -25,17 +36,7 @@ REDUCTION_LFN_DIR={{ reduction_lfn_dir }}
 DER_DIR=/cvmfs/lz.opensciencegrid.org/DER/release-{{ der_version }}
 DER_LFN_DIR={{ der_lfn_dir }}
 {% endif %}
-export OUTPUT_DIR=$(pwd)
 
-function stop_on_error {
-    ${@:1:(($#-1))}
-    ret=$?
-    if [ $ret -ne 0 ]
-    then
-	echo ${@:$#} "exit code: $ret" >&2
-	exit $ret
-    fi
-}
 
 {% if simulation %}
 ## Simulation

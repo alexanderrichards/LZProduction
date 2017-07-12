@@ -10,7 +10,9 @@ from git import Git
 @contextmanager
 def temporary_runscript(**kwargs):
     templates_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'bash')
-    template_env = jinja2.Environment(loader=jinja2.FileSystemLoader(searchpath=templates_dir))
+    template_env = jinja2.Environment(loader=jinja2.FileSystemLoader(searchpath=templates_dir),
+                                      trim_blocks=True,
+                                      lstrip_blocks=True)
     with open('/tmp/runscript.sh', 'wb') as runscript:
         runscript.write(template_env.get_template('runscript_template.bash').render(**kwargs))
     try:

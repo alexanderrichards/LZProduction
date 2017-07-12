@@ -76,7 +76,10 @@ class ParametricJobs(SQLTableBase):
                                  lzap_lfn_dir=lzap_lfn_dir,
                                  seed0=str(self.seed),
                                  unixtime=unixtime,
-                                 livetimeperjob=livetimeperjob, **self) as runscript,\
+                                 livetimeperjob=livetimeperjob,
+                                 simulation=self.app_version is not None,
+                                 reduction=self.reduction_version is not None,
+                                 der=self.der_version is not None, **self) as runscript,\
              temporary_macro(self.tag, self.macro, self.app, self.nevents) as macro:
             logger.info("Submitting ParametricJob %s, macro: %s to DIRAC", self.id, self.macro)
             self.status, self.dirac_jobs = dirac.submit_job(runscript,

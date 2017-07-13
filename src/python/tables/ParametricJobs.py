@@ -47,7 +47,7 @@ class ParametricJobs(SQLTableBase):
     ForeignKeyConstraint(['request_id'], ['requests.id'])
 
     def submit(self, scoped_session):
-        lfn_root = os.path.join('/lz/data/MDC1', '_'.join(('-'.join((self.app, self.app_version)),
+        lfn_root = os.path.join('/lz/user/l/lzproduser.grid.hep.ph.ic.ac.uk', '_'.join(('-'.join((self.app, self.app_version)),
                                                            '-'.join(('DER', self.der_version)))))
         macro_name = os.path.splitext(os.path.basename(self.macro))[0]
         livetime_sec_per_beamon = 0.1132698957

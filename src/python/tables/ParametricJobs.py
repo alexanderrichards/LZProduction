@@ -47,7 +47,7 @@ class ParametricJobs(SQLTableBase):
     ForeignKeyConstraint(['request_id'], ['requests.id'])
 
     def submit(self, scoped_session):
-        lfn_root = os.path.join('/lz/data/MDC1', '_'.join(('-'.join((self.app, self.app_version)),
+        lfn_root = os.path.join('/lz/user/l/lzproduser.grid.hep.ph.ic.ac.uk', '_'.join(('-'.join((self.app, self.app_version)),
                                                            '-'.join(('DER', self.der_version)))))
         macro_name = os.path.splitext(os.path.basename(self.macro))[0]
         livetime_sec_per_beamon = 0.1132698957
@@ -76,7 +76,10 @@ class ParametricJobs(SQLTableBase):
                                  lzap_lfn_dir=lzap_lfn_dir,
                                  seed0=str(self.seed),
                                  unixtime=unixtime,
-                                 livetimeperjob=livetimeperjob, **self) as runscript,\
+                                 livetimeperjob=livetimeperjob,
+                                 simulation=self.app_version is not None,
+                                 reduction=self.reduction_version is not None,
+                                 der=self.der_version is not None, **self) as runscript,\
              temporary_macro(self.tag, self.macro, self.app, self.nevents) as macro:
             logger.info("Submitting ParametricJob %s, macro: %s to DIRAC", self.id, self.macro)
             self.status, self.dirac_jobs = dirac.submit_job(runscript,

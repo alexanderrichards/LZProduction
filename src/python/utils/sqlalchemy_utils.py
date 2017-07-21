@@ -46,10 +46,10 @@ class _IterableBase(Mapping):
         """Access instrumented attributes as a dict."""
         if not item in self.__class__.attributes():
             raise KeyError("Invalid attribute name: %s" % item)
-        return getattr(item)
+        return getattr(self, item)
 
     def __len__(self):
-        return len(list(self))
+        return len(list(self.__class__.attributes()))
 
 SQLTableBase = declarative_base(cls=_IterableBase,  # pylint: disable=C0103
                                 metaclass=DeclarativeABCMeta)

@@ -70,7 +70,7 @@ class ParametricJobs(SQLTableBase):
                                  g4_version='4.9.5.p02',
                                  se='UKI-LT2-IC-HEP-disk',
                                  unixtime=unixtime,
-                                 livetimeperjob=livetimeperjob  **self) as runscript,\
+                                 livetimeperjob=livetimeperjob,  **self) as runscript,\
              temporary_macro(self.tag, self.macro, self.app, self.nevents) as macro:
             logger.info("Submitting ParametricJob %s, macro: %s to DIRAC", self.id, self.macro)
             if self.app_version is not None:

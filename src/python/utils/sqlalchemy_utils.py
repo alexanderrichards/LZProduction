@@ -44,7 +44,7 @@ class _IterableBase(Mapping):
 
     def __getitem__(self, item):
         """Access instrumented attributes as a dict."""
-        if not item in self:
+        if not item in self.__class__.attributes():
             raise KeyError("Invalid attribute name: %s" % item)
         return getattr(item)
 

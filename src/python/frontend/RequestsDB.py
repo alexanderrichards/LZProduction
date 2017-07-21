@@ -74,8 +74,6 @@ class RequestsDB(object):
     def POST(self, **kwargs):  # pylint: disable=C0103
         """REST Post method."""
         print "IN POST", kwargs
-        kwargs['request_date'] = datetime.now().strftime('%d/%m/%Y')
-        kwargs['status'] = 'Requested'
         selected_macros = kwargs.pop('selected_macros', [])
         if not isinstance(selected_macros, list):
             selected_macros = [selected_macros]

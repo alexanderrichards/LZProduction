@@ -14,7 +14,7 @@ def ListSplitter(sequence, nentries):
 
 def param_slicer(params, nentries):  # , param_index=1):
 #    param_lens = [len(i[param_index]) for i in parameters]
-    param_lens = [len(i[1]) for i in parameters]
+    param_lens = [len(i[1]) for i in params]
     if min(param_lens) != max(param_lens):
         raise ValueError("parameters wront size!")
 
@@ -108,15 +108,19 @@ class DiracDaemon(Daemonize):
                       (DIRACSTATUS[info['Status']] for info in dirac_statuses.itervalues()),
                       DIRACSTATUS.Unknown).name
 
-    def submit_lfn_parametric_job(self, input_lfn_dir, **kargs):
+    def submit_lfn_parametric_job(self, name, executable,  input_lfn_dir, args='', input_sandbox=None,
+                                  platform='ANY', output_log='', chunk_size=1000):
         lfns = self.list_lfns(input_lfn_dir)
         parameters = [('args', [os.path.basename(l) for l in lfns], False),
                       ('InputData', lfns, 'ParametricInputData')]
-        return self.submit_parametric_job(parameters=parameters, **kwargs)
+        return self.submit_parametric_job(name, executable,  parameters, args, input_sandbox,
+                                          platform, output_log, chunk_size)
 
-    def submit_ranged_parametric_job(self, start, stop, step=1, **kargs):
+    def submit_ranged_parametric_job(self, name, executable, start, stop, step=1, args='', input_sandbox=None,
+                                     platform='ANY', output_log='', chunk_size=1000):
         parameters = [('args', range(start, stop, step), False)]
-        return self.submit_parametric_job(parameters=parameters, **kwargs)
+        return self.submit_parametric_job(name, executable,  parameters, args, input_sandbox,
+                                          platform, output_log, chunk_size)
 
     def submit_parametric_job(self, name, executable,  parameters, args='', input_sandbox=None,
                               platform='ANY', output_log='', chunk_size=1000):

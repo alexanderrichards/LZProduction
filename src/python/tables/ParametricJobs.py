@@ -54,8 +54,8 @@ class ParametricJobs(SQLTableBase):
     ForeignKeyConstraint(['request_id'], ['requests.id'])
 
     def submit(self, scoped_session):
-        lfn_root = os.path.join('/lz/user/l/lzproduser.grid.hep.ph.ic.ac.uk', '_'.join(('-'.join((self.app, self.app_version)),
-                                                           '-'.join(('DER', self.der_version)))))
+#        lfn_root = os.path.join('/lz/user/l/lzproduser.grid.hep.ph.ic.ac.uk', '_'.join(('-'.join((self.app, self.app_version)),
+#                                                           '-'.join(('DER', self.der_version)))))
         macro_name = os.path.splitext(os.path.basename(self.macro))[0]
         livetime_sec_per_beamon = 0.1132698957
         livetimeperjob = str(self.nevents * livetime_sec_per_beamon)
@@ -93,7 +93,6 @@ class ParametricJobs(SQLTableBase):
             this = session.query(ParametricJobs).filter(ParametricJobs.id == self.id).first()
             if this is not None:
                 this.status = self.status
-                this.outputdir_lfns = self.outputdir_lfns
                 this.dirac_jobs = self.dirac_jobs
         return self.status
 

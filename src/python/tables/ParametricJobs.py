@@ -68,6 +68,7 @@ class ParametricJobs(SQLTableBase):
              temporary_runscript(root_version='5.34.32',
                                  root_arch='slc6_gcc44_x86_64',
                                  g4_version='4.9.5.p02',
+                                 physics_version='1.4.0',
                                  se='UKI-LT2-IC-HEP-disk',
                                  unixtime=unixtime,
                                  livetimeperjob=livetimeperjob,  **self) as runscript,\
@@ -86,7 +87,7 @@ class ParametricJobs(SQLTableBase):
                                                                                executable=os.path.basename(runscript),
                                                                                args='%(args)s',
                                                                                input_sandbox=[runscript],
-                                                                               input_lfn_dir=self.reduction_lfn_dir or self.der_lfn_dir or self.lzap_lfn_dir,
+                                                                               input_lfn_dir=self.reduction_lfn_inputdir or self.der_lfn_inputdir or self.lzap_lfn_inputdir,
                                                                                output_log='lzanalysis_output.log')
 
         with continuing(scoped_session) as session:

@@ -103,7 +103,32 @@ stop_on_error $DER_DIR/DER --UserCheck false --SkipLargeDeltaT true --FileTimeSt
 cd $OUTPUT_DIR
 DER_OUTPUT_FILE=$(ls *_raw.root)
 {% endif %}
+{% if lzap_version %}
+## LZap
+###########################
+N0=0
+Nlast=251
+LZAP_LFN_DIR={{ lzap_lfn_outputdir }}
+{% if not der_version %}
+DER_OUTPUT_FILE=$2
+{% endif %}
 
+set --
+
+export PHYS_DIR=/cvmfs/lz.opensciencegrid.org/Physics/{{ physics_version }}
+source ${PHYS_DIR}/Physics/setup.sh
+STEERING_DIR=${PHYS_DIR}/ProductionSteeringFiles
+STEERING_FILE=${STEERING_DIR}/RunLZapMCTruthON.py
+
+export LZAP_INPUT_FILES=${OUTPUT_DIR}/$(basename ${DER_OUTPUT_FILE})
+export LZAP_OUTPUT_FILE=${OUTPUT_DIR}/$(basename ${DER_OUTPUT_FILE/"_raw.root"/"_lzap.root"})
+N=$(echo $(basename ${LZAP_OUTPUT_FILE}) | grep -oP '(?<=_)\d+(?=\_lzap)')
+
+if [ "$N" -ge "$N0" ] && [ "$N" -lt "$Nlast" ]
+then
+stop_on_error lzap ${STEERING_FILE} "Error running LZap!"
+fi
+{% endif %}
 ## Upload
 ###########################
 ls -l *.root
@@ -120,4 +145,7 @@ stop_on_error dirac-dms-add-file -ddd $REDUCTION_LFN_DIR/$REDUCTION_OUTPUT_FILE 
 {% endif %}
 {% if der_version and der_lfn_outputdir %}
 stop_on_error dirac-dms-add-file -ddd $DER_LFN_DIR/$DER_OUTPUT_FILE $OUTPUT_DIR/$DER_OUTPUT_FILE $SE "Failed to upload DER output!"
+{% endif %}
+{% if lzap_version and lzap_lfn_outputdir %}
+stop_on_error dirac-dms-add-file -ddd $LZAP_LFN_DIR/$(basename ${LZAP_OUTPUT_FILE}) $LZAP_OUTPUT_FILE $SE "Failed to upload LZap output!"
 {% endif %}

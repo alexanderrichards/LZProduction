@@ -54,27 +54,30 @@ class ParametricJobs(SQLTableBase):
     ForeignKeyConstraint(['request_id'], ['requests.id'])
 
     def submit(self, scoped_session):
+        # problems here if not running simulation, there will be no macro so
+        # everything including context needs reworking.
 #        lfn_root = os.path.join('/lz/user/l/lzproduser.grid.hep.ph.ic.ac.uk', '_'.join(('-'.join((self.app, self.app_version)),
 #                                                           '-'.join(('DER', self.der_version)))))
-        macro_name = os.path.splitext(os.path.basename(self.macro))[0]
-        livetime_sec_per_beamon = 0.1132698957
-        livetimeperjob = str(self.nevents * livetime_sec_per_beamon)
-        unixtime = time.time()
-        match = unixdate.search(macro_name)
-        if match is not None:
-            month, day, year = match.groups()
-            unixtime = str(int(calendar.timegm(datetime(int(year), int(month), int(day), 0, 0).utctimetuple())))
-        with DiracClient("http://localhost:8000/") as dirac,\
-             temporary_runscript(root_version='5.34.32',
-                                 root_arch='slc6_gcc44_x86_64',
-                                 g4_version='4.9.5.p02',
-                                 physics_version='1.4.0',
-                                 se='UKI-LT2-IC-HEP-disk',
-                                 unixtime=unixtime,
-                                 livetimeperjob=livetimeperjob,  **self) as runscript,\
-             temporary_macro(self.tag, self.macro, self.app, self.nevents) as macro:
-            logger.info("Submitting ParametricJob %s, macro: %s to DIRAC", self.id, self.macro)
-            if self.app_version is not None:
+        if self.app_version is not None:
+
+            macro_name = os.path.splitext(os.path.basename(self.macro or ''))[0]
+            livetime_sec_per_beamon = 0.1132698957
+            livetimeperjob = str((self.nevents or 1) * livetime_sec_per_beamon)
+            unixtime = time.time()
+            match = unixdate.search(macro_name)
+            if match is not None:
+                month, day, year = match.groups()
+                unixtime = str(int(calendar.timegm(datetime(int(year), int(month), int(day), 0, 0).utctimetuple())))
+            with DiracClient("http://localhost:8000/") as dirac,\
+                 temporary_runscript(root_version='5.34.32',
+                                     root_arch='slc6_gcc44_x86_64',
+                                     g4_version='4.9.5.p02',
+                                     physics_version='1.4.0',
+                                     se='UKI-LT2-IC-HEP-disk',
+                                     unixtime=unixtime,
+                                     livetimeperjob=livetimeperjob,  **self) as runscript,\
+                 temporary_macro(self.tag, self.macro or '', self.app, self.nevents) as macro:
+                logger.info("Submitting ParametricJob %s, macro: %s to DIRAC", self.id, self.macro)
                 self.status, self.dirac_jobs = dirac.submit_ranged_parametric_job(name=os.path.splitext(os.path.basename(macro))[0] + '-%(args)s',
                                                                                   executable=os.path.basename(runscript),
                                                                                   args=os.path.basename(macro) + ' %(args)s',
@@ -82,13 +85,22 @@ class ParametricJobs(SQLTableBase):
                                                                                   start=self.seed,
                                                                                   stop=self.seed + self.njobs,
                                                                                   output_log='lzproduction_output.log')
-            else:
-                self.status, self.dirac_jobs = dirac.submit_lfn_parametric_job(name="%(args)s",
-                                                                               executable=os.path.basename(runscript),
-                                                                               args='%(args)s',
-                                                                               input_sandbox=[runscript],
-                                                                               input_lfn_dir=self.reduction_lfn_inputdir or self.der_lfn_inputdir or self.lzap_lfn_inputdir,
-                                                                               output_log='lzanalysis_output.log')
+        else:
+            with DiracClient("http://localhost:8000/") as dirac,\
+                 temporary_runscript(root_version='5.34.32',
+                                     root_arch='slc6_gcc44_x86_64',
+                                     g4_version='4.9.5.p02',
+                                     physics_version='1.4.0',
+                                     se='UKI-LT2-IC-HEP-disk', **self) as runscript:
+                 logger.info("Submitting ParametricJob %s, inputdir: %s to DIRAC", self.id, self.reduction_lfn_inputdir or self.der_lfn_inputdir or self.lzap_lfn_inputdir)
+                 self.status, self.dirac_jobs = dirac.submit_lfn_parametric_job(name="%(args)s",
+                                                                                executable=os.path.basename(runscript),
+                                                                                args='%(args)s',
+                                                                                input_sandbox=[runscript],
+                                                                                input_lfn_dir=self.reduction_lfn_inputdir or self.der_lfn_inputdir or self.lzap_lfn_inputdir,
+                                                                                output_log='lzanalysis_output.log')
+
+
 
         with continuing(scoped_session) as session:
             this = session.query(ParametricJobs).filter(ParametricJobs.id == self.id).first()

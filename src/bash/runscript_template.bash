@@ -115,16 +115,16 @@ DER_OUTPUT_FILE=$2
 
 set --
 
-export PHYS_DIR=/cvmfs/lz.opensciencegrid.org/Physics/{{ physics_version }}
+export PHYS_DIR=/cvmfs/lz.opensciencegrid.org/Physics/release-{{ physics_version }}
 source ${PHYS_DIR}/Physics/setup.sh
 STEERING_DIR=${PHYS_DIR}/ProductionSteeringFiles
 STEERING_FILE=${STEERING_DIR}/RunLZapMCTruthON.py
 
 export LZAP_INPUT_FILES=${OUTPUT_DIR}/$(basename ${DER_OUTPUT_FILE})
 export LZAP_OUTPUT_FILE=${OUTPUT_DIR}/$(basename ${DER_OUTPUT_FILE/"_raw.root"/"_lzap.root"})
-N=$(echo $(basename ${LZAP_OUTPUT_FILE}) | grep -oP '(?<=_)\d+(?=\_lzap)')
+N=$(($(basename ${LZAP_OUTPUT_FILE}) | grep -oP '(?<=_)\d+(?=\_lzap)'))
 
-if [ "$N" -ge "$N0" ] && [ "$N" -lt "$Nlast" ]
+if [ $N -ge $N0 ] && [ $N -lt $Nlast ]
 then
 stop_on_error lzap ${STEERING_FILE} "Error running LZap!"
 fi

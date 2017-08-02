@@ -1,6 +1,7 @@
 """Requests service."""
 import os
 import json
+import logging
 from datetime import datetime
 from collections import namedtuple
 import cherrypy
@@ -9,6 +10,7 @@ from utils.apache_utils import name_from_dn
 from utils.sqlalchemy_utils import create_db, db_session
 from tables import Requests, Users, ParametricJobs
 
+logger = logging.getLogger(__name__)
 COLUMNS = ['id', 'request_date', 'sim_lead', 'status', 'description']
 SelectedMacro = namedtuple('SelectedMacro', ('path', 'name', 'njobs', 'nevents', 'seed', 'status', 'output'))
 
@@ -100,7 +102,16 @@ class RequestsDB(object):
                                              reschedule=False,
                                              **masked_dict(kwargs, ParametricJobs.attributes())))
 
+            if set(['reduction_lfn_inputdir', 'der_lfn_inputdir', 'lzap_lfn_inputdir']).intersection(kwargs.iterkeys()):
+                macros.append(ParametricJobs(request_id=request.id,
+                                             status="Requested",
+                                             dirac_jobs=[],
+                                             reschedule=False,
+                                             **masked_dict(kwargs, ParametricJobs.attributes())))
+
             session.add_all(macros)
+            if not macros:
+                logger.warning("No ParametricJobs added to the DB.")
         return self.GET()
 
     def PUT(self, reqid, **kwargs):  # pylint: disable=C0103

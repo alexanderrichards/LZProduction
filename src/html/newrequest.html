@@ -308,7 +308,7 @@ $(document).ready(function() {
 		    <br>
 		    <label for="tag"><span class="glyphicon glyphicon-tag"></span> Select Tag:</label>
 		    <div class="input-group">
-		      <select id="tags" class="selectpicker form-control" data-live-search="true" data-live-search-style="startsWith" data-size="10" data-width="100px" data-dropup-auto="false" data-live-search-placeholder="Search..." title="Tag" name="tag" required>
+		      <select id="tags" class="selectpicker form-control togglable" toggle="sim_toggle" data-live-search="true" data-live-search-style="startsWith" data-size="10" data-width="100px" data-dropup-auto="false" data-live-search-placeholder="Search..." title="Tag" name="tag" required>
 		      </select>
 		    </div>
 
@@ -318,7 +318,7 @@ $(document).ready(function() {
 		      <div class="col-xs-8">
 			<div class="input-group macro-selection">
 			  <!-- having no name attribute means it's not submitted as part of the form -->
-			  <select id="macros" class="selectpicker form-control" data-size="6" width="100%" data-selected-text-format="count > 1" data-live-search="true" data-dropup-auto="false" data-live-search-placeholder="Search..." title="Macros" multiple disabled></select>
+			  <select id="macros" class="selectpicker form-control togglable" toggleoff="sim_toggle" data-size="6" width="100%" data-selected-text-format="count > 1" data-live-search="true" data-dropup-auto="false" data-live-search-placeholder="Search..." title="Macros" multiple disabled></select>
 			</div>
 		      </div>
 
@@ -327,21 +327,21 @@ $(document).ready(function() {
 			  <div class="col-xs-12">
 			    <label for="njobs">Number of Jobs/Files:</label>
 			    <div class="input-group">
-			      <input id="njobs" class="form-control" type="text">
+			      <input id="njobs" class="form-control togglable" toggle="sim_toggle" type="text">
 			    </div>
 			  </div>
 
 			  <div class="col-xs-12">
 			    <label for="nevents">Beam On Events:</label>
 			    <div class="input-group">
-			      <input id="nevents" class="form-control" type="text">
+			      <input id="nevents" class="form-control togglable" toggle="sim_toggle" type="text">
 			    </div>
 			  </div>
 
 			  <div class="col-xs-12">
 			    <label for="seed">Initial Seed:</label>
 			    <div class="input-group">
-			      <input id="seed" class="form-control" type="text" value="9000000">
+			      <input id="seed" class="form-control togglable" toggle="sim_toggle" type="text" value="9000000">
 			    </div>
 			  </div>
 			</div>
@@ -353,7 +353,7 @@ $(document).ready(function() {
 		      <div class="col-xs-8">
 		      </div>
 		      <div class="col-xs-4">
-			<button id="add" type="button" class="btn btn-default">
+			<button id="add" type="button" class="btn btn-default togglable" toggle="sim_toggle">
 			  <span class="glyphicon glyphicon-plus-sign text-primary"></span> Add
 			</button>
 		      </div>
@@ -366,12 +366,12 @@ $(document).ready(function() {
 		    <div class="row">
 		      <div class="col-xs-8">
 			<div class="input-group macro-selection">
-			  <select id="selected_macros" name="selected_macros" class="form-control macro-selection" size=10 multiple disabled></select>
+			  <select id="selected_macros" name="selected_macros" class="form-control macro-selection togglable" toggleoff="sim_toggle" size=10 multiple disabled></select>
 			</div>
 		      </div>
 
 		      <div class="col-xs-4">
-			<button id="remove" type="button" class="btn btn-default">
+			<button id="remove" type="button" class="btn btn-default togglable" toggle="sim_toggle">
 			  <span class="glyphicon glyphicon-minus-sign text-danger"></span> Remove
 			</button>
 		      </div>

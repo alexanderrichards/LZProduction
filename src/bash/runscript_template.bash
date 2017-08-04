@@ -27,7 +27,7 @@ MCTRUTH_LFN_DIR={{ mctruth_lfn_outputdir }}
 ## Reduction variables
 ####################
 {% if not app_version %}
-SIM_OUTPUT_FILE=$2
+SIM_OUTPUT_FILE=$1
 {% endif %}
 LIBNEST_DIR=/cvmfs/lz.opensciencegrid.org/fastNEST/release-{{ fastnest_version }}
 REDUCTION_DIR=/cvmfs/lz.opensciencegrid.org/TDRAnalysis/release-{{ reduction_version }}
@@ -37,7 +37,7 @@ REDUCTION_LFN_DIR={{ reduction_lfn_outputdir }}
 ## DER variables
 ####################
 {% if not app_version %}
-MCTRUTH_OUTPUT_FILE=$2
+MCTRUTH_OUTPUT_FILE=$1
 {% endif %}
 DER_DIR=/cvmfs/lz.opensciencegrid.org/DER/release-{{ der_version }}
 DER_LFN_DIR={{ der_lfn_outputdir }}
@@ -110,7 +110,7 @@ N0=0
 Nlast=251
 LZAP_LFN_DIR={{ lzap_lfn_outputdir }}
 {% if not der_version %}
-DER_OUTPUT_FILE=$2
+DER_OUTPUT_FILE=$1
 {% endif %}
 
 set --
@@ -119,14 +119,13 @@ export PHYS_DIR=/cvmfs/lz.opensciencegrid.org/Physics/release-{{ physics_version
 source ${PHYS_DIR}/Physics/setup.sh
 STEERING_DIR=${PHYS_DIR}/ProductionSteeringFiles
 STEERING_FILE=${STEERING_DIR}/RunLZapMCTruthON.py
-
 export LZAP_INPUT_FILES=${OUTPUT_DIR}/$(basename ${DER_OUTPUT_FILE})
 export LZAP_OUTPUT_FILE=${OUTPUT_DIR}/$(basename ${DER_OUTPUT_FILE/"_raw.root"/"_lzap.root"})
-N=$(($(basename ${LZAP_OUTPUT_FILE}) | grep -oP '(?<=_)\d+(?=\_lzap)'))
+N=$(echo $(basename ${LZAP_OUTPUT_FILE}) | grep -oP '(?<=_)\d+(?=\_lzap)')
 
 if [ $N -ge $N0 ] && [ $N -lt $Nlast ]
 then
-stop_on_error lzap ${STEERING_FILE} "Error running LZap!"
+stop_on_error ${LZAP_SCRIPTS_DIR}/lzap_execute ${STEERING_FILE} "Error running LZap!"
 fi
 {% endif %}
 ## Upload

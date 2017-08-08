@@ -1,6 +1,6 @@
 """Services Table."""
 from sqlalchemy import Column, Integer, String, TIMESTAMP
-from sqlalchemy_utils import SQLTableBase
+from utils.sqlalchemy_utils import SQLTableBase
 
 
 class Services(SQLTableBase):

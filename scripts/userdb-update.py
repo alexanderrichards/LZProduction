@@ -57,8 +57,8 @@ if __name__ == '__main__':
     sys.path = [os.path.join(lzprod_root, 'src', 'python')] + sys.path
 
     Users = importlib.import_module('tables').Users
-    CertClient = importlib.import_module('suds_utils').CertClient
-    sqlalchemy_utils = importlib.import_module('sqlalchemy_utils')
+    CertClient = importlib.import_module('utils.suds_utils').CertClient
+    sqlalchemy_utils = importlib.import_module('utils.sqlalchemy_utils')
 
     # Note if clients share the same transport we get a
     # 'Duplicate domain "suds.options" found' exception.

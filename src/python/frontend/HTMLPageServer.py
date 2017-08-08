@@ -1,11 +1,12 @@
 """Certificate authenticated web server."""
 from datetime import datetime
+import cStringIO
 import cherrypy
 from cherrypy.lib.static import serve_fileobj
-from sqlalchemy_utils import create_db, db_session
-from apache_utils import name_from_dn
+from utils.sqlalchemy_utils import create_db, db_session
+from utils.apache_utils import name_from_dn
 from tables import Services, ParametricJobs, Users, Requests
-import csv, cStringIO
+import csv
 
 MINS = 60
 SERVICE_COLOUR_MAP = {'up': 'brightgreen',
@@ -74,7 +75,6 @@ class HTMLPageServer(object):
                                  .one_or_none()
                 if request is not None:
                     request.status = "Submitted"
-
 
     @cherrypy.expose
     def csv_export(self):

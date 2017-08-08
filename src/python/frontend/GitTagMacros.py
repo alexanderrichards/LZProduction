@@ -12,6 +12,7 @@ Macro = namedtuple('Macro', ('name', 'path'))
 macro_dir_map = {'LUXSim': ['BackgroundMacros'],
                  'BACCARAT': ['BaccMacros', 'MDC1Macros']}
 
+
 @cherrypy.popargs('tagid', 'app')
 class GitTagMacros(object):
     """

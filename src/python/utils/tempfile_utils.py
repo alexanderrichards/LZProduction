@@ -6,28 +6,20 @@ from contextlib import contextmanager
 import jinja2
 from git import Git
 
+
 @contextmanager
 def temporary_runscript(**kwargs):
-    templates_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'bash')
-    template_env = jinja2.Environment(loader=jinja2.FileSystemLoader(searchpath=templates_dir))
+    templates_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'bash')
+    template_env = jinja2.Environment(loader=jinja2.FileSystemLoader(searchpath=templates_dir),
+                                      trim_blocks=True,
+                                      lstrip_blocks=True)
     with open('/tmp/runscript.sh', 'wb') as runscript:
-        runscript.write("#!/bin/bash\n")
-        if kwargs.get('app_version'):
-            runscript.write(template_env.get_template('Simulation.bash').render(**kwargs))
-            runscript.write('\n')
-        if kwargs.get('reduction_version'):
-            runscript.write(template_env.get_template('Reduction.bash').render(**kwargs))
-            runscript.write('\n')
-        if kwargs.get('der_version'):
-            runscript.write(template_env.get_template('DER.bash').render(**kwargs))
-            runscript.write('\n')
-        if kwargs.get('lzap_version'):
-            runscript.write(template_env.get_template('LZap.bash').render(**kwargs))
-            runscript.write('\n')
+        runscript.write(template_env.get_template('runscript_template.bash').render(**kwargs))
     try:
         yield runscript.name
     finally:
         os.remove(runscript.name)
+
 
 @contextmanager
 def temporary_macro(tag, macro, app, nevents):
@@ -38,7 +30,7 @@ def temporary_macro(tag, macro, app, nevents):
         /$app/beamOn $nevents
         exit
         """))
-    lzprod_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+    lzprod_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
     git_dir = os.path.join(lzprod_root, 'git', 'TDRAnalysis')
     macro = os.path.join(git_dir, macro)
     git = Git(git_dir)
@@ -55,4 +47,3 @@ def temporary_macro(tag, macro, app, nevents):
         yield tmp_macro.name
     finally:
         os.remove(tmp_macro.name)
-

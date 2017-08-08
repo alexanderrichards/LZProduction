@@ -1,7 +1,7 @@
 """Admin management service."""
 from collections import namedtuple
-from sqlalchemy_utils import create_db, db_session
-from apache_utils import name_from_dn
+from utils.sqlalchemy_utils import create_db, db_session
+from utils.apache_utils import name_from_dn
 from tables import Users
 
 User = namedtuple('User', ('id', 'admin', 'name'))

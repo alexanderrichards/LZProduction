@@ -122,8 +122,9 @@ class ParametricJobs(SQLTableBase):
                 self.reschedule = False
             else:
                 self.status = dirac.status(dirac_ids)
-        if self.status == 'Failed':
-            self.status = dirac.auto_reschedule(dirac_ids)
+
+            if self.status == 'Failed':
+                self.status = dirac.auto_reschedule(dirac_ids)
 
         with continuing(scoped_session) as session:
             this = session.query(ParametricJobs).filter(ParametricJobs.id == self.id).first()

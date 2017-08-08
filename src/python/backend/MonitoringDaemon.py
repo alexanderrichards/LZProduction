@@ -29,7 +29,7 @@ class MonitoringDaemon(Daemonize):
                    .filter(Services.name == "gangad")\
                    .update({'status': 'down',
                             'timestamp': datetime.now()})
-        super(GangaDaemon, self).exit()
+        super(MonitoringDaemon, self).exit()
 
     @staticmethod
     def reset_loggers():

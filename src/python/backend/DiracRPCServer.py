@@ -196,7 +196,7 @@ class DiracDaemon(Daemonize):
         This method will reschedule jobs from a list that are in state failed,
         so long as:
         1) There is at least one job in the list in the Done state
-        2) The job hasn't reached a reschedule count of 5
+        2) The job hasn't reached a reschedule count of 2
         """
         status_map = {}
         for k, v in self._dirac_api.status(ids).get("Value", {}).iteritems():
@@ -205,7 +205,7 @@ class DiracDaemon(Daemonize):
         failed_jobs = [job for job in status_map.get('Failed')
                        if int(self._dirac_api.attributes(job)
                                              .get('Value', {})
-                                             .get('RescheduleCounter', 0)) < 5]
+                                             .get('RescheduleCounter', 0)) < 2]
         if failed_jobs and status_map.get('Done'):
             self._dirac_api.reschedule(failed_jobs)
         return self.status(ids)

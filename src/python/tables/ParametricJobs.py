@@ -92,14 +92,13 @@ class ParametricJobs(SQLTableBase):
                                      g4_version='4.9.5.p02',
                                      physics_version='1.4.0',
                                      se='UKI-LT2-IC-HEP-disk', **self) as runscript:
-                 logger.info("Submitting ParametricJob %s, inputdir: %s to DIRAC", self.id, self.reduction_lfn_inputdir or self.der_lfn_inputdir or self.lzap_lfn_inputdir)
-                 self.status, self.dirac_jobs = dirac.submit_lfn_parametric_job(name="%(args)s",
-                                                                                executable=os.path.basename(runscript),
-                                                                                args='%(args)s',
-                                                                                input_sandbox=[runscript],
-                                                                                input_lfn_dir=self.reduction_lfn_inputdir or self.der_lfn_inputdir or self.lzap_lfn_inputdir,
-                                                                                output_log='lzanalysis_output.log')
-
+                logger.info("Submitting ParametricJob %s, inputdir: %s to DIRAC", self.id, self.reduction_lfn_inputdir or self.der_lfn_inputdir or self.lzap_lfn_inputdir)
+                self.status, self.dirac_jobs = dirac.submit_lfn_parametric_job(name="%(args)s",
+                                                                               executable=os.path.basename(runscript),
+                                                                               args='%(args)s',
+                                                                               input_sandbox=[runscript],
+                                                                               input_lfn_dir=self.reduction_lfn_inputdir or self.der_lfn_inputdir or self.lzap_lfn_inputdir,
+                                                                               output_log='lzanalysis_output.log')
 
 
         with continuing(scoped_session) as session:

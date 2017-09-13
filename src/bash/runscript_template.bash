@@ -57,16 +57,26 @@ OUTPUT_FILE=$(awk '/^\/{{ app }}\/io\/outputName/ {print $2}' $1 | tail -1)$2.bi
 # move into the LUXSim directory, set G4 env, and run the macro
 # the executable must be run from within it's dir!
 cd $APP_DIR
+{% if app == 'BACCARAT' and app_version.startswith('2') %}
+source setup.sh
+stop_on_error $APP_DIR/bin/{{ app }}Executable $OUTPUT_DIR/$MACRO_FILE "Simulation step failed!"
+{% else %}
 source $G4_DIR/etc/geant4env.sh $G4_VER
 stop_on_error $APP_DIR/{{ app }}Executable $OUTPUT_DIR/$MACRO_FILE "Simulation step failed!"
+{% endif %}
 
 cd $OUTPUT_DIR
 # after macro has run, rootify
-source $ROOT_DIR/bin/thisroot.sh
 {% if app == 'BACCARAT' %}
-$APP_DIR/tools/BaccRootConverter $OUTPUT_FILE
+{% if app_version.startswith('2') %}
+stop_on_error $APP_DIR/bin/BaccRootConverter $OUTPUT_FILE "Failed Rootify step!"
 {% else %}
-`ls $APP_DIR/tools/*RootReader` $OUTPUT_FILE
+source $ROOT_DIR/bin/thisroot.sh
+stop_on_error $APP_DIR/tools/BaccRootConverter $OUTPUT_FILE "Failed Rootify step!"
+{% endif %}
+{% else %}
+source $ROOT_DIR/bin/thisroot.sh
+stop_on_error `ls $APP_DIR/tools/*RootReader` $OUTPUT_FILE "Failed Rootify step!"
 {% endif %}
 SIM_OUTPUT_FILE=$(basename $OUTPUT_FILE .bin).root
 
@@ -80,8 +90,8 @@ source $LIBNEST_DIR/libNEST/thislibNEST.sh
 REDUCTION_OUTPUT_FILE=$(basename $SIM_OUTPUT_FILE .root)_analysis_tree.root
 
 {% if app == 'BACCARAT' %}
-export BACC_TOOLS=/cvmfs/lz.opensciencegrid.org/BACCARAT/release-1.0.0/tools
-export LD_LIBRARY_PATH=$BACC_TOOLS:$LD_LIBRARY_PATH
+export BACC_TOOLS=$APP_DIR/tools
+export LD_LIBRARY_PATH=$APP_DIR/lib:$LD_LIBRARY_PATH
 stop_on_error $REDUCTION_DIR/ReducedAnalysisTree/Bacc2AnalysisTree $SIM_OUTPUT_FILE $REDUCTION_OUTPUT_FILE "Reduction step failed!"
 {% else %}
 stop_on_error $REDUCTION_DIR/ReducedAnalysisTree/LZSim2AnalysisTree $SIM_OUTPUT_FILE $REDUCTION_OUTPUT_FILE "Reduction step failed!"

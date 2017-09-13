@@ -80,7 +80,11 @@ stop_on_error `ls $APP_DIR/tools/*RootReader` $OUTPUT_FILE "Failed Rootify step!
 {% endif %}
 SIM_OUTPUT_FILE=$(basename $OUTPUT_FILE .bin).root
 
+{% if app == 'BACCARAT' and app_version.startswith('2') %}
+stop_on_error `ls $APP_DIR/bin/*MCTruth` $SIM_OUTPUT_FILE "MCTruth step failed!"
+{% else %}
 stop_on_error `ls $APP_DIR/tools/*MCTruth` $SIM_OUTPUT_FILE "MCTruth step failed!"
+{% endif %}
 MCTRUTH_OUTPUT_FILE=$(ls *_mctruth.root)
 {% endif %}
 {% if reduction_version %}

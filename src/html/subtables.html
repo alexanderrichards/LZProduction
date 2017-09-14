@@ -13,6 +13,7 @@
       <td>Output</td>
       <td>Status</td>
       <td></td>
+      <td></td>
     </tr>
     {% for macro in macros %}
     <tr>
@@ -21,19 +22,19 @@
       <td>{{ macro.nevents }}</td>
       <td>{{ macro.seed }}</td>
       <td>
-	{% if macro.sim_lfn_outputdir is not none%}
+	{% if macro.sim_lfn_outputdir is not none %}
 	{{ macro.sim_lfn_outputdir }}<br>
 	{% endif %}
-	{% if macro.mctruth_lfn_outputdir is not none%}
+	{% if macro.mctruth_lfn_outputdir is not none %}
 	{{ macro.mctruth_lfn_outputdir }}<br>
 	{% endif %}
-	{% if macro.reduction_lfn_outputdir is not none%}
+	{% if macro.reduction_lfn_outputdir is not none %}
 	{{ macro.reduction_lfn_outputdir }}<br>
 	{% endif %}
-	{% if macro.der_lfn_outputdir is not none%}
+	{% if macro.der_lfn_outputdir is not none %}
 	{{ macro.der_lfn_outputdir }}<br>
 	{% endif %}
-	{% if macro.lzap_lfn_outputdir is not none%}
+	{% if macro.lzap_lfn_outputdir is not none %}
 	{{ macro.lzap_lfn_outputdir }}<br>
 	{% endif %}
       </td>
@@ -44,6 +45,7 @@
 	  {{ macro.status }}
 	{% endif %}
       </td>
+      <td>{% include "html/progressbars.html" %}</td>
       <td>
 	{% if macro.status == 'Failed' %}
 	<span class="glyphicon glyphicon-repeat text-primary reschedule" style="cursor:pointer" macroid="{{ macro.id }}" requestid="{{ macro.request_id }}"></span>

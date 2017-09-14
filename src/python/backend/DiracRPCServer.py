@@ -1,4 +1,5 @@
 import os
+from collections import Counter
 from SimpleXMLRPCServer import SimpleXMLRPCServer
 from enum import IntEnum, unique
 from daemonize import Daemonize
@@ -104,9 +105,10 @@ class DiracDaemon(Daemonize):
         if not dirac_statuses:
             self.logger.warning("Returning status 'Unknown' as no information in DIRAC for ids: %s",
                                 ids)
+        counter = Counter(info['Status'] for info in dirac_statuses.itervalues())
         return reduce(max,
-                      (DIRACSTATUS[info['Status']] for info in dirac_statuses.itervalues()),
-                      DIRACSTATUS.Unknown).name
+                      (DIRACSTATUS[status] for status in counter),
+                      DIRACSTATUS.Unknown).name, counter
 
     def submit_lfn_parametric_job(self, name, executable,  input_lfn_dir, args='', input_sandbox=None,
                                   platform='ANY', output_log='', chunk_size=1000):

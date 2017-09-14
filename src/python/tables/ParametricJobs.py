@@ -44,6 +44,7 @@ class ParametricJobs(SQLTableBase):
     lzap_version = Column(String(250))
     lzap_lfn_inputdir = Column(String(250))
     lzap_lfn_outputdir = Column(String(250))
+    counters = Column(String(150))
     request_id = Column(Integer, nullable=False)
     status = Column(String(25), nullable=False)
     dirac_jobs = Column(LongPickleType(), nullable=False)
@@ -78,7 +79,7 @@ class ParametricJobs(SQLTableBase):
                                      livetimeperjob=livetimeperjob,  **self) as runscript,\
                  temporary_macro(self.tag, self.macro or '', self.app, self.nevents) as macro:
                 logger.info("Submitting ParametricJob %s, macro: %s to DIRAC", self.id, self.macro)
-                self.status, self.dirac_jobs = dirac.submit_ranged_parametric_job(name=os.path.splitext(os.path.basename(macro))[0] + '-%(args)s',
+                self.status, self.counters, self.dirac_jobs = dirac.submit_ranged_parametric_job(name=os.path.splitext(os.path.basename(macro))[0] + '-%(args)s',
                                                                                   executable=os.path.basename(runscript),
                                                                                   args=os.path.basename(macro) + ' %(args)s',
                                                                                   input_sandbox=[runscript, macro],
@@ -93,7 +94,7 @@ class ParametricJobs(SQLTableBase):
                                      physics_version='1.4.0',
                                      se='UKI-LT2-IC-HEP-disk', **self) as runscript:
                 logger.info("Submitting ParametricJob %s, inputdir: %s to DIRAC", self.id, self.reduction_lfn_inputdir or self.der_lfn_inputdir or self.lzap_lfn_inputdir)
-                self.status, self.dirac_jobs = dirac.submit_lfn_parametric_job(name="%(args)s",
+                self.status, self.counters, self.dirac_jobs = dirac.submit_lfn_parametric_job(name="%(args)s",
                                                                                executable=os.path.basename(runscript),
                                                                                args='%(args)s',
                                                                                input_sandbox=[runscript],
@@ -105,6 +106,7 @@ class ParametricJobs(SQLTableBase):
             this = session.query(ParametricJobs).filter(ParametricJobs.id == self.id).first()
             if this is not None:
                 this.status = self.status
+                this.counters = self.counters
                 this.dirac_jobs = self.dirac_jobs
         return self.status
 
@@ -118,16 +120,17 @@ class ParametricJobs(SQLTableBase):
         dirac_ids = self.dirac_jobs
         with DiracClient("http://localhost:8000/") as dirac:
             if self.reschedule:
-                self.status = dirac.reschedule(dirac_ids)
+                self.status, self.counters = dirac.reschedule(dirac_ids)
                 self.reschedule = False
             else:
-                self.status = dirac.status(dirac_ids)
+                self.status, self.counters = dirac.status(dirac_ids)
 
             if self.status == 'Failed':
-                self.status = dirac.auto_reschedule(dirac_ids)
+                self.status, self.counters = dirac.auto_reschedule(dirac_ids)
 
         with continuing(scoped_session) as session:
             this = session.query(ParametricJobs).filter(ParametricJobs.id == self.id).first()
             if this is not None:
                 this.status = self.status
+                this.counters = self.counters
         return self.status

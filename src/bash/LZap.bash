@@ -1,30 +1,21 @@
+N0=0
+Nlast=251
+LZAP_LFN_DIR={{ lzap_lfn_outputdir }}
+{% if not der_version %}
+DER_OUTPUT_FILE=$1
+{% endif %}
+
 set --
-#export GAUDI_HOME_DIR=/cvmfs/lz.opensciencegrid.org/Gaudi/Gaudi/
-#export LCG_MOUNT=/cvmfs/sft.cern.ch/lcg/
-#export LCG_HOME_DIR=/cvmfs/sft.cern.ch/lcg/releases/LCG_79
-#export LZ_BUILD_CONFIG=x86_64-slc6-gcc48-opt
 
-LZAP_PHYSICS_DIR=/cvmfs/lz.opensciencegrid.org/Physics/release-$physics_version
-LZAP_DIR=/cvmfs/lz.opensciencegrid.org/LZap/release-$lzap_version
+export PHYS_DIR=/cvmfs/lz.opensciencegrid.org/Physics/release-{{ physics_version }}
+source ${PHYS_DIR}/Physics/setup.sh
+STEERING_DIR=${PHYS_DIR}/ProductionSteeringFiles
+STEERING_FILE=${STEERING_DIR}/RunLZapMCTruthON.py
+export LZAP_INPUT_FILES=${OUTPUT_DIR}/$(basename ${DER_OUTPUT_FILE})
+export LZAP_OUTPUT_FILE=${OUTPUT_DIR}/$(basename ${DER_OUTPUT_FILE/"_raw.root"/"_lzap.root"})
+N=$(echo $(basename ${LZAP_OUTPUT_FILE}) | grep -oP '(?<=_)\d+(?=\_lzap)')
 
-source $LZAP_DIR/LZap/setup.sh
-PYTHONPATH=${LZAP_BASE_PYTHONPATH}
-
-$LZAP_PHYSICS_DIR/PhotonDetection/lzap_project
-
-VALIDATIONS_DIR=/cvmfs/lz.opensciencegrid.org/Physics/release-1.0.0/PhotonDetection/scripts/validations
-
-for i in (PulseClassifierValidation PhotonCounterValidation PulseFinderValidation PodCalibratorValidation)
-do
-  sed "s:^selector\.InputFiles *= *.*$:selector.InputFiles = [$DER_OUTPUT_FILE]:g" <$VALIDATIONS_DIR/$i.py> $i.py
-  $LZAP_DIR/scripts/lzap_execute $i.py
-  mv $i.root ${i}_10k_DER_pdsf_grid.root
-done
-
-# OUTPUT_REDUCED_FILE=${OUTPUT_ROOT_FILE/".root"/"_analysis_tree.root"}
-
-
-#dirac-dms-add-file $LZAP_PATH/$OUTPUT_LZAP_FILE1 $OUTPUT_DIR/$OUTPUT_LZAP_FILE1 $DATA_STORE_SE
-#dirac-dms-add-file $LZAP_PATH/$OUTPUT_LZAP_FILE2 $OUTPUT_DIR/$OUTPUT_LZAP_FILE2 $DATA_STORE_SE
-#dirac-dms-add-file $LZAP_PATH/$OUTPUT_LZAP_FILE3 $OUTPUT_DIR/$OUTPUT_LZAP_FILE3 $DATA_STORE_SE
-#dirac-dms-add-file $LZAP_PATH/$OUTPUT_LZAP_FILE4 $OUTPUT_DIR/$OUTPUT_LZAP_FILE4 $DATA_STORE_SE
+if [ $N -ge $N0 ] && [ $N -lt $Nlast ]
+then
+stop_on_error ${LZAP_SCRIPTS_DIR}/lzap_execute ${STEERING_FILE} "Error running LZap!"
+fi

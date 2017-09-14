@@ -1,7 +1,11 @@
+{% if not app_version %}
+MCTRUTH_OUTPUT_FILE=$1
+{% endif %}
 DER_DIR=/cvmfs/lz.opensciencegrid.org/DER/release-{{ der_version }}
-DER_LFN_DIR={{ der_lfn_dir }}
+DER_LFN_DIR={{ der_lfn_outputdir }}
 
-i_job=$((SEED-{{ seed0 }}))
+
+i_job=$((SEED-{{ seed }}))
 livetimeperjob={{ livetimeperjob }}
 DT=$(awk "BEGIN {print $i_job*$livetimeperjob+0.5; exit}")
 let DDT=`echo $DT | cut -d. -f 1`
@@ -9,19 +13,7 @@ UNIXTIME=$(({{ unixtime }}+DDT))
 
 cd $DER_DIR
 source $DER_DIR/DERenv.sh
-#time $DER_DIR/DER  --fileSeqNum DER --UserCheck false --SkipLargeDeltaT true --outDir ${OUTPUT_DIR}/ ${OUTPUT_DIR}/${MCTRUTH_OUTPUT_FILE}
-$DER_DIR/DER --UserCheck false --SkipLargeDeltaT true --FileTimeStamp ${UNIXTIME} --fileSeqNum ${i_job} --SignalChain SAMPLED --outDir ${OUTPUT_DIR}/ ${OUTPUT_DIR}/${MCTRUTH_OUTPUT_FILE}
-ret=$?
-if [ $ret -ne 0 ]
-then
-    echo "DER step failed with exit code: $ret" >&2
-    exit $ret
-fi
+stop_on_error $DER_DIR/DER --UserCheck false --SkipLargeDeltaT true --FileTimeStamp ${UNIXTIME} --fileSeqNum ${i_job} --SignalChain SAMPLED --outDir ${OUTPUT_DIR}/ ${OUTPUT_DIR}/${MCTRUTH_OUTPUT_FILE} "DER step failed!"
 
 cd $OUTPUT_DIR
 DER_OUTPUT_FILE=$(ls *_raw.root)
-#DER_OUTPUT_FILE=$(basename $MCTRUTH_OUTPUT_FILE ._mctruth.root)_der.root
-#mv $(ls lz_*DER*.root) $DER_OUTPUT_FILE
-
-ls -l *.root
-dirac-dms-add-file -ddd $DER_LFN_DIR/$DER_OUTPUT_FILE $OUTPUT_DIR/$DER_OUTPUT_FILE $SE

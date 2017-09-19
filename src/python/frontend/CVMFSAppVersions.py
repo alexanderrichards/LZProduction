@@ -1,10 +1,12 @@
 """CVMFS Servcice."""
 import os
 import re
+import logging
 import cherrypy
 import html
 from natsort import natsorted
 
+logger = logging.getLogger(__name__)
 VERSION_RE = re.compile(r"^release-(\d{1,3}\.\d{1,3}\.\d{1,3})$")
 
 
@@ -30,7 +32,13 @@ class CVMFSAppVersions(object):
             print "Invalid app type %s" % appid
             return ''
         html_ = html.HTML()
-        _, dirs, _ = os.walk(os.path.join(self.cvmfs_root, appid)).next()
+        dirs = []
+        try:
+            _, dirs, _ = os.walk(os.path.join(self.cvmfs_root, appid)).next()
+        except StopIteration:
+            logger.error("Couldn't access CVMFS dir: %s",
+                         os.path.join(self.cvmfs_root, appid))
+
         for dir_ in natsorted(dirs, reverse=True):
             for version in VERSION_RE.findall(dir_):
                 html_.option(version)

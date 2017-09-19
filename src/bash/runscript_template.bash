@@ -12,27 +12,27 @@ function stop_on_error {
 export OUTPUT_DIR=$(pwd)
 SE={{ se }}
 
+{% if app_version %}
 ## Simulation
 ###########################
-{% if app_version %}
 {% include "Simulation.template" %}
 {% endif %}
 
+{% if reduction_version %}
 ## Reduction
 ###########################
-{% if reduction_version %}
 {% include "Reduction.template" %}
 {% endif %}
 
+{% if der_version %}
 ## DER
 ###########################
-{% if der_version %}
 {% include "DER.template" %}
 {% endif %}
 
+{% if lzap_version %}
 ## LZap
 ###########################
-{% if lzap_version %}
 {% include "LZap.template" %}
 {% endif %}
 

@@ -1,6 +1,8 @@
 """DIRAC utility module."""
 import logging
 import xmlrpclib
+from collections import Counter
+from .string_utils import DefaultFormatter
 #from contextlib import contextmanager
 
 #from utils.coroutine_utils import status_accumulator
@@ -29,9 +31,12 @@ def apply_status_map(func):
     return wrapper
 
 def counter_magic(dirac_counter):
+    dirac_counter = Counter(dirac_counter)  # Can't serialise Counter so must convert back
     counter = Counter(status_map.get(status, 'Unknown') for status in dirac_counter.elements())
-    return '{Completed}/{Failed}/{Killed}/{Deleted}/{Unknown}/{Running}/{Submitted}'.format(**counter)
-    
+    formatter = DefaultFormatter(0)
+    return formatter.format('{Completed}/{Failed}/{Killed}/{Deleted}/{Unknown}/{Running}/{Submitted}',
+                            **counter)
+
 
 class DiracClient(xmlrpclib.ServerProxy):
 

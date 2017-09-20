@@ -108,7 +108,7 @@ class DiracDaemon(Daemonize):
         counter = Counter(info['Status'] for info in dirac_statuses.itervalues())
         return reduce(max,
                       (DIRACSTATUS[status] for status in counter),
-                      DIRACSTATUS.Unknown).name, counter
+                      DIRACSTATUS.Unknown).name, dict(counter)  # Can't serialise Counter
 
     def submit_lfn_parametric_job(self, name, executable,  input_lfn_dir, args='', input_sandbox=None,
                                   platform='ANY', output_log='', chunk_size=1000):

@@ -1,6 +1,8 @@
 """DIRAC utility module."""
 import logging
 import xmlrpclib
+from collections import Counter
+from .string_utils import DefaultFormatter
 #from contextlib import contextmanager
 
 #from utils.coroutine_utils import status_accumulator
@@ -28,6 +30,13 @@ def apply_status_map(func):
         return status_map.get(func(*args, **kwargs), 'Unknown')
     return wrapper
 
+def counter_magic(dirac_counter):
+    dirac_counter = Counter(dirac_counter)  # Can't serialise Counter so must convert back
+    counter = Counter(status_map.get(status, 'Unknown') for status in dirac_counter.elements())
+    formatter = DefaultFormatter(0)
+    return formatter.format('{Completed}/{Failed}/{Killed}/{Deleted}/{Unknown}/{Running}/{Submitted}',
+                            **counter)
+
 
 class DiracClient(xmlrpclib.ServerProxy):
 
@@ -41,26 +50,9 @@ class DiracClient(xmlrpclib.ServerProxy):
             logger.exception("Exception raised in server.")
         return False
 
-#    def _status_accumulate(self, status_dict):
-#        ret = {}
-#        status = "Unknown"
-#        status_acc = status_accumulator(('Unknown', 'Deleted', 'Killed', 'Done',
-#                                         'Failed', 'Stalled', 'Completed', 'Received', 'Matched',
-#                                         'Checking', 'Queued', 'Waiting', 'Running'))
-#        if not status_dict:
-#            logger.warning("status dict is empty! Unknown status will be returned.")
-#        for k, v in status_dict.iteritems():
-#            ret[int(k)] = v
-#            status = status_acc.send(v['Status'])
-#        return status_map.get(status, "Unknown"), ret
-
-
-    def __getattr__(self, item):
-        return apply_status_map(xmlrpclib.ServerProxy.__getattr__(self, item))
-
     def submit_lfn_parametric_job(self, name, executable,  input_lfn_dir, args='', input_sandbox=None,
                                   platform='ANY', output_log='', chunk_size=1000):
-        status, dirac_jobs = xmlrpclib.ServerProxy.__getattr__(self, 'submit_lfn_parametric_job')(name,
+        (status, c), dirac_jobs = xmlrpclib.ServerProxy.__getattr__(self, 'submit_lfn_parametric_job')(name,
                                                                                                   executable,
                                                                                                   input_lfn_dir,
                                                                                                   args,
@@ -68,11 +60,11 @@ class DiracClient(xmlrpclib.ServerProxy):
                                                                                                   platform,
                                                                                                   output_log,
                                                                                                   chunk_size)
-        return status_map.get(status, "Unknown"), dirac_jobs
+        return status_map.get(status, "Unknown"), counter_magic(c), dirac_jobs
 
     def submit_ranged_parametric_job(self, name, executable,  start, stop, step=1, args='', input_sandbox=None,
                                      platform='ANY', output_log='', chunk_size=1000):
-        status, dirac_jobs = xmlrpclib.ServerProxy.__getattr__(self, 'submit_ranged_parametric_job')(name,
+        (status, c), dirac_jobs = xmlrpclib.ServerProxy.__getattr__(self, 'submit_ranged_parametric_job')(name,
                                                                                                      executable,
                                                                                                      start,
                                                                                                      stop,
@@ -82,11 +74,11 @@ class DiracClient(xmlrpclib.ServerProxy):
                                                                                                      platform,
                                                                                                      output_log,
                                                                                                      chunk_size)
-        return status_map.get(status, "Unknown"), dirac_jobs
+        return status_map.get(status, "Unknown"), counter_magic(c), dirac_jobs
 
     def submit_parametric_job(self, name, executable,  parameters, args='', input_sandbox=None,
                               platform='ANY', output_log='', chunk_size=1000):
-        status, dirac_jobs = xmlrpclib.ServerProxy.__getattr__(self, 'submit_parametric_job')(name,
+        (status, c), dirac_jobs = xmlrpclib.ServerProxy.__getattr__(self, 'submit_parametric_job')(name,
                                                                                               executable,
                                                                                               parameters,
                                                                                               args,
@@ -94,27 +86,16 @@ class DiracClient(xmlrpclib.ServerProxy):
                                                                                               platform,
                                                                                               output_log,
                                                                                               chunk_size)
-        return status_map.get(status, "Unknown"), dirac_jobs
+        return status_map.get(status, "Unknown"), counter_magic(c), dirac_jobs
 
-#    def status(self, ids):
-#        return status_map.get(xmlrpclib.ServerProxy.__getattr__(self, 'status')(ids), "Unknown")
+    def status(self, ids):
+        status, counter = xmlrpclib.ServerProxy.__getattr__(self, 'status')(ids)
+        return status_map.get(status, "Unknown"), counter_magic(counter)
 
-#    def auto_reschedule(self, ids):
-#        return status_map.get(xmlrpclib.ServerProxy.__getattr__(self, 'auto_reschedule')(ids),
-#                              "Unknown")
+    def auto_reschedule(self, ids):
+        status, counter = xmlrpclib.ServerProxy.__getattr__(self, 'auto_reschedule')(ids)
+        return status_map.get(status, "Unknown"), counter_magic(counter)
 
-#    def reschedule(self, ids):
-#        return status_map.get(xmlrpclib.ServerProxy.__getattr__(self, 'reschedule')(ids), "Unknown")
-
-'''
-@contextmanager
-def dirac_server(url):
-    """RPC context for communication with dirac environment API."""
-    try:
-        yield DiracClient(url)
-#        yield xmlrpclib.ServerProxy(url)
-    except xmlrpclib.ProtocolError:
-        logger.exception("Protocol error reaching server.")
-    except xmlrpclib.Fault:
-        logger.exception("Exception raised in server.")
-'''
+    def reschedule(self, ids):
+        status, counter = xmlrpclib.ServerProxy.__getattr__(self, 'reschedule')(ids)
+        return status_map.get(status, "Unknown"), counter_magic(counter)

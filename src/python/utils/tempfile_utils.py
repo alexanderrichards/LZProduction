@@ -1,7 +1,7 @@
+"""Functions for creating temporary job file."""
 import os
 from textwrap import dedent
 from string import Template
-from tempfile import NamedTemporaryFile
 from contextlib import contextmanager
 import jinja2
 from git import Git
@@ -9,6 +9,7 @@ from git import Git
 
 @contextmanager
 def temporary_runscript(**kwargs):
+    """Create temporary runscript."""
     templates_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'bash')
     template_env = jinja2.Environment(loader=jinja2.FileSystemLoader(searchpath=templates_dir),
                                       trim_blocks=True,
@@ -23,6 +24,7 @@ def temporary_runscript(**kwargs):
 
 @contextmanager
 def temporary_macro(tag, macro, app, nevents):
+    """Create temporary macro."""
     app_map = {'BACCARAT': 'Bacc'}
     macro_extras = Template(dedent("""
         /control/getEnv SEED

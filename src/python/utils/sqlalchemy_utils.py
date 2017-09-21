@@ -15,10 +15,18 @@ from sqlalchemy.orm.attributes import InstrumentedAttribute
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.ext.declarative.api import DeclarativeMeta
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
 
 class DeclarativeABCMeta(DeclarativeMeta, ABCMeta):
+    """
+    Declarative abstract base metaclass.
+
+    Metaclass combining the SQLAlchemy DeclarativeMeta
+    with the ABCMeta giving us the ability to use abstract
+    decorators etc.
+    """
+
     pass
 
 
@@ -44,14 +52,14 @@ class _IterableBase(Mapping):
 
     def __getitem__(self, item):
         """Access instrumented attributes as a dict."""
-        if not item in self.__class__.attributes():
+        if item not in self.__class__.attributes():
             raise KeyError("Invalid attribute name: %s" % item)
         return getattr(self, item)
 
     def __len__(self):
         return len(list(self.__class__.attributes()))
 
-SQLTableBase = declarative_base(cls=_IterableBase,  # pylint: disable=C0103
+SQLTableBase = declarative_base(cls=_IterableBase,  # pylint: disable=invalid-name
                                 metaclass=DeclarativeABCMeta)
 
 
@@ -67,6 +75,7 @@ def create_db(url):
 
 
 def setup_session(url):
+    """Setup session."""
     engine = create_engine(url)
     SQLTableBase.metadata.create_all(engine)
     SQLTableBase.metadata.bind = engine
@@ -75,6 +84,7 @@ def setup_session(url):
 
 @contextmanager
 def nonexpiring(scoped_session):
+    """Non-expiring session."""
     try:
         yield scoped_session(expire_on_commit=False)
         scoped_session.commit()
@@ -88,6 +98,7 @@ def nonexpiring(scoped_session):
 
 @contextmanager
 def reraising(scoped_session):
+    """Session reraising exceptions."""
     try:
         yield scoped_session()
         scoped_session.commit()
@@ -101,6 +112,7 @@ def reraising(scoped_session):
 
 @contextmanager
 def continuing(scoped_session):
+    """Session swallowing exceptions."""
     try:
         yield scoped_session()
         scoped_session.commit()

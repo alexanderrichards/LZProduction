@@ -1,12 +1,12 @@
 """Requests Table."""
 import logging
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, TIMESTAMP, Text, PickleType, ForeignKeyConstraint
+from sqlalchemy import Column, Integer, String, TIMESTAMP, PickleType, ForeignKeyConstraint
 from utils.sqlalchemy_utils import SQLTableBase, nonexpiring, continuing
 from tables import ParametricJobs
 from utils.coroutine_utils import status_accumulator
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
 
 class Requests(SQLTableBase):
@@ -25,6 +25,7 @@ class Requests(SQLTableBase):
     ForeignKeyConstraint(['requester_id'], ['users.id'])
 
     def submit(self, scoped_session):
+        """Submit a request."""
         self.status = "Submitting"
         with nonexpiring(scoped_session) as session:
             jobs = session.query(ParametricJobs).filter(ParametricJobs.request_id == self.id).all()
@@ -52,6 +53,7 @@ class Requests(SQLTableBase):
                     logger.info("Request %s moved to state %s", self.id, self.status)
 
     def update_status(self, scoped_session):
+        """Update request status."""
         status_acc = status_accumulator(('Unknown', 'Deleted', 'Killed', 'Completed', 'Failed', 'Requested', 'Approved', 'Submitted', 'Submitting', 'Running'))
         # with sqlalchemy_utils.db_session(self.dburl) as session:
         with nonexpiring(scoped_session) as session:

@@ -4,8 +4,8 @@ APP_DIR=/cvmfs/lz.opensciencegrid.org/{{ app }}/release-{{ app_version }}
 ROOT_DIR=/cvmfs/lz.opensciencegrid.org/ROOT/v{{ root_version }}/{{ root_arch }}/root
 G4_DIR=/cvmfs/lz.opensciencegrid.org/geant4/
 G4_VER=geant{{ g4_version }}
-SIM_LFN_DIR={{ sim_lfn_outputdir }}/{{ macro| basename }}
-MCTRUTH_LFN_DIR={{ mctruth_lfn_outputdir }}/{{ macro| basename }}
+SIM_LFN_DIR={{ sim_lfn_outputdir }}/{{ macro| filename }}
+MCTRUTH_LFN_DIR={{ mctruth_lfn_outputdir }}/{{ macro| filename }}
 
 #extract the name of the output file from the LUXSim macro
 {% if app == 'BACCARAT' %}

@@ -52,20 +52,22 @@ class HTMLPageServer(object):
         return self.template_env.get_template('html/index.html').render(data)
 
     @cherrypy.expose
-    def details(self, id):
+    def details(self, request_id):
+        """Return details of a request."""
         with db_session(self.dburl) as session:
             macros = session.query(ParametricJobs)\
-                            .filter(ParametricJobs.request_id == id)\
+                            .filter(ParametricJobs.request_id == request_id)\
                             .all()
             if not macros:
                 return "Error: No macro information!"
             return self.template_env.get_template('html/subtables.html').render({'macros': macros})
 
     @cherrypy.expose
-    def reschedule(self, id):
+    def reschedule(self, job_id):
+        """Reschedule a given job."""
         with db_session(self.dburl) as session:
             macro = session.query(ParametricJobs)\
-                           .filter(ParametricJobs.id == int(id))\
+                           .filter(ParametricJobs.id == int(job_id))\
                            .one_or_none()
             if macro is not None:
                 macro.reschedule = True

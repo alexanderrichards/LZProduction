@@ -14,7 +14,7 @@ def temporary_runscript(**kwargs):
     template_env = jinja2.Environment(loader=jinja2.FileSystemLoader(searchpath=templates_dir),
                                       trim_blocks=True,
                                       lstrip_blocks=True)
-    template_env.filters['basename'] = os.path.basename
+    template_env.filters['filename'] = lambda path: os.path.splitext(os.path.basename(path))[0]
     with open('/tmp/runscript.sh', 'wb') as runscript:
         runscript.write(template_env.get_template('runscript_template.bash').render(**kwargs))
     try:

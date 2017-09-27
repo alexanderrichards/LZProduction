@@ -20,6 +20,7 @@ def daemon_main(args):
     services = importlib.import_module('frontend')
     apache_utils = importlib.import_module('utils.apache_utils')
     src_root = os.path.join(lzprod_root, 'src')
+    importlib.import_module('utils.jinja2_utils')
     template_env = jinja2.Environment(loader=jinja2.FileSystemLoader(searchpath=src_root))
 
     config = {

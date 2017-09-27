@@ -75,42 +75,52 @@ if __name__ == '__main__':
     voms_users_info = vomsAdmin.service.listMembers(vomsAdmin.service.getVOName())
     voms_valid_users = set(vomsCompat.service.getGridmapUsers())
 
-    voms_users = set((user_info['DN'], user_info['CA']) for user_info in voms_users_info)
+    voms_users = {Users(dn=user_info['DN'],
+                        ca=user_info['CA'],
+                        email=user_info['mail'],
+                        suspended=user_info['DN'] not in voms_valid_users,
+                        admin=False) for user_info in voms_users_info}
 
     sqlalchemy_utils.create_db(args.dburl)
     with sqlalchemy_utils.db_session(args.dburl) as session:
-        db_users = set(session.query(Users.dn, Users.ca).all())
+        db_users = set(session.query(Users).all())
 
         new_users = voms_users.difference(db_users)
         removed_users = db_users.difference(voms_users)
-        common_users = voms_users.intersection(db_users)
+        common_users = db_users.intersection(voms_users)  # takes from arg first
 
         # Add new users in VOMS
-        for userdn, userca in new_users:
-            logger.info("Adding user: DN='%s', CA='%s'", userdn, userca)
-            session.add(Users(dn=userdn,
-                              ca=userca,
-                              suspended=userdn not in voms_valid_users,
-                              admin=False))
+        for new_user in new_users:
+            logger.info("Adding user: DN='%s', CA='%s'", new_user.dn, new_user.ca)
+            session.add(new_user)
 
         # Remove users removed from VOMS
-        for userdn, userca in removed_users:
-            logger.info("Removing user: DN='%s', CA='%s'", userdn, userca)
+        for removed_user in removed_users:
+            logger.info("Removing user: DN='%s', CA='%s'", removed_user.dn, removed_user.ca)
             session.query(Users)\
-                   .filter(Users.dn == userdn)\
-                   .filter(Users.ca == userca)\
+                   .filter_by(dn=removed_user.dn, ca=removed_user.ca)\
                    .delete(synchronize_session=False)
 
         # Users with modified suspended status, update from VOMS
-        for userdn, userca in common_users:
-            voms_suspended = userdn not in voms_valid_users
-            db_suspended = any(session.query(Users.suspended).filter(Users.dn == userdn).one())
+        for common_user in common_users:
+            voms_dn, voms_ca = common_user.dn, common_user.ca
+            voms_email, voms_suspended = common_user.email, common_user.suspended
+            db_email, db_suspended = session.query(Users.email, Users.suspended)\
+                                            .filter_by(dn=voms_dn, ca=voms_ca)\
+                                            .one()
+
+            if voms_email != db_email:
+                logger.info("Updating user: DN='%s', CA='%s', Email=%s->%s",
+                             voms_dn, voms_ca, db_email, voms_email)
+                session.query(Users)\
+                       .filter_by(dn=voms_dn, ca=voms_ca)\
+                       .update({'email': voms_email})
+
             if voms_suspended != db_suspended:
                 logger.info("Updating user: DN='%s', CA='%s', Suspended=%s->%s",
-                             userdn, userca, db_suspended, voms_suspended)
+                             voms_dn, voms_ca, db_suspended, voms_suspended)
                 session.query(Users)\
-                       .filter(Users.dn == userdn)\
-                       .filter(Users.ca == userca)\
+                       .filter_by(dn=voms_dn, ca=voms_ca)\
                        .update({'suspended': voms_suspended})
 
     logging.shutdown()

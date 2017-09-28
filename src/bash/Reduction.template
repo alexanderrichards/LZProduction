@@ -1,9 +1,11 @@
-{% if not app_version %}
-SIM_OUTPUT_FILE=$1
-{% endif %}
 LIBNEST_DIR=/cvmfs/lz.opensciencegrid.org/fastNEST/release-{{ fastnest_version }}
 REDUCTION_DIR=/cvmfs/lz.opensciencegrid.org/TDRAnalysis/release-{{ reduction_version }}
+{% if not app_version %}
+SIM_OUTPUT_FILE=$1
 REDUCTION_LFN_DIR={{ reduction_lfn_outputdir }}
+{% else %}
+REDUCTION_LFN_DIR={{ reduction_lfn_outputdir }}/$(basename $MACRO_FILE .mac)
+{% endif %}
 
 source $LIBNEST_DIR/libNEST/thislibNEST.sh
 REDUCTION_OUTPUT_FILE=$(basename $SIM_OUTPUT_FILE .root)_analysis_tree.root

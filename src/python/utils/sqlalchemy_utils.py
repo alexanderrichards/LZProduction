@@ -39,6 +39,12 @@ class _IterableBase(Mapping):
     of an SQLAlchemy declarative base.
     """
 
+    @property
+    def columns(self):
+        """Get table columns."""
+        for column in self.__table__.columns:
+            yield str(column)
+
     @classmethod
     def attributes(cls):
         """Get an iterator over instrumented attributes."""
@@ -48,16 +54,16 @@ class _IterableBase(Mapping):
 
     def __iter__(self):
         """Get an iterator over instrumented attributes."""
-        return self.__class__.attributes()
+        return self.columns
 
     def __getitem__(self, item):
         """Access instrumented attributes as a dict."""
-        if item not in self.__class__.attributes():
+        if item not in self.columns:
             raise KeyError("Invalid attribute name: %s" % item)
         return getattr(self, item)
 
     def __len__(self):
-        return len(list(self.__class__.attributes()))
+        return len(list(self.columns))
 
 SQLTableBase = declarative_base(cls=_IterableBase,  # pylint: disable=invalid-name
                                 metaclass=DeclarativeABCMeta)

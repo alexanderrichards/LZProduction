@@ -45,6 +45,8 @@
    http://stackoverflow.com/questions/27170878/disable-ctrlclick-selection-in-jquery-datatables
   */
   #tableBody tbody tr td { -moz-user-select: none; }
+  .img-circle {border-radius: 50%;}
+  #identicon {width: 50px; height: 50px;}
 </style>
 
 <head>
@@ -55,6 +57,9 @@
   <div id="notification"></div>
 
   <div class="page-header">
+    <div align="right">
+      {{ user.dn }} <img id="identicon" class="img-circle" src="https://www.gravatar.com/avatar/{{ user.email| gravitar_hash }}?d=identicon">
+    </div>
     <h1>LZ Production Requests</h1>
     <div align="right">
       <img border="0" alt="Ganga daemon status" src="https://img.shields.io/badge/gangad-{{gangad_status}}-{{gangad_status_colour}}.svg">

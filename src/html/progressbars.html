@@ -1,0 +1,28 @@
+{% if macro.counters is not none %}
+{% set Completed, Failed, Killed, Deleted, Unknown, Running, Submitted = macro.counters.split("/") %}
+{% set Other = Killed|int + Deleted|int + Unknown|int %}
+{% set Total = Completed|int + Failed|int + Running|int + Submitted|int + Other %}
+{% set Striped = "" %}
+{% if (Running|int + Submitted|int) > 0 %}
+{% set Striped = "progress-bar-striped active" %}
+{% endif %}
+<div class="container" style="width:150px;border:0px;padding:0px;padding-top:15px">
+  <div class="progress" style="background:rgba(214, 214, 214, 1)">
+    <div class="progress-bar progress-bar-success {{Striped}}" role="progressbar" style="width:{{ 100 * Completed|int / Total }}%">
+      {{ Completed }}
+    </div>
+    <div class="progress-bar progress-bar-danger {{Striped}}" role="progressbar" style="width:{{ 100 * Failed|int / Total }}%">
+      {{ Failed }}
+    </div>
+    <div class="progress-bar progress-bar-info {{Striped}}" role="progressbar" style="width:{{ 100 * Running|int / Total }}%">
+      {{ Running }}
+    </div>
+    <div class="progress-bar progress-bar-warning {{Striped}}" role="progressbar" style="width:{{ 100 * Submitted|int / Total }}%">
+      {{ Submitted }}
+    </div>
+    <div class="progress-bar {{Striped}}" role="progressbar" style="width:{{ 100 * Other / Total }}%;background:grey">
+      {{ Other }}
+    </div>
+  </div>
+</div>
+{% endif %}

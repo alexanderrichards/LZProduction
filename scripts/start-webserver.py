@@ -20,6 +20,7 @@ def daemon_main(args):
     services = importlib.import_module('frontend')
     apache_utils = importlib.import_module('utils.apache_utils')
     src_root = os.path.join(lzprod_root, 'src')
+    importlib.import_module('utils.jinja2_utils')
     template_env = jinja2.Environment(loader=jinja2.FileSystemLoader(searchpath=src_root))
 
     config = {
@@ -86,8 +87,8 @@ if __name__ == '__main__':
                         help="URL for the requests DB. Note can use the prefix 'mysql+pymysql://' "
                              "if you have a problem with MySQLdb.py [default: %(default)s]")
     parser.add_argument('-a', '--socket-host', default='0.0.0.0',
-                        help="The host address to listen on (0.0.0.0 means all available) "
-                             "[default: %(default)s]")
+                        help="The host address to listen on (0.0.0.0 means all available "
+                             "interfaces) [default: %(default)s]")
     parser.add_argument('-p', '--socket-port', default=8080, type=int,
                         help="The host port to listen on [default: %(default)s]")
     parser.add_argument('-t', '--thread-pool', default=8, type=int,

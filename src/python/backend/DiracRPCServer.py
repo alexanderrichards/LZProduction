@@ -1,4 +1,6 @@
+"""DIRAC RPC Server."""
 import os
+from collections import Counter
 from SimpleXMLRPCServer import SimpleXMLRPCServer
 from enum import IntEnum, unique
 from daemonize import Daemonize
@@ -7,12 +9,16 @@ from DIRAC.Interfaces.API.Dirac import Dirac
 from DIRAC.Interfaces.API.Job import Job
 from DIRAC.Resources.Catalog.FileCatalog import FileCatalog
 
+
 def ListSplitter(sequence, nentries):
-    ## iterable must be of type Sequence
+    """Split sequence into groups."""
+    # iterable must be of type Sequence
     for i in xrange(0, len(sequence), nentries):
-        yield sequence[i : i + nentries]
+        yield sequence[i:i + nentries]
+
 
 def param_slicer(params, nentries):  # , param_index=1):
+    """param slicer."""
 #    param_lens = [len(i[param_index]) for i in parameters]
     param_lens = [len(i[1]) for i in params]
     if min(param_lens) != max(param_lens):
@@ -26,16 +32,19 @@ def param_slicer(params, nentries):  # , param_index=1):
 #                       for p in params]
     param_splitters = [(i, ListSplitter(j, nentries), k) for i, j, k in params]
     while True:
-#        yield [tuple(map(lambda i, x: x.next() if i == param_index else x,
-#                         enumerate(p)))
-#               for p in param_splitters]
-#        yield [tuple(x.next() if i == param_index else x
-#                     for i, x in enumerate(p))
-#               for p in param_splitters]
+        # yield [tuple(map(lambda i, x: x.next() if i == param_index else x,
+        #                  enumerate(p)))
+        #        for p in param_splitters]
+        # yield [tuple(x.next() if i == param_index else x
+        #              for i, x in enumerate(p))
+        #        for p in param_splitters]
         yield [(i, j.next(), k) for i, j, k in param_splitters]
+
 
 @unique
 class DIRACSTATUS(IntEnum):
+    """DIRAC Status Enum."""
+
     Unknown = 0
     Deleted = 1
     Killed = 2
@@ -52,6 +61,8 @@ class DIRACSTATUS(IntEnum):
 
 
 class DiracError(RuntimeError):
+    """DIRAC Error."""
+
     pass
 
 
@@ -70,7 +81,8 @@ class DiracDaemon(Daemonize):
         # closed when daemonising
         dirac_server = SimpleXMLRPCServer(self._address)
         dirac_server.register_introspection_functions()
-        dirac_server.register_instance(self._dirac_api)  # Maybe don't want to expose the whole dirac api
+        # Maybe don't want to expose the whole dirac api
+        dirac_server.register_instance(self._dirac_api)
         # override Dirac().status to reduce the list of parametric statuses
         dirac_server.register_function(self.status)
         dirac_server.register_function(self.submit_parametric_job)
@@ -82,6 +94,7 @@ class DiracDaemon(Daemonize):
         dirac_server.serve_forever()
 
     def list_lfns(self, root_dir):
+        """List LFNs."""
         file_catalog = FileCatalog()
         return file_catalog.listDirectory(root_dir, timeout=360)\
                            .get('Value', {})\
@@ -104,25 +117,30 @@ class DiracDaemon(Daemonize):
         if not dirac_statuses:
             self.logger.warning("Returning status 'Unknown' as no information in DIRAC for ids: %s",
                                 ids)
+        counter = Counter(info['Status'] for info in dirac_statuses.itervalues())
         return reduce(max,
-                      (DIRACSTATUS[info['Status']] for info in dirac_statuses.itervalues()),
-                      DIRACSTATUS.Unknown).name
+                      (DIRACSTATUS[status] for status in counter),
+                      DIRACSTATUS.Unknown).name, dict(counter)  # Can't serialise Counter
 
-    def submit_lfn_parametric_job(self, name, executable,  input_lfn_dir, args='', input_sandbox=None,
-                                  platform='ANY', output_log='', chunk_size=1000):
+    def submit_lfn_parametric_job(self, name, executable, input_lfn_dir, args='',
+                                  input_sandbox=None, platform='ANY', output_log='',
+                                  chunk_size=1000):
+        """Submit LFN parametric job."""
         lfns = self.list_lfns(input_lfn_dir)
         parameters = [('args', [os.path.basename(l) for l in lfns], False),
                       ('InputData', lfns, 'ParametricInputData')]
-        return self.submit_parametric_job(name, executable,  parameters, args, input_sandbox,
+        return self.submit_parametric_job(name, executable, parameters, args, input_sandbox,
                                           platform, output_log, chunk_size)
 
-    def submit_ranged_parametric_job(self, name, executable, start, stop, step=1, args='', input_sandbox=None,
-                                     platform='ANY', output_log='', chunk_size=1000):
+    def submit_ranged_parametric_job(self, name, executable, start, stop, step=1, args='',
+                                     input_sandbox=None, platform='ANY', output_log='',
+                                     chunk_size=1000):
+        """Submit seed ranged parametric job."""
         parameters = [('args', range(start, stop, step), False)]
-        return self.submit_parametric_job(name, executable,  parameters, args, input_sandbox,
+        return self.submit_parametric_job(name, executable, parameters, args, input_sandbox,
                                           platform, output_log, chunk_size)
 
-    def submit_parametric_job(self, name, executable,  parameters, args='', input_sandbox=None,
+    def submit_parametric_job(self, name, executable, parameters, args='', input_sandbox=None,
                               platform='ANY', output_log='', chunk_size=1000):
         """
         Submit LZProduction job to DIRAC.
@@ -180,9 +198,7 @@ class DiracDaemon(Daemonize):
 #        return self.status(dirac_jobs), dirac_jobs
 
     def reschedule(self, ids):
-        """
-        Reschedule all jobs in state Failed.
-        """
+        """Reschedule all jobs in state Failed."""
         failed_jobs = [k for k, v in self._dirac_api.status(ids).get("Value", {}).iteritems()
                        if v['Status'] == "Failed"]
         if failed_jobs:

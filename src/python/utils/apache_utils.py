@@ -7,10 +7,9 @@ credentials against a local DB.
 """
 from collections import namedtuple
 import cherrypy
+from sqlalchemy.orm.exc import MultipleResultsFound
 from utils.sqlalchemy_utils import create_db, db_session
 from tables import Users
-
-VerifiedUser = namedtuple('VerifiedUser', ('id', 'dn', 'ca', 'admin'))
 
 
 def name_from_dn(client_dn):
@@ -84,29 +83,28 @@ class CredentialDispatcher(object):
 
         create_db(self._users_dburl)
         with db_session(self._users_dburl) as session:
-            users = session.query(Users)\
-                           .filter(Users.dn == client_dn)\
-                           .filter(Users.ca == client_ca)\
-                           .all()
-            if not users:
-                raise cherrypy.HTTPError(403, 'Forbidden: Unknown user. user: (%s, %s)'
-                                         % (client_dn, client_ca))
-            if len(users) > 1:
+            try:
+                user = session.query(Users)\
+                              .filter_by(dn=client_dn, ca=client_ca)\
+                              .one_or_none()
+            except MultipleResultsFound:
                 raise cherrypy.HTTPError(500, 'Internal Server Error: Duplicate user detected. '
                                               'user: (%s, %s)'
                                          % (client_dn, client_ca))
-            if users[0].suspended:
+            if user is None:
+                raise cherrypy.HTTPError(403, 'Forbidden: Unknown user. user: (%s, %s)'
+                                         % (client_dn, client_ca))
+            if user.suspended:
                 raise cherrypy.HTTPError(403, 'Forbidden: User is suspended by VO. user: (%s, %s)'
                                          % (client_dn, client_ca))
 
-            if self._admin_only and not users[0].admin:
+            if self._admin_only and not user.admin:
                 raise cherrypy.HTTPError(403, 'Forbidden: Admin users only')
 
-            cherrypy.request.verified_user = VerifiedUser(users[0].id,
-                                                          users[0].dn,
-                                                          users[0].ca,
-                                                          users[0].admin)
+            session.expunge(user)
+            cherrypy.request.verified_user = user
+
         return self._dispatcher(path)
 
 
-__all__ = ('VerifiedUser', 'name_from_dn', 'apache_client_convert', 'CredentialDispatcher')
+__all__ = ('name_from_dn', 'apache_client_convert', 'CredentialDispatcher')

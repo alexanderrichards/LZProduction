@@ -6,7 +6,7 @@ import cherrypy
 import html
 from natsort import natsorted
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 VERSION_RE = re.compile(r"^release-(\d{1,3}\.\d{1,3}\.\d{1,3})$")
 
 

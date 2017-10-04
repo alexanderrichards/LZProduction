@@ -1,5 +1,4 @@
 """Requests service."""
-import os
 import json
 import logging
 from datetime import datetime
@@ -10,13 +9,14 @@ from utils.apache_utils import name_from_dn
 from utils.sqlalchemy_utils import create_db, db_session
 from tables import Requests, Users, ParametricJobs
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 COLUMNS = ['id', 'request_date', 'sim_lead', 'status', 'description']
 SelectedMacro = namedtuple('SelectedMacro', ('path', 'name', 'njobs', 'nevents', 'seed', 'status', 'output'))
 
-def masked_dict(d, mask):
+def masked_dict(dct, mask):
+    """Masked dict."""
     mask = tuple(mask)  # incase it's a generator/iterator
-    return {k: v for k, v in d.iteritems() if k in mask}
+    return {k: v for k, v in dct.iteritems() if k in mask}
 
 class RequestsDB(object):
     """

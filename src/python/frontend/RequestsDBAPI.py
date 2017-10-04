@@ -8,14 +8,14 @@ from tables import Requests, Users, ParametricJobs
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
-def subdict(d, seq, **kwargs):
+def subdict(dct, seq, **kwargs):
     """Sub dict."""
     # tuple(seq) as seq might be iterator
-    # return {k: v for k, v in d.iteritems() if k in tulpe(seq)}
+    # return {k: v for k, v in dct.iteritems() if k in tulpe(seq)}
 
-    # This might be faster if d is large as doesn't have to iterate through it.
+    # This might be faster if dct is large as doesn't have to iterate through it.
     # also works natively with seq being an iterator, no tuple initialisation
-    return dict({k: d[k] for k in seq if k in d}, **kwargs)
+    return dict({key: dct[key] for key in seq if key in dct}, **kwargs)
 
 
 class MappingEncoder(json.JSONEncoder):

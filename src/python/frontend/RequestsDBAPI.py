@@ -69,7 +69,7 @@ class RequestsDBAPI(object):
             if requester.admin:
                 user_requests = session.query(Requests)
             request = user_requests.filter_by(id=reqid).first()
-            return json.dumps({'data': request}, cls=MappingEncoder)
+            return json.dumps({'data': request}, cls=DatetimeMappingEncoder)
 
 
 
@@ -91,7 +91,7 @@ class RequestsDBAPI(object):
             session.refresh(request)
 
             parametricjobs = []
-            if app in kwargs:
+            if 'app' in kwargs:
                 for macro in selected_macros:
                     path, njobs, nevents, seed = macro.split()
                     parametricjobs.append(ParametricJobs(**subdict(kwargs, ParametricJobs.columns,

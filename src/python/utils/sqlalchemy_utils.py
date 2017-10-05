@@ -43,7 +43,7 @@ class _IterableBase(Mapping):
     def columns(self):
         """Get table columns."""
         for column in self.__table__.columns:
-            yield str(column)
+            yield column.name
 
     @classmethod
     def attributes(cls):

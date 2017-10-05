@@ -2,6 +2,7 @@
 import json
 import logging
 from datetime import datetime
+from collections import Mapping
 import cherrypy
 from utils.sqlalchemy_utils import create_db, db_session
 from tables import Requests, Users, ParametricJobs
@@ -18,17 +19,19 @@ def subdict(dct, seq, **kwargs):
     return dict({key: dct[key] for key in seq if key in dct}, **kwargs)
 
 
-class MappingEncoder(json.JSONEncoder):
-    """JSON encoder for type Mapping."""
+class DatetimeMappingEncoder(json.JSONEncoder):
+    """JSON encoder for types Datetime and Mapping."""
 
     def default(self, obj):
         """Override base default method."""
         if isinstance(obj, Mapping):
             return dict(obj)
-        return json.JSONEncoder.default(self,obj)
+        if isinstance(obj, datetime):
+            return obj.isoformat(' ')
+        return super(DatetimeMappingEncoder, self).default(obj)
 
 
-class RequestsDB(object):
+class RequestsDBAPI(object):
     """
     RequestsDB Service.
 
@@ -58,8 +61,9 @@ class RequestsDB(object):
                                           .all()
                     # could make a specialised encoder for this.
                     return json.dumps({'data': [dict(request, requester=user.name)
-                                                for request, user in all_requests]})
-                return json.dumps({'data': user_requests.all()}, cls=MappingEncoder)
+                                                for request, user in all_requests]},
+                                      cls=DatetimeMappingEncoder)
+                return json.dumps({'data': user_requests.all()}, cls=DatetimeMappingEncoder)
 
             # Get specific request.
             if requester.admin:

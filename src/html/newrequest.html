@@ -168,7 +168,8 @@ $(document).ready(function() {
     parent.$.fancybox.close();
     $.ajax({url: this.action,  // this is the javascript this not JQuery object $(this)
             type: this.method,
-            data: $(this).serialize(),
+//            data: $(this).serialize(),
+            data: JSON.parse(JSON.stringify($(this).serializeArray())),
             success: function(result){
 		       parent.$("#tableBody").DataTable().ajax.reload();
 //                       parent.$.fancybox.close();

@@ -3,9 +3,9 @@ from datetime import datetime
 import cStringIO
 import cherrypy
 from cherrypy.lib.static import serve_fileobj
-from utils.sqlalchemy_utils import create_db, db_session
 from utils.apache_utils import name_from_dn
-from tables import Services, ParametricJobs, Users, Requests
+from sql.utils import create_all_tables, session_scope
+from sql.tables import Services, ParametricJobs, Users, Requests
 import csv
 
 MINS = 60
@@ -20,8 +20,7 @@ class HTMLPageServer(object):
 
     def __init__(self, dburl, template_env):
         """Initialisation."""
-        self.dburl = dburl
-        create_db(dburl)
+        self.dburl = create_all_tables(dburl)
         self.template_env = template_env
 
     @cherrypy.expose
@@ -30,7 +29,7 @@ class HTMLPageServer(object):
         data = {'user': cherrypy.request.verified_user}
         data['index_script'] = self.template_env.get_template('javascript/index.js')\
                                                 .render(data)
-        with db_session(self.dburl) as session:
+        with session_scope(self.dburl) as session:
             gangad = session.query(Services).filter(Services.name == 'gangad').one_or_none()
             if gangad is None:
                 data.update({'gangad_status': 'Not in DB!', 'gangad_status_colour': 'red'})
@@ -54,7 +53,7 @@ class HTMLPageServer(object):
     @cherrypy.expose
     def details(self, request_id):
         """Return details of a request."""
-        with db_session(self.dburl) as session:
+        with session_scope(self.dburl) as session:
             macros = session.query(ParametricJobs)\
                             .filter(ParametricJobs.request_id == request_id)\
                             .all()
@@ -65,7 +64,7 @@ class HTMLPageServer(object):
     @cherrypy.expose
     def reschedule(self, job_id):
         """Reschedule a given job."""
-        with db_session(self.dburl) as session:
+        with session_scope(self.dburl) as session:
             macro = session.query(ParametricJobs)\
                            .filter(ParametricJobs.id == int(job_id))\
                            .one_or_none()
@@ -81,7 +80,7 @@ class HTMLPageServer(object):
     @cherrypy.expose
     def csv_export(self):
         """Return .csv of Requests and ParametricJobs tables"""
-        with db_session(self.dburl) as session:
+        with session_scope(self.dburl) as session:
             query = session.query(Requests.id,
                                   Users.dn,
                                   Requests.request_date,

@@ -6,8 +6,9 @@ from datetime import datetime
 import requests
 from daemonize import Daemonize
 
-from utils import logging_utils, sqlalchemy_utils
-from tables import Requests, Services
+from utils import logging_utils
+from sql.utils import create_all_tables, session_scope
+from sql.tables import Requests, Services
 MINS = 60
 
 
@@ -25,7 +26,7 @@ class MonitoringDaemon(Daemonize):
 
     def exit(self):
         """Update the gangad status on exit."""
-        with sqlalchemy_utils.continuing(self.session) as session:
+        with session_scope(self.session, reraise=False) as session:
             session.query(Services)\
                    .filter(Services.name == "gangad")\
                    .update({'status': 'down',
@@ -51,7 +52,7 @@ class MonitoringDaemon(Daemonize):
 
         # Setup scoped_session within the daemon otherwise the file descriptor
         # will be closed
-        self.session = sqlalchemy_utils.setup_session(self.dburl)
+        self.session = create_all_tables(self.dburl)
         try:
             while True:
                 self.check_services()
@@ -67,7 +68,7 @@ class MonitoringDaemon(Daemonize):
         This function checks the status of the DIRAC status as well as updating the
         timestamp for the current gangad service.
         """
-        with sqlalchemy_utils.reraising(self.session) as session:
+        with session_scope(self.session) as session:
             query = session.query(Services)
 
             # DIRAC
@@ -96,12 +97,13 @@ class MonitoringDaemon(Daemonize):
         Check the status of ongoing DB requests and either update them or
         create new Ganga tasks for new requests.
         """
-        with sqlalchemy_utils.nonexpiring(self.session) as session:
+        with session_scope(self.session) as session:
             monitored_requests = session.query(Requests)\
                                         .filter(Requests.status.in_(('Approved',
                                                                      'Submitted',
                                                                      'Running')))\
                                         .all()
+            session.expunge_all()
 
         for request in monitored_requests:
             if request.status == "Approved":

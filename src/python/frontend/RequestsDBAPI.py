@@ -4,8 +4,8 @@ import logging
 from datetime import datetime
 from collections import Mapping
 import cherrypy
-from utils.sqlalchemy_utils import create_db, db_session
-from tables import Requests, Users, ParametricJobs
+from sql.utils import create_all_tables, session_scope
+from sql.tables import Requests, Users, ParametricJobs
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
@@ -43,15 +43,14 @@ class RequestsDBAPI(object):
 
     def __init__(self, dburl):
         """Initialisation."""
-        self.dburl = dburl
-        create_db(dburl)
+        self.dburl = create_all_tables(dburl)
 
     def GET(self, reqid=None):  # pylint: disable=invalid-name
         """REST Get method."""
         logger.debug("In GET: reqid = %s", reqid)
         requester = cherrypy.request.verified_user
 
-        with db_session(self.dburl) as session:
+        with session_scope(self.dburl) as session:
             user_requests = session.query(Requests).filter_by(requester_id=requester.id)
             # Get all requests.
             if reqid is None:
@@ -81,7 +80,7 @@ class RequestsDBAPI(object):
         if not isinstance(selected_macros, list):
             selected_macros = [selected_macros]
 
-        with db_session(self.dburl) as session:
+        with session_scope(self.dburl) as session:
             request = Requests(**subdict(kwargs, Requests.columns,
                                          requester_id=cherrypy.request.verified_user.id,
                                          request_date=datetime.now().strftime('%d/%m/%Y'),
@@ -120,7 +119,7 @@ class RequestsDBAPI(object):
         logger.debug("In PUT: reqid = %s, kwargs = %s", reqid, kwargs)
         requester = cherrypy.request.verified_user
 
-        with db_session(self.dburl) as session:
+        with session_scope(self.dburl) as session:
             query = session.query(Requests).filter_by(id=reqid)
             if not requester.admin:
                 query = query.filter_by(requester_id=requester.id)
@@ -132,7 +131,7 @@ class RequestsDBAPI(object):
         logger.debug("In DELETE: reqid = %s", reqid)
 
         if cherrypy.request.verified_user.admin:
-            with db_session(self.dburl) as session:
+            with session_scope(self.dburl) as session:
                 session.query(Requests)\
                        .filter_by(id=reqid)\
                        .delete(synchronize_session=False)

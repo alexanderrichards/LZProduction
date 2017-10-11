@@ -8,8 +8,8 @@ credentials against a local DB.
 from collections import namedtuple
 import cherrypy
 from sqlalchemy.orm.exc import MultipleResultsFound
-from utils.sqlalchemy_utils import create_db, db_session
-from tables import Users
+from sql.utils import create_all_tables, session_scope
+from sql.tables import Users
 
 
 def name_from_dn(client_dn):
@@ -81,8 +81,8 @@ class CredentialDispatcher(object):
             raise cherrypy.HTTPError(401, 'Unauthorized: Cert not verified for user DN: %s, CA: %s.'
                                      % (client_dn, client_ca))
 
-        create_db(self._users_dburl)
-        with db_session(self._users_dburl) as session:
+        engine = create_all_tables(self._users_dburl)
+        with session_scope(engine) as session:
             try:
                 user = session.query(Users)\
                               .filter_by(dn=client_dn, ca=client_ca)\

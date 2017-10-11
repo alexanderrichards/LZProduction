@@ -1,6 +1,7 @@
 """Services Table."""
+from datetime import datetime
 from sqlalchemy import Column, Integer, String, TIMESTAMP
-from utils.sqlalchemy_utils import SQLTableBase
+from .SQLTableBase import SQLTableBase
 
 
 class Services(SQLTableBase):
@@ -10,4 +11,4 @@ class Services(SQLTableBase):
     id = Column(Integer, primary_key=True)  # pylint: disable=C0103
     name = Column(String(25), nullable=False)
     status = Column(String(10), nullable=False)
-    timestamp = Column(TIMESTAMP, nullable=False)
+    timestamp = Column(TIMESTAMP, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)

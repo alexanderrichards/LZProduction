@@ -1,4 +1,4 @@
-"""Requests Table."""
+"""ParametricJobs Table."""
 import os
 import logging
 import time
@@ -6,8 +6,9 @@ import calendar
 import re
 from datetime import datetime
 from sqlalchemy.dialects.mysql import LONGBLOB
-from sqlalchemy import Column, Integer, Boolean, String, PickleType, TIMESTAMP, ForeignKeyConstraint
-from utils.sqlalchemy_utils import SQLTableBase, continuing
+from sqlalchemy import Column, Integer, Boolean, String, PickleType, TIMESTAMP, ForeignKey
+from .SQLTableBase import SQLTableBase
+from sql.utils import session_scope
 from utils.dirac_utils import DiracClient
 from utils.tempfile_utils import temporary_runscript, temporary_macro
 
@@ -46,14 +47,11 @@ class ParametricJobs(SQLTableBase):
     lzap_lfn_inputdir = Column(String(250))
     lzap_lfn_outputdir = Column(String(250))
     counters = Column(String(150))
-    request_id = Column(Integer, nullable=False)
+    request_id = Column(Integer, ForeignKey('requests.id'), nullable=False)
     status = Column(String(25), nullable=False)
     dirac_jobs = Column(LongPickleType(), nullable=False)
     reschedule = Column(Boolean, nullable=False)
-    timestamp = Column(TIMESTAMP, nullable=False,
-                       default=datetime.utcnow,
-                       onupdate=datetime.utcnow)
-    ForeignKeyConstraint(['request_id'], ['requests.id'])
+    timestamp = Column(TIMESTAMP, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     def submit(self, scoped_session):
         """Submit parametric job."""
@@ -103,7 +101,7 @@ class ParametricJobs(SQLTableBase):
                                                                                               input_lfn_dir=self.reduction_lfn_inputdir or self.der_lfn_inputdir or self.lzap_lfn_inputdir,
                                                                                               output_log='lzanalysis_output.log')
 
-        with continuing(scoped_session) as session:
+        with session_scope(scoped_session, reraise=False) as session:
             this = session.query(ParametricJobs).filter(ParametricJobs.id == self.id).first()
             if this is not None:
                 this.status = self.status
@@ -131,7 +129,7 @@ class ParametricJobs(SQLTableBase):
             if self.status == 'Failed':
                 self.status, self.counters = dirac.auto_reschedule(dirac_ids)
 
-        with continuing(scoped_session) as session:
+        with session_scope(scoped_session, reraise=False) as session:
             this = session.query(ParametricJobs).filter(ParametricJobs.id == self.id).first()
             if this is not None:
                 this.status = self.status

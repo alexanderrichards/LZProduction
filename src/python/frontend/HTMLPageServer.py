@@ -3,7 +3,6 @@ from datetime import datetime
 import cStringIO
 import cherrypy
 from cherrypy.lib.static import serve_fileobj
-from utils.apache_utils import name_from_dn
 from sql.utils import create_all_tables, session_scope
 from sql.tables import Services, ParametricJobs, Users, Requests
 import csv
@@ -82,7 +81,7 @@ class HTMLPageServer(object):
         """Return .csv of Requests and ParametricJobs tables"""
         with session_scope(self.dburl) as session:
             query = session.query(Requests.id,
-                                  Users.dn,
+                                  Users,
                                   Requests.request_date,
                                   Requests.sim_lead,
                                   Requests.description,
@@ -108,7 +107,7 @@ class HTMLPageServer(object):
             writer = csv.DictWriter(csvfile, header)
         for request in query.all():
             tmp = dict(zip(header, request))
-            tmp['requester'] = name_from_dn(tmp['requester'])
+            tmp['requester'] = tmp['requester'].name
             rows.append(tmp)
         writer.writeheader()
         for row in rows:

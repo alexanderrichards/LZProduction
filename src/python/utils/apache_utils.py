@@ -5,30 +5,10 @@ Tools for dealing with credential checking from X509 SSL certificates.
 These are useful when using Apache as a reverse proxy to check user
 credentials against a local DB.
 """
-from collections import namedtuple
 import cherrypy
 from sqlalchemy.orm.exc import MultipleResultsFound
-from sql.utils import create_all_tables, session_scope
+from sql.utils import scoped_session
 from sql.tables import Users
-
-
-def name_from_dn(client_dn):
-    """
-    Get human-readable name from DN.
-
-    Attempt to determine a meaningful name from a
-    clients DN. Requires the DN to have already been
-    converted to the more usual slash delimeted style.
-
-    Args:
-        client_dn (str): The client DN
-
-    Returns:
-        str: The human-readable name
-    """
-    cns = (token.strip('CN= ') for token in client_dn.split('/')
-           if token.startswith('CN='))
-    return sorted(cns, key=len)[-1]
 
 
 def apache_client_convert(client_dn, client_ca=None):
@@ -60,9 +40,9 @@ class CredentialDispatcher(object):
     then hands off to the wrapped dispatcher.
     """
 
-    def __init__(self, users_dburl, dispatcher, admin_only=False):
+    def __init__(self, session_factory, dispatcher, admin_only=False):
         """Initialise."""
-        self._users_dburl = users_dburl
+        self._session_factory = session_factory
         self._dispatcher = dispatcher
         self._admin_only = admin_only
 
@@ -81,8 +61,7 @@ class CredentialDispatcher(object):
             raise cherrypy.HTTPError(401, 'Unauthorized: Cert not verified for user DN: %s, CA: %s.'
                                      % (client_dn, client_ca))
 
-        engine = create_all_tables(self._users_dburl)
-        with session_scope(engine) as session:
+        with scoped_session(self._session_factory) as session:
             try:
                 user = session.query(Users)\
                               .filter_by(dn=client_dn, ca=client_ca)\
@@ -107,4 +86,4 @@ class CredentialDispatcher(object):
         return self._dispatcher(path)
 
 
-__all__ = ('name_from_dn', 'apache_client_convert', 'CredentialDispatcher')
+__all__ = ('apache_client_convert', 'CredentialDispatcher')

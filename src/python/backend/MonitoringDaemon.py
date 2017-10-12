@@ -7,7 +7,7 @@ import requests
 from daemonize import Daemonize
 
 from utils import logging_utils
-from sql.utils import create_all_tables, session_scope
+from sql.utils import create_all_tables, scoped_session
 from sql.tables import Requests, Services
 MINS = 60
 
@@ -18,7 +18,7 @@ class MonitoringDaemon(Daemonize):
     def __init__(self, dburl, delay, cert, verify=False, **kwargs):
         """Initialisation."""
         super(MonitoringDaemon, self).__init__(action=self.main, **kwargs)
-        self.session = None
+        self.session_factory = None
         self.dburl = dburl
         self.delay = delay
         self.cert = cert
@@ -26,7 +26,7 @@ class MonitoringDaemon(Daemonize):
 
     def exit(self):
         """Update the gangad status on exit."""
-        with session_scope(self.session, reraise=False) as session:
+        with scoped_session(self.session_factory, reraise=False) as session:
             session.query(Services)\
                    .filter(Services.name == "gangad")\
                    .update({'status': 'down',
@@ -52,7 +52,7 @@ class MonitoringDaemon(Daemonize):
 
         # Setup scoped_session within the daemon otherwise the file descriptor
         # will be closed
-        self.session = create_all_tables(self.dburl)
+        self.session_factory = create_all_tables(self.dburl)
         try:
             while True:
                 self.check_services()
@@ -68,7 +68,7 @@ class MonitoringDaemon(Daemonize):
         This function checks the status of the DIRAC status as well as updating the
         timestamp for the current gangad service.
         """
-        with session_scope(self.session) as session:
+        with scoped_session(self.session_factory) as session:
             query = session.query(Services)
 
             # DIRAC
@@ -97,7 +97,7 @@ class MonitoringDaemon(Daemonize):
         Check the status of ongoing DB requests and either update them or
         create new Ganga tasks for new requests.
         """
-        with session_scope(self.session) as session:
+        with scoped_session(self.session_factory) as session:
             monitored_requests = session.query(Requests)\
                                         .filter(Requests.status.in_(('Approved',
                                                                      'Submitted',
@@ -107,5 +107,5 @@ class MonitoringDaemon(Daemonize):
 
         for request in monitored_requests:
             if request.status == "Approved":
-                request.submit(self.session)
-            request.update_status(self.session)
+                request.submit(self.session_factory)
+            request.update_status(self.session_factory)

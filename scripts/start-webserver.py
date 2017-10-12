@@ -18,10 +18,13 @@ def daemon_main(args):
     sys.path = [os.path.join(lzprod_root, 'src', 'python')] + sys.path
 
     services = importlib.import_module('frontend')
+    sql_utils = importlib.import_module('sql.utils')
     apache_utils = importlib.import_module('utils.apache_utils')
     src_root = os.path.join(lzprod_root, 'src')
     importlib.import_module('utils.jinja2_utils')
     template_env = jinja2.Environment(loader=jinja2.FileSystemLoader(searchpath=src_root))
+
+    session_factory = sql_utils.create_all_tables(args.dburl)
 
     config = {
         'global': {
@@ -39,22 +42,22 @@ def daemon_main(args):
     }
 
     cherrypy.config.update(config)  # global vars need updating global config
-    cherrypy.tree.mount(services.HTMLPageServer(args.dburl, template_env),
+    cherrypy.tree.mount(services.HTMLPageServer(session_factory, template_env),
                         '/',
-                        {'/': {'request.dispatch': apache_utils.CredentialDispatcher(args.dburl, cherrypy.dispatch.Dispatcher())}})
-    cherrypy.tree.mount(services.RequestsDBAPI(args.dburl),
+                        {'/': {'request.dispatch': apache_utils.CredentialDispatcher(session_factory, cherrypy.dispatch.Dispatcher())}})
+    cherrypy.tree.mount(services.RequestsDBAPI(session_factory),
                         '/api',
-                        {'/': {'request.dispatch': apache_utils.CredentialDispatcher(args.dburl, cherrypy.dispatch.MethodDispatcher())}})
+                        {'/': {'request.dispatch': apache_utils.CredentialDispatcher(session_factory, cherrypy.dispatch.MethodDispatcher())}})
     cherrypy.tree.mount(services.CVMFSAppVersions('/cvmfs/lz.opensciencegrid.org',
                                                   ['LUXSim', 'BACCARAT', 'TDRAnalysis', 'fastNEST', 'DER', 'LZap']),
                         '/appversion',
-                        {'/': {'request.dispatch': apache_utils.CredentialDispatcher(args.dburl, cherrypy.dispatch.Dispatcher())}})
+                        {'/': {'request.dispatch': apache_utils.CredentialDispatcher(session_factory, cherrypy.dispatch.Dispatcher())}})
     cherrypy.tree.mount(services.GitTagMacros(args.git_repo, args.git_dir, template_env),
                         '/tags',
-                        {'/': {'request.dispatch':  apache_utils.CredentialDispatcher(args.dburl, cherrypy.dispatch.Dispatcher())}})
-    cherrypy.tree.mount(services.Admins(args.dburl, template_env),
+                        {'/': {'request.dispatch':  apache_utils.CredentialDispatcher(session_factory, cherrypy.dispatch.Dispatcher())}})
+    cherrypy.tree.mount(services.Admins(session_factory, template_env),
                         '/admins',
-                        {'/': {'request.dispatch':  apache_utils.CredentialDispatcher(args.dburl,
+                        {'/': {'request.dispatch':  apache_utils.CredentialDispatcher(session_factory,
                                                                                       cherrypy.dispatch.MethodDispatcher(),
                                                                                       admin_only=True)}})
     cherrypy.engine.start()

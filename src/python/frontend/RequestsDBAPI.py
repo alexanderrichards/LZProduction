@@ -4,7 +4,7 @@ import logging
 from datetime import datetime
 from collections import Mapping
 import cherrypy
-from sql.utils import create_all_tables, session_scope
+from sql.utils import scoped_session
 from sql.tables import Requests, Users, ParametricJobs
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
@@ -17,7 +17,8 @@ def subdict(dct, seq, **kwargs):
     # This might be faster if dct is large as doesn't have to iterate through it.
     # also works natively with seq being an iterator, no tuple initialisation
     return dict({key: dct[key] for key in seq if key in dct}, **kwargs)
-
+## THIS MIGHT BE BETTER, INVESTIGATE
+#    return dict(dct.viewitems() & seq, **kwargs)
 
 class DatetimeMappingEncoder(json.JSONEncoder):
     """JSON encoder for types Datetime and Mapping."""
@@ -41,16 +42,16 @@ class RequestsDBAPI(object):
 
     exposed = True
 
-    def __init__(self, dburl):
+    def __init__(self, session_factory):
         """Initialisation."""
-        self.dburl = create_all_tables(dburl)
+        self.session_factory = session_factory
 
     def GET(self, reqid=None):  # pylint: disable=invalid-name
         """REST Get method."""
         logger.debug("In GET: reqid = %s", reqid)
         requester = cherrypy.request.verified_user
 
-        with session_scope(self.dburl) as session:
+        with scoped_session(self.session_factory) as session:
             user_requests = session.query(Requests).filter_by(requester_id=requester.id)
             # Get all requests.
             if reqid is None:
@@ -80,7 +81,7 @@ class RequestsDBAPI(object):
         if not isinstance(selected_macros, list):
             selected_macros = [selected_macros]
 
-        with session_scope(self.dburl) as session:
+        with scoped_session(self.session_factory) as session:
             request = Requests(**subdict(kwargs, Requests.columns,
                                          requester_id=cherrypy.request.verified_user.id,
                                          request_date=datetime.now().strftime('%d/%m/%Y'),
@@ -119,7 +120,7 @@ class RequestsDBAPI(object):
         logger.debug("In PUT: reqid = %s, kwargs = %s", reqid, kwargs)
         requester = cherrypy.request.verified_user
 
-        with session_scope(self.dburl) as session:
+        with scoped_session(self.session_factory) as session:
             query = session.query(Requests).filter_by(id=reqid)
             if not requester.admin:
                 query = query.filter_by(requester_id=requester.id)
@@ -131,7 +132,7 @@ class RequestsDBAPI(object):
         logger.debug("In DELETE: reqid = %s", reqid)
 
         if cherrypy.request.verified_user.admin:
-            with session_scope(self.dburl) as session:
+            with scoped_session(self.session_factory) as session:
                 session.query(Requests)\
                        .filter_by(id=reqid)\
                        .delete(synchronize_session=False)

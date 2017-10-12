@@ -8,7 +8,7 @@ from datetime import datetime
 from sqlalchemy.dialects.mysql import LONGBLOB
 from sqlalchemy import Column, Integer, Boolean, String, PickleType, TIMESTAMP, ForeignKey
 from .SQLTableBase import SQLTableBase
-from sql.utils import session_scope
+from sql.utils import scoped_session
 from utils.dirac_utils import DiracClient
 from utils.tempfile_utils import temporary_runscript, temporary_macro
 
@@ -53,7 +53,7 @@ class ParametricJobs(SQLTableBase):
     reschedule = Column(Boolean, nullable=False)
     timestamp = Column(TIMESTAMP, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    def submit(self, scoped_session):
+    def submit(self, session_factory):
         """Submit parametric job."""
         # problems here if not running simulation, there will be no macro so
         # everything including context needs reworking.
@@ -101,7 +101,7 @@ class ParametricJobs(SQLTableBase):
                                                                                               input_lfn_dir=self.reduction_lfn_inputdir or self.der_lfn_inputdir or self.lzap_lfn_inputdir,
                                                                                               output_log='lzanalysis_output.log')
 
-        with session_scope(scoped_session, reraise=False) as session:
+        with scoped_session(session_factory, reraise=False) as session:
             this = session.query(ParametricJobs).filter(ParametricJobs.id == self.id).first()
             if this is not None:
                 this.status = self.status
@@ -116,7 +116,7 @@ class ParametricJobs(SQLTableBase):
             logger.info("Removing Dirac jobs %s from ParametricJob %s", dirac_ids, self.id)
             dirac.kill(dirac_ids)
 
-    def update_status(self, scoped_session):
+    def update_status(self, session_factory):
         """Update the status of parametric job."""
         dirac_ids = self.dirac_jobs
         with DiracClient("http://localhost:8000/") as dirac:
@@ -129,7 +129,7 @@ class ParametricJobs(SQLTableBase):
             if self.status == 'Failed':
                 self.status, self.counters = dirac.auto_reschedule(dirac_ids)
 
-        with session_scope(scoped_session, reraise=False) as session:
+        with scoped_session(session_factory, reraise=False) as session:
             this = session.query(ParametricJobs).filter(ParametricJobs.id == self.id).first()
             if this is not None:
                 this.status = self.status

@@ -81,8 +81,8 @@ if __name__ == '__main__':
                         suspended=user_info['DN'] not in voms_valid_users,
                         admin=False) for user_info in voms_users_info}
 
-    engine = sql_utils.create_all_tables(args.dburl)
-    with sql_utils.session_scope(engine) as session:
+    session_factory = sql_utils.create_all_tables(args.dburl)
+    with sql_utils.scoped_session(session_factory) as session:
         db_users = set(session.query(Users).all())
 
         new_users = voms_users.difference(db_users)

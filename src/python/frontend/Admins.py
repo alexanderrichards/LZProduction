@@ -1,10 +1,6 @@
 """Admin management service."""
-from collections import namedtuple
-from utils.apache_utils import name_from_dn
 from sql.utils import create_all_tables, session_scope
 from sql.tables import Users
-
-User = namedtuple('User', ('id', 'admin', 'name'))
 
 
 class Admins(object):
@@ -30,7 +26,7 @@ class Admins(object):
         self._users_dburl = create_all_tables(dburl)
         self._template_env = template_env
 
-    def GET(self):  # pylint: disable=C0103
+    def GET(self):  # pylint: disable=invalid-name
         """
         REST GET Method.
 
@@ -39,12 +35,9 @@ class Admins(object):
         """
         with session_scope(self._users_dburl) as session:
             return self._template_env.get_template('html/admins.html')\
-                                     .render({'users': [
-                                         User(user.id, user.admin, name_from_dn(user.dn))
-                                         for user in session.query(Users).all()
-                                     ]})
+                                     .render({'users': [session.query(Users).all()]})
 
-    def PUT(self, user_id, admin):  # pylint: disable=C0103
+    def PUT(self, user_id, admin):  # pylint: disable=invalid-name
         """
         REST PUT Method.
 
@@ -57,4 +50,4 @@ class Admins(object):
         # could use ast.literal_eval(admin.capitalize()) but not sure if I trust it yet
         admin = (admin.lower() == 'true')
         with session_scope(self._users_dburl) as session:
-            session.query(Users).filter(Users.id == int(user_id)).update({'admin': admin})
+            session.query(Users).filter_by(id=int(user_id)).update({'admin': admin})

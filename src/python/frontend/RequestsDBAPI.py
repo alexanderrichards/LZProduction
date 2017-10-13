@@ -120,11 +120,15 @@ class RequestsDBAPI(object):
         logger.debug("In PUT: reqid = %s, kwargs = %s", reqid, kwargs)
         requester = cherrypy.request.verified_user
 
+        if kwargs.get('status') != "Approved":
+            kwargs.pop('status', None)
+
         with db_session(self.dburl) as session:
             query = session.query(Requests).filter_by(id=reqid)
             if not requester.admin:
+                kwargs.pop('status', None)
                 query = query.filter_by(requester_id=requester.id)
-            query.update(subdict(kwargs, ('description', 'sim_lead', 'detector', 'source')))
+            query.update(subdict(kwargs, ('description', 'sim_lead', 'detector', 'source', 'status')))
         return self.GET()
 
     def DELETE(self, reqid):  # pylint: disable=invalid-name

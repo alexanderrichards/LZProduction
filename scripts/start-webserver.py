@@ -42,7 +42,7 @@ def daemon_main(args):
     cherrypy.tree.mount(services.HTMLPageServer(args.dburl, template_env),
                         '/',
                         {'/': {'request.dispatch': apache_utils.CredentialDispatcher(args.dburl, cherrypy.dispatch.Dispatcher())}})
-    cherrypy.tree.mount(services.RequestsDB(args.dburl),
+    cherrypy.tree.mount(services.RequestsDBAPI(args.dburl),
                         '/api',
                         {'/': {'request.dispatch': apache_utils.CredentialDispatcher(args.dburl, cherrypy.dispatch.MethodDispatcher())}})
     cherrypy.tree.mount(services.CVMFSAppVersions('/cvmfs/lz.opensciencegrid.org',
@@ -127,6 +127,7 @@ if __name__ == '__main__':
 
     daemon = Daemonize(app=os.path.splitext(os.path.basename(__file__))[0],
                        pid=args.pid_file,
+                       logger=logger,
                        keep_fds=[fhandler.stream.fileno()],
                        foreground=args.debug_mode,
                        action=partial(daemon_main, args=args))

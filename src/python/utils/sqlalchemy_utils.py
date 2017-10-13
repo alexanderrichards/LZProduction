@@ -30,6 +30,19 @@ class DeclarativeABCMeta(DeclarativeMeta, ABCMeta):
     pass
 
 
+class ColumnsDescriptor(object):
+    """Yield the column names."""
+
+    def __get__(self, obj, cls):
+        """Descriptor get."""
+        for column in cls.__table__.columns:
+            yield column.name
+
+    def __set__(self, obj, value):
+        """Descriptor set."""
+        raise AttributeError("Read only attribute!")
+
+
 class _IterableBase(Mapping):
     """
     Iterable base class.
@@ -39,25 +52,34 @@ class _IterableBase(Mapping):
     of an SQLAlchemy declarative base.
     """
 
-    @classmethod
-    def attributes(cls):
-        """Get an iterator over instrumented attributes."""
-        for name, _ in getmembers(cls,
-                                  lambda value: isinstance(value, InstrumentedAttribute)):
-            yield name
+    # This we can get from the class as well as instance
+    # unlike property
+    columns = ColumnsDescriptor()
+#    @property
+#    def columns(self):
+#        """Get table columns."""
+#        for column in self.__table__.columns:
+#            yield column.name
+
+#    @classmethod
+#    def attributes(cls):
+#        """Get an iterator over instrumented attributes."""
+#        for name, _ in getmembers(cls,
+#                                  lambda value: isinstance(value, InstrumentedAttribute)):
+#            yield name
 
     def __iter__(self):
         """Get an iterator over instrumented attributes."""
-        return self.__class__.attributes()
+        return self.columns
 
     def __getitem__(self, item):
         """Access instrumented attributes as a dict."""
-        if item not in self.__class__.attributes():
+        if item not in self.columns:
             raise KeyError("Invalid attribute name: %s" % item)
         return getattr(self, item)
 
     def __len__(self):
-        return len(list(self.__class__.attributes()))
+        return len(list(self.columns))
 
 SQLTableBase = declarative_base(cls=_IterableBase,  # pylint: disable=invalid-name
                                 metaclass=DeclarativeABCMeta)

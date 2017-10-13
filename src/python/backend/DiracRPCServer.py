@@ -1,6 +1,6 @@
 """DIRAC RPC Server."""
 import os
-from collections import Counter
+from collections import Counter, defaultdict
 from SimpleXMLRPCServer import SimpleXMLRPCServer
 from enum import IntEnum, unique
 from daemonize import Daemonize
@@ -214,14 +214,15 @@ class DiracDaemon(Daemonize):
         1) There is at least one job in the list in the Done state
         2) The job hasn't reached a reschedule count of 2
         """
-        status_map = {}
+        status_map = defaultdict(set)
         for k, v in self._dirac_api.status(ids).get("Value", {}).iteritems():
-            status_map.setdefault(v['Status'], []).append(k)
+            status_map[v['Status']].add(k)
 
-        failed_jobs = [job for job in status_map.get('Failed')
+        failed_jobs = [job for job in (status_map['Failed'] | status_map['Stalled'])
                        if int(self._dirac_api.attributes(job)
                                              .get('Value', {})
                                              .get('RescheduleCounter', 0)) < 2]
-        if failed_jobs and status_map.get('Done'):
+        if failed_jobs and status_map['Done']:
+            self.logger.info("Auto-rescheduling jobs: %s", failed_jobs)
             self._dirac_api.reschedule(failed_jobs)
         return self.status(ids)

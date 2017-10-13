@@ -134,4 +134,5 @@ class ParametricJobs(SQLTableBase):
             if this is not None:
                 this.status = self.status
                 this.counters = self.counters
+                this.reschedule = self.reschedule
         return self.status

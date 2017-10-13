@@ -124,7 +124,7 @@ class RequestsDBAPI(object):
             query = session.query(Requests).filter_by(id=reqid)
             if not requester.admin:
                 query = query.filter_by(requester_id=requester.id)
-            query.update(kwargs)
+            query.update(subdict(kwargs, ('description', 'sim_lead', 'detector', 'source')))
         return self.GET()
 
     def DELETE(self, reqid):  # pylint: disable=invalid-name

@@ -43,10 +43,6 @@ class RequestsDBAPI(object):
 
     exposed = True
 
-    def __init__(self, session_factory):
-        """Initialisation."""
-        self.session_factory = session_factory
-
     def GET(self, reqid=None):  # pylint: disable=invalid-name
         """REST Get method."""
         logger.debug("In GET: reqid = %s", reqid)

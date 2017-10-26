@@ -7,7 +7,7 @@ from sql.tables import create_all_tables
 from utils.apache_utils import CredentialDispatcher
 import utils.jinja2_utils
 from .services import HTMLPageServer, RequestsDBAPI, CVMFSAppVersions, GitTagMacros, Admins
-
+from sql.tables import Requests
 
 class LZProductionServer(Daemonize):
     """LZ Production Web Server Daemon."""
@@ -56,7 +56,7 @@ class LZProductionServer(Daemonize):
         cherrypy.tree.mount(HTMLPageServer(template_env),
                             '/',
                             {'/': {'request.dispatch': CredentialDispatcher(cherrypy.dispatch.Dispatcher())}})
-        cherrypy.tree.mount(RequestsDBAPI(),
+        cherrypy.tree.mount(Requests,
                             '/api',
                             {'/': {'request.dispatch': CredentialDispatcher(cherrypy.dispatch.MethodDispatcher())}})
         cherrypy.tree.mount(CVMFSAppVersions('/cvmfs/lz.opensciencegrid.org',

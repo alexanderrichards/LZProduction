@@ -13,7 +13,7 @@ class LZProductionServer(Daemonize):
     """LZ Production Web Server Daemon."""
 
     def __init__(self,
-                 production_root
+                 production_root,
                  dburl="sqlite:///",
                  socket_host='0.0.0.0',
                  socket_port=8080,

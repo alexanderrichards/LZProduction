@@ -6,8 +6,8 @@ These are useful when using Apache as a reverse proxy to check user
 credentials against a local DB.
 """
 import cherrypy
-from sqlalchemy.orm.exc import MultipleResultsFound
-from sql.utils import scoped_session
+from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
+from sql.utils import db_session
 from sql.tables import Users
 
 
@@ -40,9 +40,8 @@ class CredentialDispatcher(object):
     then hands off to the wrapped dispatcher.
     """
 
-    def __init__(self, session_factory, dispatcher, admin_only=False):
+    def __init__(self, dispatcher, admin_only=False):
         """Initialise."""
-        self._session_factory = session_factory
         self._dispatcher = dispatcher
         self._admin_only = admin_only
 
@@ -61,16 +60,16 @@ class CredentialDispatcher(object):
             raise cherrypy.HTTPError(401, 'Unauthorized: Cert not verified for user DN: %s, CA: %s.'
                                      % (client_dn, client_ca))
 
-        with scoped_session(self._session_factory) as session:
+        with db_session() as session:
             try:
                 user = session.query(Users)\
                               .filter_by(dn=client_dn, ca=client_ca)\
-                              .one_or_none()
+                              .one()
             except MultipleResultsFound:
                 raise cherrypy.HTTPError(500, 'Internal Server Error: Duplicate user detected. '
                                               'user: (%s, %s)'
                                          % (client_dn, client_ca))
-            if user is None:
+            except NoResultFound:
                 raise cherrypy.HTTPError(403, 'Forbidden: Unknown user. user: (%s, %s)'
                                          % (client_dn, client_ca))
             if user.suspended:

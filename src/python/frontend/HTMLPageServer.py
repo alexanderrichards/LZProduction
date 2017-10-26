@@ -3,7 +3,7 @@ from datetime import datetime
 import cStringIO
 import cherrypy
 from cherrypy.lib.static import serve_fileobj
-from sql.utils import scoped_session
+from sql.utils import db_session
 from sql.tables import Services, ParametricJobs, Users, Requests
 import csv
 
@@ -17,9 +17,8 @@ SERVICE_COLOUR_MAP = {'up': 'brightgreen',
 class HTMLPageServer(object):
     """The Web server."""
 
-    def __init__(self, session_factory, template_env):
+    def __init__(self, template_env):
         """Initialisation."""
-        self.session_factory = session_factory
         self.template_env = template_env
 
     @cherrypy.expose
@@ -28,23 +27,23 @@ class HTMLPageServer(object):
         data = {'user': cherrypy.request.verified_user}
         data['index_script'] = self.template_env.get_template('javascript/index.js')\
                                                 .render(data)
-        with scoped_session(self.session_factory) as session:
-            gangad = session.query(Services).filter(Services.name == 'gangad').one_or_none()
-            if gangad is None:
-                data.update({'gangad_status': 'Not in DB!', 'gangad_status_colour': 'red'})
+        with db_session() as session:
+            monitoringd = session.query(Services).filter(Services.name == 'monitoringd').one_or_none()
+            if monitoringd is None:
+                data.update({'monitoringd_status': 'Not in DB!', 'monitoringd_status_colour': 'red'})
                 return self.template_env.get_template('html/index.html').render(data)
 
-            nongangad_services = session.query(Services).filter(Services.name != 'gangad').all()
-            out_of_date = (datetime.now() - gangad.timestamp).total_seconds() > 30. * MINS
-            if gangad.status == 'down' or out_of_date:
-                nongangad_services = (Services(name=service.name, status='unknown')
-                                      for service in nongangad_services)
-                if gangad.status != 'down':
-                    gangad = Services(name=gangad.name, status='stuck%3F')  # %3F = ?
+            nonmonitoringd_services = session.query(Services).filter(Services.name != 'monitoringd').all()
+            out_of_date = (datetime.now() - monitoringd.timestamp).total_seconds() > 30. * MINS
+            if monitoringd.status == 'down' or out_of_date:
+                nonmonitoringd_services = (Services(name=service.name, status='unknown')
+                                           for service in nonmonitoringd_services)
+                if monitoringd.status != 'down':
+                    monnitoringd = Services(name=monitoringd.name, status='stuck%3F')  # %3F = ?
 
-            data.update({'gangad_status': gangad.status,
-                         'gangad_status_colour': SERVICE_COLOUR_MAP[gangad.status]})
-            for service in nongangad_services:
+            data.update({'monitoringd_status': monitoringd.status,
+                         'monitoringd_status_colour': SERVICE_COLOUR_MAP[monitoringd.status]})
+            for service in nonmonitoringd_services:
                 data.update({service.name + '_status': service.status,
                              service.name + '_status_colour': SERVICE_COLOUR_MAP[service.status]})
         return self.template_env.get_template('html/index.html').render(data)
@@ -52,7 +51,7 @@ class HTMLPageServer(object):
     @cherrypy.expose
     def details(self, request_id):
         """Return details of a request."""
-        with scoped_session(self.session_factory) as session:
+        with db_session() as session:
             macros = session.query(ParametricJobs)\
                             .filter(ParametricJobs.request_id == request_id)\
                             .all()
@@ -63,7 +62,7 @@ class HTMLPageServer(object):
     @cherrypy.expose
     def reschedule(self, job_id):
         """Reschedule a given job."""
-        with scoped_session(self.session_factory) as session:
+        with db_session() as session:
             macro = session.query(ParametricJobs)\
                            .filter(ParametricJobs.id == int(job_id))\
                            .one_or_none()
@@ -79,7 +78,7 @@ class HTMLPageServer(object):
     @cherrypy.expose
     def csv_export(self):
         """Return .csv of Requests and ParametricJobs tables"""
-        with scoped_session(self.session_factory) as session:
+        with db_session() as session:
             query = session.query(Requests.id,
                                   Users,
                                   Requests.request_date,

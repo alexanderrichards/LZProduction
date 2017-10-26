@@ -4,23 +4,24 @@ import logging
 import time
 import calendar
 import re
+from collections import defaultdict
 from datetime import datetime
 from sqlalchemy.dialects.mysql import LONGBLOB
-from sqlalchemy import Column, Integer, Boolean, String, PickleType, TIMESTAMP, ForeignKey
+from sqlalchemy import Column, Integer, Boolean, String, PickleType, TIMESTAMP, ForeignKey, Enum
 from .SQLTableBase import SQLTableBase
-from sql.utils import scoped_session
-from utils.dirac_utils import DiracClient
+from ..utils import db_session
+from ..statuses import LOCALSTATUS
+from rpc.DiracRPCClient import dirac_api_client, ParametricDiracJobClient
 from utils.tempfile_utils import temporary_runscript, temporary_macro
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 UNIXDATE = re.compile(r'(?P<month>[0-9]{2})-(?P<day>[0-9]{2})-(?P<year>[0-9]{4})$')
 
-
-class LongPickleType(PickleType):
-    """Pickle type for long blob."""
-
-    impl = LONGBLOB
-
+def ListSplitter(sequence, nentries):
+    """Split sequence into groups."""
+    # iterable must be of type Sequence
+    for i in xrange(0, len(sequence), nentries):
+        yield sequence[i:i + nentries]
 
 class ParametricJobs(SQLTableBase):
     """Jobs SQL Table."""
@@ -46,19 +47,23 @@ class ParametricJobs(SQLTableBase):
     lzap_version = Column(String(250))
     lzap_lfn_inputdir = Column(String(250))
     lzap_lfn_outputdir = Column(String(250))
-    counters = Column(String(150))
     request_id = Column(Integer, ForeignKey('requests.id'), nullable=False)
-    status = Column(String(25), nullable=False)
-    dirac_jobs = Column(LongPickleType(), nullable=False)
-    reschedule = Column(Boolean, nullable=False)
+    status = Column(Enum(LOCALSTATUS), nullable=False)
+    reschedule = Column(Boolean, nullable=False, default=False)
     timestamp = Column(TIMESTAMP, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    num_completed = Column(Integer, nullable=False, default=0)
+    num_failed = Column(Integer, nullable=False, default=0)
+    num_submitted = Column(Integer, nullable=False, default=0)
 
-    def submit(self, session_factory):
+    def submit(self):
         """Submit parametric job."""
         # problems here if not running simulation, there will be no macro so
         # everything including context needs reworking.
 #        lfn_root = os.path.join('/lz/user/l/lzproduser.grid.hep.ph.ic.ac.uk', '_'.join(('-'.join((self.app, self.app_version)),
 #                                                           '-'.join(('DER', self.der_version)))))
+
+        parametric_job = ParametricDiracJobClient()
+        dirac_ids = set()
         if self.app_version is not None:
 
             macro_name = os.path.splitext(os.path.basename(self.macro or ''))[0]
@@ -69,8 +74,7 @@ class ParametricJobs(SQLTableBase):
             if match is not None:
                 month, day, year = match.groups()
                 unixtime = str(int(calendar.timegm(datetime(int(year), int(month), int(day), 0, 0).utctimetuple())))
-            with DiracClient("http://localhost:8000/") as dirac,\
-                 temporary_runscript(root_version='5.34.32',
+            with temporary_runscript(root_version='5.34.32',
                                      root_arch='slc6_gcc44_x86_64',
                                      g4_version='4.9.5.p02',
                                      physics_version='1.4.0',
@@ -79,60 +83,77 @@ class ParametricJobs(SQLTableBase):
                                      livetimeperjob=livetimeperjob, **self) as runscript,\
                  temporary_macro(self.tag, self.macro or '', self.app, self.nevents) as macro:
                 logger.info("Submitting ParametricJob %s, macro: %s to DIRAC", self.id, self.macro)
-                self.status, self.counters, self.dirac_jobs = dirac.submit_ranged_parametric_job(name=os.path.splitext(os.path.basename(macro))[0] + '-%(args)s',
-                                                                                                 executable=os.path.basename(runscript),
-                                                                                                 args=os.path.basename(macro) + ' %(args)s',
-                                                                                                 input_sandbox=[runscript, macro],
-                                                                                                 start=self.seed,
-                                                                                                 stop=self.seed + self.njobs,
-                                                                                                 output_log='lzproduction_output.log')
+                for sublist in ListSplitter(range(self.seed, self.seed + self.njobs), 1000):
+                    with parametric_job as j:
+                        j.setName(os.path.splitext(os.path.basename(macro))[0] + '-%(args)s')
+                        j.setPlatform('ANY')
+                        j.setExecutable(os.path.basename(runscript),
+                                        os.path.basename(macro) + ' %(args)s',
+                                        'lzproduction_output.log')
+                        j.setInputSandbox([runscript, macro])
+                        j.setDestination('ANY')
+                        j.setParameterSequence('args', sublist, addToWorkflow=False)
+                    dirac_ids.update(parametric_job.subjob_ids)
         else:
-            with DiracClient("http://localhost:8000/") as dirac,\
-                 temporary_runscript(root_version='5.34.32',
+            with temporary_runscript(root_version='5.34.32',
                                      root_arch='slc6_gcc44_x86_64',
                                      g4_version='4.9.5.p02',
                                      physics_version='1.4.0',
                                      se='UKI-LT2-IC-HEP-disk', **self) as runscript:
                 logger.info("Submitting ParametricJob %s, inputdir: %s to DIRAC", self.id, self.reduction_lfn_inputdir or self.der_lfn_inputdir or self.lzap_lfn_inputdir)
-                self.status, self.counters, self.dirac_jobs = dirac.submit_lfn_parametric_job(name="%(args)s",
-                                                                                              executable=os.path.basename(runscript),
-                                                                                              args='%(args)s',
-                                                                                              input_sandbox=[runscript],
-                                                                                              input_lfn_dir=self.reduction_lfn_inputdir or self.der_lfn_inputdir or self.lzap_lfn_inputdir,
-                                                                                              output_log='lzanalysis_output.log')
 
-        with scoped_session(session_factory, reraise=False) as session:
-            this = session.query(ParametricJobs).filter(ParametricJobs.id == self.id).first()
-            if this is not None:
-                this.status = self.status
-                this.counters = self.counters
-                this.dirac_jobs = self.dirac_jobs
-        return self.status
+                input_lfn_dir=self.reduction_lfn_inputdir or\
+                               self.der_lfn_inputdir or \
+                               self.lzap_lfn_inputdir
+                for sublist in ListSplitter(list_lfns(input_lfn_dir), 1000):
+                    with parametric_job as j:
+                        j.setName("%(args)s")
+                        j.setPlatform('ANY')
+                        j.setExecutable(os.path.basename(runscript),
+                                        '%(args)s',
+                                        'lzanalysis_output.log')
+                        j.setInputSandbox([runscript])
+                        j.setDestination('ANY')
+                        j.setParameterSequence('InputData', sublist, addToWorkflow='ParametricInputData')
+                        j.setParameterSequence('args',
+                                               [os.path.basename(l) for l in sublist],
+                                               addToWorkflow=False)
+                    dirac_ids.update(parametric_job.subjob_ids)
+
+        with db_session() as session:
+            session.bulk_insert_mappings(DiracJobs, [{'id': i, 'parametricjob_id': self.id}
+                                                     for i in parametric_job.subjob_ids])
 
     def reset(self):
         """Reset parametric job."""
-        dirac_ids = self.dirac_jobs
-        with DiracClient("http://localhost:8000/") as dirac:
-            logger.info("Removing Dirac jobs %s from ParametricJob %s", dirac_ids, self.id)
-            dirac.kill(dirac_ids)
+        with db_session(reraise=False) as session:
+            dirac_jobs = session.query(DiracJobs).filter_by(parametricjob_id=self.id)
+            dirac_job_ids = [j.id for j in dirac_jobs.all()]
+            dirac_jobs.delete(synchronize_session=False)
+        with dirac_api_client() as dirac:
+            logger.info("Removing Dirac jobs %s from ParametricJob %s", dirac_job_ids, self.id)
+            dirac.kill(dirac_job_ids)
+            dirac.delete(dirac_job_ids)
+
+
+    def delete_dirac_jobs(self, session):
+        """Delete associated DIRAC jobs."""
+        logger.info("Deleting DiracJobs for ParametricJob id: %s", self.id)
+        session.query(DiracJobs)\
+               .filter_by(parametricjob_id=self.id)\
+               .delete(synchronize_session=False)
 
     def update_status(self, session_factory):
         """Update the status of parametric job."""
-        dirac_ids = self.dirac_jobs
-        with DiracClient("http://localhost:8000/") as dirac:
-            if self.reschedule:
-                self.status, self.counters = dirac.reschedule(dirac_ids)
-                self.reschedule = False
-            else:
-                self.status, self.counters = dirac.status(dirac_ids)
-
-            if self.status == 'Failed':
-                self.status, self.counters = dirac.auto_reschedule(dirac_ids)
-
-        with scoped_session(session_factory, reraise=False) as session:
-            this = session.query(ParametricJobs).filter(ParametricJobs.id == self.id).first()
-            if this is not None:
-                this.status = self.status
-                this.counters = self.counters
-                this.reschedule = self.reschedule
-        return self.status
+        local_statuses = DiracJobs.update_status(self)
+        # could just have DiracJobs return this... maybe better
+#        local_statuses = Counter(status.local_status for status in dirac_statuses.elements())
+        status = max(local_statuses or [self.status])
+        with db_session() as session:
+            this = session.merge(self)
+            this.status = status
+            this.num_completed = local_statuses['Completed']
+            this.num_failed = local_statuses['Failed']
+            this.num_submitted = local_statuses['Submitted']
+            this.reschedule = False
+        return status

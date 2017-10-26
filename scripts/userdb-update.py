@@ -56,7 +56,8 @@ if __name__ == '__main__':
     # Add the python src path to the sys.path for future imports
     sys.path = [os.path.join(lzprod_root, 'src', 'python')] + sys.path
 
-    Users = importlib.import_module('sql.tables').Users
+    tables = importlib.import_module('sql.tables')
+    Users = tables.Users
     CertClient = importlib.import_module('utils.suds_utils').CertClient
     sql_utils = importlib.import_module('sql.utils')
 
@@ -81,8 +82,8 @@ if __name__ == '__main__':
                         suspended=user_info['DN'] not in voms_valid_users,
                         admin=False) for user_info in voms_users_info}
 
-    session_factory = sql_utils.create_all_tables(args.dburl)
-    with sql_utils.scoped_session(session_factory) as session:
+    tables.create_all_tables(args.dburl)
+    with sql_utils.db_session() as session:
         db_users = set(session.query(Users).all())
 
         new_users = voms_users.difference(db_users)

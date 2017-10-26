@@ -7,31 +7,32 @@ with SQLAlchemy.
 import logging
 from contextlib import contextmanager
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from .SQLTableBase import SQLTableBase
+from sqlalchemy.orm import sessionmaker, scoped_session
 
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
 
-def create_all_tables(url):
-    """Create all tables of type Base."""
-    engine = create_engine(url)
-    SQLTableBase.metadata.create_all(bind=engine)
-    return sessionmaker(bind=engine)
+SESSION = scoped_session(sessionmaker())
 
+
+def rebind_session(engine):
+    SESSION.remove()
+    SESSION.configure(bind=engine)
 
 @contextmanager
-def scoped_session(session_factory, reraise=True):
+def db_session(url=None, reraise=True):
     """Provide a transactional scope around a series of operations."""
-    session = session_factory()
+    if url is not None:
+        rebind_session(create_engine(url))
+
     try:
-        yield session
-        session.commit()
+        yield SESSION()
+        SESSION.commit()
     except:
         logger.exception("Problem with DB session, rolling back.")
-        session.rollback()
+        SESSION.rollback()
         if reraise:
             raise
     finally:
-        session.close()
+        SESSION.remove()

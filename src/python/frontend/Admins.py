@@ -1,5 +1,5 @@
 """Admin management service."""
-from sql.utils import scoped_session
+from sql.utils import db_session
 from sql.tables import Users
 
 
@@ -13,7 +13,7 @@ class Admins(object):
 
     exposed = True
 
-    def __init__(self, session_factory, template_env):
+    def __init__(self, template_env):
         """
         Initialisation.
 
@@ -23,7 +23,6 @@ class Admins(object):
                                                environment. This contains the html
                                                root dir with the templates below it.
         """
-        self._session_factory = session_factory
         self._template_env = template_env
 
     def GET(self):  # pylint: disable=invalid-name
@@ -33,7 +32,7 @@ class Admins(object):
         Returns:
             str: The rendered HTML containing the users admin status as toggles.
         """
-        with scoped_session(self._session_factory) as session:
+        with db_session() as session:
             return self._template_env.get_template('html/admins.html')\
                                      .render({'users': [session.query(Users).all()]})
 
@@ -49,5 +48,5 @@ class Admins(object):
         print "IN PUT(Admins)", user_id, admin
         # could use ast.literal_eval(admin.capitalize()) but not sure if I trust it yet
         admin = (admin.lower() == 'true')
-        with scoped_session(self._session_factory) as session:
+        with db_session() as session:
             session.query(Users).filter_by(id=int(user_id)).update({'admin': admin})

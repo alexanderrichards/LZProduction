@@ -2,6 +2,7 @@
 # pylint: disable=invalid-name
 """Script to start the LZ Production web server."""
 import os
+import sys
 import argparse
 import importlib
 import logging

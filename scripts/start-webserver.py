@@ -2,70 +2,13 @@
 # pylint: disable=invalid-name
 """Script to start the LZ Production web server."""
 import os
-import sys
 import argparse
 import importlib
 import logging
 from logging.handlers import TimedRotatingFileHandler
-from functools import partial
-import cherrypy
-import jinja2
-from daemonize import Daemonize
-
-def daemon_main(args):
-    """Main function executed by the daemon process."""
-    # Add the python src path to the sys.path for future imports
-    sys.path = [os.path.join(lzprod_root, 'src', 'python')] + sys.path
-
-    services = importlib.import_module('frontend')
-    sql_utils = importlib.import_module('sql.utils')
-    apache_utils = importlib.import_module('utils.apache_utils')
-    src_root = os.path.join(lzprod_root, 'src')
-    importlib.import_module('utils.jinja2_utils')
-    template_env = jinja2.Environment(loader=jinja2.FileSystemLoader(searchpath=src_root))
-
-    session_factory = sql_utils.create_all_tables(args.dburl)
-
-    config = {
-        'global': {
-            'tools.gzip.on': True,
-            'tools.staticdir.root': os.path.join(lzprod_root, 'src', 'html'),
-            'tools.staticdir.on': True,
-            'tools.staticdir.dir': '',
-            'server.socket_host': args.socket_host,
-            'server.socket_port': args.socket_port,
-            'server.thread_pool': args.thread_pool,
-            'tools.expires.on': True,
-            'tools.expires.secs': 3,  # expire in an hour, 3 secs for debug
-            'checker.check_static_paths': None
-        }
-    }
-
-    cherrypy.config.update(config)  # global vars need updating global config
-    cherrypy.tree.mount(services.HTMLPageServer(session_factory, template_env),
-                        '/',
-                        {'/': {'request.dispatch': apache_utils.CredentialDispatcher(session_factory, cherrypy.dispatch.Dispatcher())}})
-    cherrypy.tree.mount(services.RequestsDBAPI(session_factory),
-                        '/api',
-                        {'/': {'request.dispatch': apache_utils.CredentialDispatcher(session_factory, cherrypy.dispatch.MethodDispatcher())}})
-    cherrypy.tree.mount(services.CVMFSAppVersions('/cvmfs/lz.opensciencegrid.org',
-                                                  ['LUXSim', 'BACCARAT', 'TDRAnalysis', 'fastNEST', 'DER', 'LZap']),
-                        '/appversion',
-                        {'/': {'request.dispatch': apache_utils.CredentialDispatcher(session_factory, cherrypy.dispatch.Dispatcher())}})
-    cherrypy.tree.mount(services.GitTagMacros(args.git_repo, args.git_dir, template_env),
-                        '/tags',
-                        {'/': {'request.dispatch':  apache_utils.CredentialDispatcher(session_factory, cherrypy.dispatch.Dispatcher())}})
-    cherrypy.tree.mount(services.Admins(session_factory, template_env),
-                        '/admins',
-                        {'/': {'request.dispatch':  apache_utils.CredentialDispatcher(session_factory,
-                                                                                      cherrypy.dispatch.MethodDispatcher(),
-                                                                                      admin_only=True)}})
-    cherrypy.engine.start()
-    cherrypy.engine.block()
-
-
 
 if __name__ == '__main__':
+    app_name = os.path.splitext(os.path.basename(__file__))[0]
     lzprod_root = os.path.dirname(
         os.path.dirname(
             os.path.expanduser(
@@ -103,16 +46,28 @@ if __name__ == '__main__':
                              "(debugging only)")
     args = parser.parse_args()
 
+    # Dynamic imports to module level
+    ###########################################################################
+    # Add the python src path to the sys.path for future imports
+    sys.path = [os.path.join(lzprod_root, 'src', 'python')] + sys.path
+    LZProductionServer = importlib.import_module('webapp.WebServer').LZProductionServer
+
+    # Logging setup
+    ###########################################################################
+    # check and create logging dir
     if not os.path.isdir(args.log_dir):
         if os.path.exists(args.log_dir):
-            raise Exception("%s path already exists and is not a directory so cant make log dir" % args.log_dir)
+            raise Exception("%s path already exists and is not a directory so cant make log dir"
+                            % args.log_dir)
         os.mkdir(args.log_dir)
 
+    # setup the handler
     fhandler = TimedRotatingFileHandler(os.path.join(args.log_dir, 'LZWebServer.log'),
                                         when='midnight', backupCount=5)
     if args.debug_mode:
         fhandler = logging.StreamHandler()
     fhandler.setFormatter(logging.Formatter("[%(asctime)s] %(name)15s : %(levelname)8s : %(message)s"))
+    # setup the root logger
     root_logger = logging.getLogger()
     root_logger.addHandler(fhandler)
     root_logger.setLevel(args.logginglevel)
@@ -125,13 +80,22 @@ if __name__ == '__main__':
         cherrypy_logger.setLevel(logging.NOTSET)
         cherrypy_logger.handlers = []
 
+    # setup the main app logger
     logger = logging.getLogger("LZWebServer")
     logger.debug("Script called with args: %s", args)
 
-    daemon = Daemonize(app=os.path.splitext(os.path.basename(__file__))[0],
+    # Daemon setup
+    ###########################################################################
+    daemon = WebServer(production_root=lzprod_root,
+                       dburl=args.dburl,
+                       socket_host=args.socket_host,
+                       socket_port=args.socket_port,
+                       thread_pool=args.thread_pool,
+                       git_repo=args.git_repo,
+                       git_dir=args.git_dir,
+                       app=app_name,
                        pid=args.pid_file,
                        logger=logger,
                        keep_fds=[fhandler.stream.fileno()],
-                       foreground=args.debug_mode,
-                       action=partial(daemon_main, args=args))
+                       foreground=args.debug_mode)
     daemon.start()

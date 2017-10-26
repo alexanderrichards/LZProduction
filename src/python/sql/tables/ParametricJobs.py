@@ -15,7 +15,7 @@ from utils.tempfile_utils import temporary_runscript, temporary_macro
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 UNIXDATE = re.compile(r'(?P<month>[0-9]{2})-(?P<day>[0-9]{2})-(?P<year>[0-9]{4})$')
 
-def ListSplitter(sequence, nentries):
+def list_splitter(sequence, nentries):
     """Split sequence into groups."""
     # iterable must be of type Sequence
     for i in xrange(0, len(sequence), nentries):
@@ -81,7 +81,7 @@ class ParametricJobs(SQLTableBase):
                                      livetimeperjob=livetimeperjob, **self) as runscript,\
                  temporary_macro(self.tag, self.macro or '', self.app, self.nevents) as macro:
                 logger.info("Submitting ParametricJob %s, macro: %s to DIRAC", self.id, self.macro)
-                for sublist in ListSplitter(range(self.seed, self.seed + self.njobs), 1000):
+                for sublist in list_splitter(range(self.seed, self.seed + self.njobs), 1000):
                     with parametric_job as j:
                         j.setName(os.path.splitext(os.path.basename(macro))[0] + '-%(args)s')
                         j.setPlatform('ANY')
@@ -103,7 +103,7 @@ class ParametricJobs(SQLTableBase):
                 input_lfn_dir=self.reduction_lfn_inputdir or\
                                self.der_lfn_inputdir or \
                                self.lzap_lfn_inputdir
-                for sublist in ListSplitter(list_lfns(input_lfn_dir), 1000):
+                for sublist in list_splitter(list_lfns(input_lfn_dir), 1000):
                     with parametric_job as j:
                         j.setName("%(args)s")
                         j.setPlatform('ANY')

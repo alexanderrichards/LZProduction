@@ -10,7 +10,7 @@ class SERVICESTATUS(Enum):
     """Service Status Enum."""
 
     Down = 0
-    Up = 1
+    Up = 1  # pylint: disable=invalid-name
 
 
 @unique
@@ -50,7 +50,7 @@ class LOCALSTATUS(IntEnum):
     Submitted = 7
     Submitting = 8
     Running = 9
-    
+
 
 STATUS_MAP = {DIRACSTATUS.Unknown: LOCALSTATUS.Unknown,
               DIRACSTATUS.Deleted: LOCALSTATUS.Deleted,

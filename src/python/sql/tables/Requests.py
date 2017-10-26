@@ -49,6 +49,7 @@ class Requests(SQLTableBase):
     timestamp = Column(TIMESTAMP, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     def submit(self):
+        """Submit Request."""
         with db_session() as session:
             parametricjobs = session.query(ParametricJobs).filter_by(request_id=self.id).all()
             session.expunge_all()

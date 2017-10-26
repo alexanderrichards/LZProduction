@@ -4,9 +4,7 @@ import logging
 import time
 import calendar
 import re
-from collections import defaultdict
 from datetime import datetime
-from sqlalchemy.dialects.mysql import LONGBLOB
 from sqlalchemy import Column, Integer, Boolean, String, PickleType, TIMESTAMP, ForeignKey, Enum
 from .SQLTableBase import SQLTableBase
 from ..utils import db_session
@@ -143,7 +141,7 @@ class ParametricJobs(SQLTableBase):
                .filter_by(parametricjob_id=self.id)\
                .delete(synchronize_session=False)
 
-    def update_status(self, session_factory):
+    def update_status(self):
         """Update the status of parametric job."""
         local_statuses = DiracJobs.update_status(self)
         # could just have DiracJobs return this... maybe better

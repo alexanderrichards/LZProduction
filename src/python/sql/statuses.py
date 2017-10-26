@@ -1,8 +1,14 @@
+"""Status enums for use in SQL tables."""
 from enum import unique, Enum, IntEnum
+
+
+__all__ = ('SERVICESTATUS', 'DIRACSTATUS', 'LOCALSTATUS')
 
 
 @unique
 class SERVICESTATUS(Enum):
+    """Service Status Enum."""
+
     Down = 0
     Up = 1
 
@@ -27,10 +33,13 @@ class DIRACSTATUS(IntEnum):
 
     @property
     def local_status(self):
+        """Convert to LOCALSTATUS."""
         return STATUS_MAP[self]
 
 @unique
 class LOCALSTATUS(IntEnum):
+    """Local Status Enum."""
+
     Unknown = 0
     Deleted = 1
     Killed = 2

@@ -1,9 +1,11 @@
 """Dirac Jobs Table."""
+from collections import Counter
 from sqlalchemy import Column, Integer, Enum, ForeignKey
 from rpc.DiracRPCClient import dirac_api_client
 from .SQLTableBase import SQLTableBase
 from ..statuses import DIRACSTATUS
 from ..utils import db_session
+
 
 class DiracJobs(SQLTableBase):
     """Dirac Jobs SQL Table."""
@@ -16,6 +18,12 @@ class DiracJobs(SQLTableBase):
 
     @staticmethod
     def update_status(parametricjob):
+        """
+        Bulk update status.
+
+        This method updates all DIRAC jobs which belong to the given
+        parametricjob.
+        """
         with db_session() as session:
             dirac_jobs = session.query(DiracJobs)\
                                 .filter_by(parametricjob_id=parametricjob.id)\

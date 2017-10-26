@@ -39,7 +39,7 @@ class HTMLPageServer(object):
                 nonmonitoringd_services = (Services(name=service.name, status='unknown')
                                            for service in nonmonitoringd_services)
                 if monitoringd.status != 'down':
-                    monnitoringd = Services(name=monitoringd.name, status='stuck%3F')  # %3F = ?
+                    monitoringd = Services(name=monitoringd.name, status='stuck%3F')  # %3F = ?
 
             data.update({'monitoringd_status': monitoringd.status,
                          'monitoringd_status_colour': SERVICE_COLOUR_MAP[monitoringd.status]})

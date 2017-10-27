@@ -29,8 +29,7 @@ class LZProductionServer(Daemonize):
         self._thread_pool = thread_pool
         self._git_repo = git_repo
         self._src_root = os.path.join(production_root, 'src')
-        if git_dir is None:
-            self._git_dir = os.path.join(production_root, 'git', 'TDRAnalysis')
+        self._git_dir = git_dir or os.path.join(production_root, 'git', 'TDRAnalysis')
 
     def main(self):
         """Daemon main."""

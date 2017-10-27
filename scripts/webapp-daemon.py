@@ -87,16 +87,16 @@ if __name__ == '__main__':
 
     # Daemon setup
     ###########################################################################
-    daemon = WebServer(production_root=lzprod_root,
-                       dburl=args.dburl,
-                       socket_host=args.socket_host,
-                       socket_port=args.socket_port,
-                       thread_pool=args.thread_pool,
-                       git_repo=args.git_repo,
-                       git_dir=args.git_dir,
-                       app=app_name,
-                       pid=args.pid_file,
-                       logger=logger,
-                       keep_fds=[fhandler.stream.fileno()],
-                       foreground=args.debug_mode)
+    daemon = LZProductionServer(production_root=lzprod_root,
+                                dburl=args.dburl,
+                                socket_host=args.socket_host,
+                                socket_port=args.socket_port,
+                                thread_pool=args.thread_pool,
+                                git_repo=args.git_repo,
+                                git_dir=args.git_dir,
+                                app=app_name,
+                                pid=args.pid_file,
+                                logger=logger,
+                                keep_fds=[fhandler.stream.fileno()],
+                                foreground=args.debug_mode)
     daemon.start()

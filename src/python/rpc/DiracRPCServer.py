@@ -33,6 +33,7 @@ class DiracDaemon(Daemonize):
         super(DiracDaemon, self).__init__(action=self.main, **kwargs)
 
     def main(self):
+        """Daemon main."""
         # Set up the threaded server in the daemon main
         # else the file descriptors will be closed when daemon starts.
         hostname, port = self._address

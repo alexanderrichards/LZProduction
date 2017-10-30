@@ -1,6 +1,8 @@
 """DIRAC RPC Server."""
+from types import FunctionType
 import rpyc
 from rpyc.utils.server import ThreadedServer
+from daemonize import Daemonize
 from DIRAC.Interfaces.API.Job import Job
 from DIRAC.Interfaces.API.Dirac import Dirac
 
@@ -26,9 +28,15 @@ class DiracDaemon(Daemonize):
 
     def __init__(self, address, **kwargs):
         """Initialise."""
-        hostname, port = address
-        self._server = ThreadedServer(DiracService,
-                                      hostname=hostname,
-                                      port=port,
-                                      logger=kwargs.get('logger'))
-        super(DiracDaemon, self).__init__(action=self._server.start, **kwargs)
+        self._address = address
+        self._logger = kwargs.get('logger')
+        super(DiracDaemon, self).__init__(action=self.main, **kwargs)
+
+    def main(self):
+        # Set up the threaded server in the daemon main
+        # else the file descriptors will be closed when daemon starts.
+        hostname, port = self._address
+        ThreadedServer(DiracService,
+                       hostname=hostname,
+                       port=port,
+                       logger=self._logger).start()

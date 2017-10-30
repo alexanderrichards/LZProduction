@@ -42,7 +42,7 @@ if __name__ == '__main__':
     ###########################################################################
     # Add the python src path to the sys.path for future imports
     sys.path = [os.path.join(lzprod_root, 'src', 'python')] + sys.path
-    DiracDaemon = importlib.import_module('backend.DiracRPCServer').DiracDaemon
+    DiracDaemon = importlib.import_module('rpc.DiracRPCServer').DiracDaemon
 
 
     # Logging setup

@@ -35,8 +35,6 @@ class HTMLPageServer(object):
             nonmonitoringd_services = session.query(Services)\
                                              .filter(Services.name != 'monitoringd')\
                                              .all()
-            session.expunge_all()
-
             try:
                 monitoringd = session.query(Services).filter_by(name='monitoringd').one()
             except NoResultFound:
@@ -45,6 +43,7 @@ class HTMLPageServer(object):
             except MultipleResultsFound:
                 logger.error("Multiple monitoring daemon 'monitoringd' services found in DB.")
                 monitoringd = Services(name='monitoringd', status=SERVICESTATUS.Unknown, timestamp=datetime.utcnow())
+            session.expunge_all()
 
         data['services'].update({monitoringd.name: monitoringd.status})
         out_of_date = (datetime.now() - monitoringd.timestamp).total_seconds() > 30. * MINS

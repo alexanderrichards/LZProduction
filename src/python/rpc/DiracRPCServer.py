@@ -1,10 +1,14 @@
 """DIRAC RPC Server."""
+import logging
 from types import FunctionType
 import rpyc
 from rpyc.utils.server import ThreadedServer
 from daemonize import Daemonize
 from DIRAC.Interfaces.API.Job import Job
 from DIRAC.Interfaces.API.Dirac import Dirac
+
+
+logger = logging.getLogger(__name__)
 
 
 def autoexpose(cls):
@@ -29,7 +33,6 @@ class DiracDaemon(Daemonize):
     def __init__(self, address, **kwargs):
         """Initialise."""
         self._address = address
-        self._logger = kwargs.get('logger')
         super(DiracDaemon, self).__init__(action=self.main, **kwargs)
 
     def main(self):
@@ -40,4 +43,4 @@ class DiracDaemon(Daemonize):
         ThreadedServer(DiracService,
                        hostname=hostname,
                        port=port,
-                       logger=self._logger).start()
+                       logger=logger).start()

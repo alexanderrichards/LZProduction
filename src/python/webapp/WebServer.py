@@ -52,11 +52,14 @@ class LZProductionServer(Daemonize):
         }
 
         cherrypy.config.update(config)  # global vars need updating global config
-        cherrypy.tree.mount(HTMLPageServer(template_env, self.logger),
+        cherrypy.tree.mount(HTMLPageServer(template_env),
                             '/',
                             {'/': {'request.dispatch': CredentialDispatcher(cherrypy.dispatch.Dispatcher())}})
         cherrypy.tree.mount(Requests,
                             '/api',
+                            {'/': {'request.dispatch': CredentialDispatcher(cherrypy.dispatch.MethodDispatcher())}})
+        cherrypy.tree.mount(ParametricJobs,
+                            '/parametricjobs',
                             {'/': {'request.dispatch': CredentialDispatcher(cherrypy.dispatch.MethodDispatcher())}})
         cherrypy.tree.mount(CVMFSAppVersions('/cvmfs/lz.opensciencegrid.org',
                                                       ['LUXSim', 'BACCARAT', 'TDRAnalysis', 'fastNEST', 'DER', 'LZap']),

@@ -5,7 +5,10 @@ import time
 import calendar
 import re
 from datetime import datetime
+import cherrypy
 from sqlalchemy import Column, Integer, Boolean, String, PickleType, TIMESTAMP, ForeignKey, Enum
+from sqlalchemy.orm import relationship
+from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 from .SQLTableBase import SQLTableBase
 from ..utils import db_session
 from ..statuses import LOCALSTATUS
@@ -15,12 +18,15 @@ from utils.tempfile_utils import temporary_runscript, temporary_macro
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 UNIXDATE = re.compile(r'(?P<month>[0-9]{2})-(?P<day>[0-9]{2})-(?P<year>[0-9]{4})$')
 
+
 def list_splitter(sequence, nentries):
     """Split sequence into groups."""
     # iterable must be of type Sequence
     for i in xrange(0, len(sequence), nentries):
         yield sequence[i:i + nentries]
 
+
+@cherrypy.expose
 class ParametricJobs(SQLTableBase):
     """Jobs SQL Table."""
 
@@ -46,12 +52,14 @@ class ParametricJobs(SQLTableBase):
     lzap_lfn_inputdir = Column(String(250))
     lzap_lfn_outputdir = Column(String(250))
     request_id = Column(Integer, ForeignKey('requests.id'), nullable=False)
+    request = relationship("Requests", back_populates="parametricjobs")
     status = Column(Enum(LOCALSTATUS), nullable=False)
     reschedule = Column(Boolean, nullable=False, default=False)
     timestamp = Column(TIMESTAMP, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
     num_completed = Column(Integer, nullable=False, default=0)
     num_failed = Column(Integer, nullable=False, default=0)
     num_submitted = Column(Integer, nullable=False, default=0)
+    diracjobs = relationship("DiracJobs", back_populates="parametricjob")
 
     def submit(self):
         """Submit parametric job."""
@@ -155,3 +163,43 @@ class ParametricJobs(SQLTableBase):
             this.num_submitted = local_statuses['Submitted']
             this.reschedule = False
         return status
+
+
+    @staticmethod
+    def GET(reqid):  # pylint: disable=invalid-name
+        """
+        REST Get method.
+
+        Returns all ParametricJobs for a given request id.
+        """
+        logger.debug("In GET: reqid = %s", reqid)
+        requester = cherrypy.request.verified_user
+        with db_session() as session:
+            user_requests = session.query(ParametricJobs)\
+                                   .filter_by(request_id=reqid)
+            if not requester.admin:
+                user_requests = user_requests.join(ParametricJobs.request)\
+                                             .filter_by(requester_id=requester.id)
+            return json.dumps({'data': user_requests.all()}, cls=DatetimeMappingEncoder)
+
+    @staticmethod
+    def PUT(jobid, reschedule=False):  # pylint: disable=invalid-name
+        """REST Put method."""
+        logger.debug("In PUT: reqid = %s, reschedule = %s", reqid, reschedule)
+        requester = cherrypy.request.verified_user
+        with db_session() as session:
+            query = session.query(ParametricJobs).filter_by(id=jobid)
+            if not requester.admin:
+                query = job.join(ParametricJobs.request)\
+                           .filter_by(requester_id=requester.id)
+            try:
+                job = query.one()
+            except NoResultFound:
+                logger.error("No ParametricJobs found with id: %s", jobid)
+            except MultipleResultsFound:
+                logger.error("Multiple ParametricJobs found with id: %s", jobid)
+            else:
+                if reschedule and not job.reschedule:
+                    job.reschedule = True
+                    job.status = LOCALSTATUS.Submitting
+

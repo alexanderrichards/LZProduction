@@ -5,6 +5,7 @@ import cherrypy
 import json
 from collections import Mapping
 from sqlalchemy import Column, Integer, String, TIMESTAMP, ForeignKey, Enum
+from sqlalchemy.orm import relationship
 from .SQLTableBase import SQLTableBase
 from .ParametricJobs import ParametricJobs
 from .Users import Users
@@ -48,6 +49,7 @@ class Requests(SQLTableBase):
     status = Column(Enum(LOCALSTATUS), nullable=False, default=LOCALSTATUS.Requested)
     description = Column(String(250), nullable=False)
     timestamp = Column(TIMESTAMP, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    parametricjobs = relationship("ParametricJobs", back_populates="request")
 
     def submit(self):
         """Submit Request."""

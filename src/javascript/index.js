@@ -87,15 +87,16 @@ $(document).ready(function() {
     $("#tableBody tbody").on("click", "span.reschedule", function(){
 	var macro_id = $(this).attr('macroid');
 	var request_id = $(this).attr('requestid');
-	$.ajax({url: '/reschedule/' + macro_id,
-		type: "GET",
+	$.ajax({url: '/parametricjobs/' + macro_id,
+		type: "PUT",
+		data: {'reschedule': true},
 		success: function() {
 		    $("#tableBody").DataTable().ajax.reload();
 		    var datatable = $("#tableBody").DataTable();
 		    var row_id = $("tr td.rowid:contains('"+ request_id +"')");
 		    var tr = row_id.closest("tr");
 		    var row = datatable.row(tr);
-		    $.ajax({url: '/details/' + request_id,
+		    $.ajax({url: '/parametricjobs/' + request_id,
 			    type: "GET",
 			    success: function(data) {
 				row.child(data).show();
@@ -116,7 +117,7 @@ $(document).ready(function() {
             //tr.removeClass("shown");
 	}
 	else{
-	    $.ajax({url: '/details/' + request_id,
+	    $.ajax({url: '/parametricjobs/' + request_id,
 		   type: "GET",
 		   success: function(data) {
 		       row.child(data).show();
@@ -128,6 +129,7 @@ $(document).ready(function() {
 	$(this).toggleClass("text-primary")
 	$(this).toggleClass("text-danger")
     });
+
     /////////////////////////////////////////////////////
 
     // New request button

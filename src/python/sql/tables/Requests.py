@@ -7,6 +7,7 @@ from collections import Mapping
 from sqlalchemy import Column, Integer, String, TIMESTAMP, ForeignKey, Enum
 from .SQLTableBase import SQLTableBase
 from .ParametricJobs import ParametricJobs
+from .Users import Users
 from ..utils import db_session
 from ..statuses import LOCALSTATUS
 

@@ -9,8 +9,9 @@ __all__ = ('SERVICESTATUS', 'DIRACSTATUS', 'LOCALSTATUS')
 class SERVICESTATUS(Enum):
     """Service Status Enum."""
 
-    Down = 0
-    Up = 1  # pylint: disable=invalid-name
+    Unknown = 'lightgrey'
+    Down = 'red'
+    Up = 'brightgreen'  # pylint: disable=invalid-name
 
 
 @unique

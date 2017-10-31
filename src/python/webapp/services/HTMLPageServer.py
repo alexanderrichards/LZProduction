@@ -3,49 +3,52 @@ from datetime import datetime
 import cStringIO
 import cherrypy
 from cherrypy.lib.static import serve_fileobj
+from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 from sql.utils import db_session
+from sql.statuses import SERVICESTATUS
 from sql.tables import Services, ParametricJobs, Users, Requests
 import csv
 
 MINS = 60
-SERVICE_COLOUR_MAP = {'up': 'brightgreen',
-                      'down': 'red',
-                      'unknown': 'lightgrey',
-                      'stuck%3F': 'yellow'}  # %3F = ?
+#SERVICE_COLOUR_MAP = {SERVICESTATUS.Up: 'brightgreen',
+#                      SERVICESTATUS.Down: 'red',
+#                      SERVICESTATUS.Unknown: 'lightgrey',
+#                      'stuck%3F': 'yellow'}  # %3F = ?
 
 
 class HTMLPageServer(object):
     """The Web server."""
 
-    def __init__(self, template_env):
+    def __init__(self, template_env, logger):
         """Initialisation."""
         self.template_env = template_env
+        self.logger = logger
 
     @cherrypy.expose
     def index(self):
         """Return the index page."""
-        data = {'user': cherrypy.request.verified_user}
+        data = {'user': cherrypy.request.verified_user, 'services': {}}
         data['index_script'] = self.template_env.get_template('javascript/index.js')\
                                                 .render(data)
         with db_session() as session:
-            monitoringd = session.query(Services).filter(Services.name == 'monitoringd').one_or_none()
-            if monitoringd is None:
-                data.update({'monitoringd_status': 'Not in DB!', 'monitoringd_status_colour': 'red'})
-                return self.template_env.get_template('html/index.html').render(data)
+            nonmonitoringd_services = session.query(Services)\
+                                             .filter(Services.name != 'monitoringd')\
+                                             .all()
+            try:
+                monitoringd = session.query(Services).filter_by(name='monitoringd').one()
+            except NoResultFound:
+                self.logger.warning("Monitoring daemon 'monitoringd' service status not in DB.")
+                monitoringd = Services(name='monitoringd', status=SERVICESTATUS.Unknown)
+            except MultipleResultsFound:
+                self.logger.error("Multiple monitoring daemon 'monitoringd' services found in DB.")
+                monitoringd = Services(name='monitoringd', status=SERVICESTATUS.Unknown)
 
-            nonmonitoringd_services = session.query(Services).filter(Services.name != 'monitoringd').all()
-            out_of_date = (datetime.now() - monitoringd.timestamp).total_seconds() > 30. * MINS
-            if monitoringd.status == 'down' or out_of_date:
-                nonmonitoringd_services = (Services(name=service.name, status='unknown')
-                                           for service in nonmonitoringd_services)
-                if monitoringd.status != 'down':
-                    monitoringd = Services(name=monitoringd.name, status='stuck%3F')  # %3F = ?
-
-            data.update({'monitoringd_status': monitoringd.status,
-                         'monitoringd_status_colour': SERVICE_COLOUR_MAP[monitoringd.status]})
-            for service in nonmonitoringd_services:
-                data.update({service.name + '_status': service.status,
-                             service.name + '_status_colour': SERVICE_COLOUR_MAP[service.status]})
+        data['services'].update({monitoringd.name: monitoringd.status})
+        out_of_date = (datetime.now() - monitoringd.timestamp).total_seconds() > 30. * MINS
+        if monitoringd.status is not SERVICESTATUS.Up or out_of_date:
+            nonmonitoringd_services = (Services(name=service.name, status=SERVICESTATUS.Unknown)
+                                       for service in nonmonitoringd_services)
+        data['services'].update({service.name: service.status for service in nonmonitoringd_services})
         return self.template_env.get_template('html/index.html').render(data)
 
     @cherrypy.expose

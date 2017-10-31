@@ -52,7 +52,7 @@ class LZProductionServer(Daemonize):
         }
 
         cherrypy.config.update(config)  # global vars need updating global config
-        cherrypy.tree.mount(HTMLPageServer(template_env),
+        cherrypy.tree.mount(HTMLPageServer(template_env, self.logger),
                             '/',
                             {'/': {'request.dispatch': CredentialDispatcher(cherrypy.dispatch.Dispatcher())}})
         cherrypy.tree.mount(Requests,

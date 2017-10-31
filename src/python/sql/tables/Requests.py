@@ -29,7 +29,7 @@ class DatetimeMappingEncoder(json.JSONEncoder):
     def default(self, obj):
         """Override base default method."""
         if isinstance(obj, Mapping):
-            return dict(obj)
+            return dict(obj, status=obj.status.name)
         if isinstance(obj, datetime):
             return obj.isoformat(' ')
         return super(DatetimeMappingEncoder, self).default(obj)
@@ -116,7 +116,7 @@ class Requests(SQLTableBase):
                                           .join(Users, Requests.requester_id == Users.id)\
                                           .all()
                     # could make a specialised encoder for this.
-                    return json.dumps({'data': [dict(request, requester=user.name)
+                    return json.dumps({'data': [dict(request, requester=user.name, status=request.status.name)
                                                 for request, user in all_requests]},
                                       cls=DatetimeMappingEncoder)
                 return json.dumps({'data': user_requests.all()}, cls=DatetimeMappingEncoder)

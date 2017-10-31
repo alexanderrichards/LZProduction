@@ -14,7 +14,7 @@ class DiracJobs(SQLTableBase):
     __tablename__ = 'diracjobs'
     id = Column(Integer, primary_key=True)  # pylint: disable=invalid-name
     parametricjob_id = Column(Integer, ForeignKey('parametricjobs.id'), nullable=False)
-    parametricjob = relationship("ParametricJob", back_populates='diracjobs')
+    parametricjob = relationship("ParametricJobs", back_populates='diracjobs')
     status = Column(Enum(DIRACSTATUS), nullable=False, default=DIRACSTATUS.Unknown)
     reschedules = Column(Integer, nullable=False, default=0)
 

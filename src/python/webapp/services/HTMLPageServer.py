@@ -35,19 +35,21 @@ class HTMLPageServer(object):
             nonmonitoringd_services = session.query(Services)\
                                              .filter(Services.name != 'monitoringd')\
                                              .all()
+            session.expunge_all()
+
             try:
                 monitoringd = session.query(Services).filter_by(name='monitoringd').one()
             except NoResultFound:
                 logger.warning("Monitoring daemon 'monitoringd' service status not in DB.")
-                monitoringd = Services(name='monitoringd', status=SERVICESTATUS.Unknown)
+                monitoringd = Services(name='monitoringd', status=SERVICESTATUS.Unknown, timestamp=datetime.utcnow())
             except MultipleResultsFound:
                 logger.error("Multiple monitoring daemon 'monitoringd' services found in DB.")
-                monitoringd = Services(name='monitoringd', status=SERVICESTATUS.Unknown)
+                monitoringd = Services(name='monitoringd', status=SERVICESTATUS.Unknown, timestamp=datetime.utcnow())
 
         data['services'].update({monitoringd.name: monitoringd.status})
         out_of_date = (datetime.now() - monitoringd.timestamp).total_seconds() > 30. * MINS
         if monitoringd.status is not SERVICESTATUS.Up or out_of_date:
-            nonmonitoringd_services = (Services(name=service.name, status=SERVICESTATUS.Unknown)
+            nonmonitoringd_services = (Services(name=service.name, status=SERVICESTATUS.Unknown, timestamp=datetime.utcnow())
                                        for service in nonmonitoringd_services)
         data['services'].update({service.name: service.status for service in nonmonitoringd_services})
         return self.template_env.get_template('html/index.html').render(data)

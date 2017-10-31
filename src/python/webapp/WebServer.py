@@ -7,7 +7,7 @@ from sql.tables import create_all_tables
 from utils.apache_utils import CredentialDispatcher
 import utils.jinja2_utils
 from .services import HTMLPageServer, CVMFSAppVersions, GitTagMacros, Admins#, RequestsDBAPI
-from sql.tables import Requests
+from sql.tables import Requests, ParametricJobs
 
 class LZProductionServer(Daemonize):
     """LZ Production Web Server Daemon."""

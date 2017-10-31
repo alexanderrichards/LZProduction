@@ -1,4 +1,5 @@
 """Certificate authenticated web server."""
+import logging
 from datetime import datetime
 import cStringIO
 import cherrypy
@@ -9,6 +10,7 @@ from sql.statuses import SERVICESTATUS
 from sql.tables import Services, ParametricJobs, Users, Requests
 import csv
 
+logger = logging.getLogger(__name__)
 MINS = 60
 #SERVICE_COLOUR_MAP = {SERVICESTATUS.Up: 'brightgreen',
 #                      SERVICESTATUS.Down: 'red',
@@ -19,10 +21,9 @@ MINS = 60
 class HTMLPageServer(object):
     """The Web server."""
 
-    def __init__(self, template_env, logger):
+    def __init__(self, template_env):
         """Initialisation."""
         self.template_env = template_env
-        self.logger = logger
 
     @cherrypy.expose
     def index(self):
@@ -37,10 +38,10 @@ class HTMLPageServer(object):
             try:
                 monitoringd = session.query(Services).filter_by(name='monitoringd').one()
             except NoResultFound:
-                self.logger.warning("Monitoring daemon 'monitoringd' service status not in DB.")
+                logger.warning("Monitoring daemon 'monitoringd' service status not in DB.")
                 monitoringd = Services(name='monitoringd', status=SERVICESTATUS.Unknown)
             except MultipleResultsFound:
-                self.logger.error("Multiple monitoring daemon 'monitoringd' services found in DB.")
+                logger.error("Multiple monitoring daemon 'monitoringd' services found in DB.")
                 monitoringd = Services(name='monitoringd', status=SERVICESTATUS.Unknown)
 
         data['services'].update({monitoringd.name: monitoringd.status})

@@ -10,6 +10,7 @@ from sqlalchemy import Column, Integer, Boolean, String, PickleType, TIMESTAMP, 
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 from .SQLTableBase import SQLTableBase
+from .DiracJobs import DiracJobs
 from ..utils import db_session
 from ..statuses import LOCALSTATUS
 from rpc.DiracRPCClient import dirac_api_client, ParametricDiracJobClient

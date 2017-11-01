@@ -3,7 +3,9 @@ import os
 import logging
 import time
 import calendar
+import json
 import re
+from collections import Mapping
 from datetime import datetime
 import cherrypy
 from sqlalchemy import Column, Integer, Boolean, String, PickleType, TIMESTAMP, ForeignKey, Enum
@@ -25,6 +27,18 @@ def list_splitter(sequence, nentries):
     # iterable must be of type Sequence
     for i in xrange(0, len(sequence), nentries):
         yield sequence[i:i + nentries]
+
+
+class DatetimeMappingEncoder(json.JSONEncoder):
+    """JSON encoder for types Datetime and Mapping."""
+
+    def default(self, obj):
+        """Override base default method."""
+        if isinstance(obj, Mapping):
+            return dict(obj, status=obj.status.name)
+        if isinstance(obj, datetime):
+            return obj.isoformat(' ')
+        return super(DatetimeMappingEncoder, self).default(obj)
 
 
 @cherrypy.expose

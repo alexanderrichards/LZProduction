@@ -56,7 +56,7 @@ class Requests(SQLTableBase):
         with db_session() as session:
             parametricjobs = session.query(ParametricJobs).filter_by(request_id=self.id).all()
             session.expunge_all()
-            session.merge(self).status = 'Submitting'
+            session.merge(self).status = LOCALSTATUS.Submitting
 
         logger.info("Submitting request %s", self.id)
 
@@ -70,6 +70,9 @@ class Requests(SQLTableBase):
             logger.info("Resetting associated ParametricJobs")
             for job in submitted_jobs:
                 job.reset()
+        else:
+           with db_session() as session:
+               session.merge(self).status = LOCALSTATUS.Submitted
 
 
     def delete_parametric_jobs(self, session):
@@ -99,7 +102,7 @@ class Requests(SQLTableBase):
         if status != self.status:
             with db_session(reraise=False) as session:
                 session.merge(self).status = status
-            logger.info("Request %s moved to state %s", self.id, self.status.name)
+            logger.info("Request %s moved to state %s", self.id, status.name)
 
 
     @staticmethod

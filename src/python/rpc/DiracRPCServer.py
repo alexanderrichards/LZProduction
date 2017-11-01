@@ -11,20 +11,51 @@ from DIRAC.Interfaces.API.Dirac import Dirac
 logger = logging.getLogger(__name__)
 
 
-def autoexpose(cls):
-    """Tag all methods as exposed."""
-    for i, j in vars(cls).copy().iteritems():
-        if isinstance(j, FunctionType) and not\
-           (i.startswith('__') or i.startswith('exposed_')):
-            setattr(cls, "exposed_%s" % i, j)
-    return cls
+#def autoexpose(cls):
+#    """Tag all methods as exposed."""
+#    for i, j in vars(cls).copy().iteritems():
+#        if isinstance(j, FunctionType) and not\
+#           (i.startswith('__') or i.startswith('exposed_')):
+#            setattr(cls, "exposed_%s" % i, j)
+#    return cls
+
+class FixedJob(Job):
+    """Fixed DIRAC Job class."""
+
+    def setInputSandbox(self, files):
+        """
+        Set the input sandbox.
+
+        This method uses if type(files) == list in DIRAC which fails for
+        rpc type <netref list>. isinstance should be used instead. Solution
+        is to intercept this arg and cast it to a list.
+        """
+        if isinstance(files, list):
+            files = list(files)
+        return super(NewJob, self).setInputSandbox(files)
+
+
+class FixedDirac(Dirac):
+    """Fixed DIRAC Dirac class."""
+
+    def status(self, jobid):
+        """
+        Return the status of DIRAC jobs.
+
+        This method does not have an encoder setup for type set
+        let alone rpc type type <netref set>. we intercept the arg here and
+        cast to a list.
+        """
+        if isinstance(jobid, (list, set)):
+            jobid = list(jobid)
+        return super(NewDirac, self).status(jobid)
 
 
 class DiracService(rpyc.Service):
     """DIRAC RPyC Service."""
 
-    exposed_Job = autoexpose(Job)
-    exposed_dirac_api = autoexpose(Dirac)()
+    exposed_Job = FixedJob
+    exposed_dirac_api = FixedDirac()
 
 
 class DiracDaemon(Daemonize):
@@ -43,4 +74,6 @@ class DiracDaemon(Daemonize):
         ThreadedServer(DiracService,
                        hostname=hostname,
                        port=port,
-                       logger=logger).start()
+                       logger=logger,
+                       protocol_config={"allow_public_attrs": True,
+                                        "allow_pickle": True}).start()

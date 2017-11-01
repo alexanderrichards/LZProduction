@@ -1,11 +1,16 @@
 """Dirac Jobs Table."""
-from collections import Counter
+import logging
+from copy import deepcopy
+from collections import Counter, defaultdict
 from sqlalchemy import Column, Integer, Enum, ForeignKey
 from sqlalchemy.orm import relationship
 from rpc.DiracRPCClient import dirac_api_client
 from .SQLTableBase import SQLTableBase
 from ..statuses import DIRACSTATUS
 from ..utils import db_session
+
+
+logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
 
 class DiracJobs(SQLTableBase):
@@ -30,6 +35,7 @@ class DiracJobs(SQLTableBase):
             dirac_jobs = session.query(DiracJobs)\
                                 .filter_by(parametricjob_id=parametricjob.id)\
                                 .all()
+            session.expunge_all()
 
         # Group jobs by status
         job_types = defaultdict(set)
@@ -45,7 +51,8 @@ class DiracJobs(SQLTableBase):
                        job_types[DIRACSTATUS.Queued] | \
                        job_types[DIRACSTATUS.Waiting] | \
                        job_types[DIRACSTATUS.Checking] | \
-                       job_types[DIRACSTATUS.Matched]
+                       job_types[DIRACSTATUS.Matched] | \
+                       job_types[DIRACSTATUS.Unknown]
 
         if parametricjob.reschedule:
             reschedule_jobs = job_types[DIRACSTATUS.Failed] | job_types[DIRACSTATUS.Stalled]
@@ -74,27 +81,31 @@ class DiracJobs(SQLTableBase):
                 logger.error("Problem rescheduling jobs: %s", result['Message'])
 
         # Update status
+        dirac_statuses = {}
         with dirac_api_client() as dirac:
             dirac_answer = dirac.status(monitor_jobs)
-        if not dirac_answer['OK']:
-            raise DiracError(dirac_answer['Message'])
-        dirac_statuses = dirac_answer['Value']
+            if not dirac_answer['OK']:
+                raise DiracError(dirac_answer['Message'])
+            dirac_statuses.update(deepcopy(dirac_answer['Value']))
+
         skipped_jobs = monitor_jobs.difference(dirac_statuses)
         if skipped_jobs:
             logger.warning("Couldn't check the status of jobs: %s", list(skipped_jobs))
 
         with db_session() as session:
-            session.query(DiracJobs)\
-                   .filter(DiracJobs.id.in_(dirac_statuses.keys()))\
-                   .update({'status': DIRACSTATUS(dirac_statuses[DiracJobs.id]['Status'])})
-#            session.bulk_update_mappings(DiracJobs, [{'id': i, 'status': DIRACSTATUS(j['Status'])
-#                                                      for i, j in dirac_statuses.iteritems()}])
+#            session.query(DiracJobs)\
+#                   .filter(DiracJobs.id.in_(dirac_statuses.keys()))\
+#                   .update({'status': DIRACSTATUS[dirac_statuses[DiracJobs.id]['Status']]})
+            session.bulk_update_mappings(DiracJobs, [{'id': i, 'status': DIRACSTATUS[j['Status']]}
+                                                      for i, j in dirac_statuses.iteritems()])
             session.flush()
+            session.expire_all()
             dirac_jobs = session.query(DiracJobs)\
                                 .filter_by(parametricjob_id=parametricjob.id)\
                                 .all()
+            session.expunge_all()
 
         if not dirac_jobs:
             logger.warning("No dirac jobs associated with parametricjob: %s. returning status unknown", parametricjob.id)
-            dirac_jobs = [DIRACSTATUS.Unknown]
+            return Counter([DIRACSTATUS.Unknown])
         return Counter(job.status.local_status for job in dirac_jobs)

@@ -1,44 +1,29 @@
 """ParametricJobs Table."""
 import os
-import logging
-import time
-import calendar
-import json
 import re
-from collections import Mapping
+import time
+import json
+import logging
+import calendar
 from datetime import datetime
+
 import cherrypy
 from sqlalchemy import Column, Integer, Boolean, String, PickleType, TIMESTAMP, ForeignKey, Enum
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
-from .SQLTableBase import SQLTableBase
-from .DiracJobs import DiracJobs
+
+from rpc.DiracRPCClient import dirac_api_client, ParametricDiracJobClient
+from utils.collections import list_splitter
+from utils.tempfile_utils import temporary_runscript, temporary_macro
 from ..utils import db_session
 from ..statuses import LOCALSTATUS
-from rpc.DiracRPCClient import dirac_api_client, ParametricDiracJobClient
-from utils.tempfile_utils import temporary_runscript, temporary_macro
+from .SQLTableBase import SQLTableBase
+from .JSONTableEncoder import JSONTableEncoder
+from .DiracJobs import DiracJobs
+
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 UNIXDATE = re.compile(r'(?P<month>[0-9]{2})-(?P<day>[0-9]{2})-(?P<year>[0-9]{4})$')
-
-
-def list_splitter(sequence, nentries):
-    """Split sequence into groups."""
-    # iterable must be of type Sequence
-    for i in xrange(0, len(sequence), nentries):
-        yield sequence[i:i + nentries]
-
-
-class DatetimeMappingEncoder(json.JSONEncoder):
-    """JSON encoder for types Datetime and Mapping."""
-
-    def default(self, obj):
-        """Override base default method."""
-        if isinstance(obj, Mapping):
-            return dict(obj, status=obj.status.name)
-        if isinstance(obj, datetime):
-            return obj.isoformat(' ')
-        return super(DatetimeMappingEncoder, self).default(obj)
 
 
 @cherrypy.expose
@@ -195,7 +180,7 @@ class ParametricJobs(SQLTableBase):
             if not requester.admin:
                 user_requests = user_requests.join(ParametricJobs.request)\
                                              .filter_by(requester_id=requester.id)
-            return json.dumps({'data': user_requests.all()}, cls=DatetimeMappingEncoder)
+            return json.dumps({'data': user_requests.all()}, cls=JSONTableEncoder)
 
     @staticmethod
     def PUT(jobid, reschedule=False):  # pylint: disable=invalid-name

@@ -1,38 +1,22 @@
 """Requests Table."""
+import json
 import logging
 from datetime import datetime
+
 import cherrypy
-import json
-from collections import Mapping
 from sqlalchemy import Column, Integer, String, TIMESTAMP, ForeignKey, Enum
 from sqlalchemy.orm import relationship
-from .SQLTableBase import SQLTableBase
-from .ParametricJobs import ParametricJobs
-from .Users import Users
+
+from utils.collections import subdict
 from ..utils import db_session
 from ..statuses import LOCALSTATUS
+from .SQLTableBase import SQLTableBase
+from .JSONTableEncoder import JSONTableEncoder
+from .Users import Users
+from .ParametricJobs import ParametricJobs
+
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
-
-def subdict(dct, seq, **kwargs):
-    """Sub dict."""
-    # tuple(seq) as seq might be iterator
-    # return {k: v for k, v in dct.iteritems() if k in tulpe(seq)}
-
-    # This might be faster if dct is large as doesn't have to iterate through it.
-    # also works natively with seq being an iterator, no tuple initialisation
-    return dict({key: dct[key] for key in seq if key in dct}, **kwargs)
-
-class DatetimeMappingEncoder(json.JSONEncoder):
-    """JSON encoder for types Datetime and Mapping."""
-
-    def default(self, obj):
-        """Override base default method."""
-        if isinstance(obj, Mapping):
-            return dict(obj, status=obj.status.name)
-        if isinstance(obj, datetime):
-            return obj.isoformat(' ')
-        return super(DatetimeMappingEncoder, self).default(obj)
 
 
 @cherrypy.expose
@@ -118,14 +102,14 @@ class Requests(SQLTableBase):
                     # could make a specialised encoder for this.
                     return json.dumps({'data': [dict(request, requester=user.name, status=request.status.name)
                                                 for request, user in all_requests]},
-                                      cls=DatetimeMappingEncoder)
-                return json.dumps({'data': user_requests.all()}, cls=DatetimeMappingEncoder)
+                                      cls=JSONTableEncoder)
+                return json.dumps({'data': user_requests.all()}, cls=JSONTableEncoder)
 
             # Get specific request.
             if requester.admin:
                 user_requests = session.query(Requests)
             request = user_requests.filter_by(id=reqid).first()
-            return json.dumps({'data': request}, cls=DatetimeMappingEncoder)
+            return json.dumps({'data': request}, cls=JSONTableEncoder)
 
 
     @staticmethod

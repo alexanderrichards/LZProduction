@@ -10,7 +10,7 @@ from sql.statuses import SERVICESTATUS
 from sql.tables import Services, ParametricJobs, Users, Requests
 import csv
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 MINS = 60
 #SERVICE_COLOUR_MAP = {SERVICESTATUS.Up: 'brightgreen',
 #                      SERVICESTATUS.Down: 'red',

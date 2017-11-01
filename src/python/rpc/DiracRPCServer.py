@@ -32,7 +32,7 @@ class FixedJob(Job):
         """
         if isinstance(files, list):
             files = list(files)
-        return super(NewJob, self).setInputSandbox(files)
+        return super(FixedJob, self).setInputSandbox(files)
 
 
 class FixedDirac(Dirac):
@@ -48,7 +48,7 @@ class FixedDirac(Dirac):
         """
         if isinstance(jobid, (list, set)):
             jobid = list(jobid)
-        return super(NewDirac, self).status(jobid)
+        return super(FixedDirac, self).status(jobid)
 
 
 class DiracService(rpyc.Service):

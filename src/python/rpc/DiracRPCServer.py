@@ -1,6 +1,6 @@
 """DIRAC RPC Server."""
 import logging
-from types import FunctionType
+#from types import FunctionType
 import rpyc
 from rpyc.utils.server import ThreadedServer
 from daemonize import Daemonize

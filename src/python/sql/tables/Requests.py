@@ -70,9 +70,6 @@ class Requests(SQLTableBase):
             logger.info("Resetting associated ParametricJobs")
             for job in submitted_jobs:
                 job.reset()
-        else:
-           with db_session() as session:
-               session.merge(self).status = LOCALSTATUS.Submitted
 
 
     def delete_parametric_jobs(self, session):

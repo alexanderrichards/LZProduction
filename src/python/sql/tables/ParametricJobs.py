@@ -205,8 +205,8 @@ class ParametricJobs(SQLTableBase):
         with db_session() as session:
             query = session.query(ParametricJobs).filter_by(id=jobid)
             if not requester.admin:
-                query = job.join(ParametricJobs.request)\
-                           .filter_by(requester_id=requester.id)
+                query = query.join(ParametricJobs.request)\
+                             .filter_by(requester_id=requester.id)
             try:
                 job = query.one()
             except NoResultFound:

@@ -107,6 +107,30 @@ $(document).ready(function() {
     
     // Table row details subtable show/hide
     /////////////////////////////////////////////////////
+    function formatfunc(parametricjob){
+	var output = '';
+	if (parametricjob.sim_lfn_outputdir != null){
+	    output = output.concat(parametricjob.sim_lfn_outputdir + "<br>");
+	}
+	if (parametricjob.mctruth_lfn_outputdir != null){
+	    output = output.concat(parametricjob.mctruth_lfn_outputdir + "<br>");
+	}
+	if (parametricjob.reduction_lfn_outputdir != null){
+	    output = output.concat(parametricjob.reduction_lfn_outputdir + "<br>");
+	}
+	if (parametricjob.der_lfn_outputdir != null){
+	    output = output.concat(parametricjob.der_lfn_outputdir + "<br>");
+	}
+	if (parametricjob.lzap_lfn_outputdir != null){
+	    output = output.concat(parametricjob.lzap_lfn_outputdir + "<br>");
+	}
+	return output;
+    }
+
+    function formatprogress(parametricjob){
+	return 'YES'
+    }
+
     $("#tableBody tbody").on("click", "tr td span.details-control", function() {
 	var datatable = $("#tableBody").DataTable();
 	var tr = $(this).closest("tr");
@@ -114,15 +138,48 @@ $(document).ready(function() {
 	var request_id = datatable.cell(row, $("td.rowid", tr)).data();
 	if (row.child.isShown()){
             row.child.hide();
-            //tr.removeClass("shown");
 	}
 	else{
-	    $.ajax({url: '/parametricjobs/' + request_id,
-		   type: "GET",
-		   success: function(data) {
-		       row.child(data).show();
-		   }});
-            //tr.addClass("shown");
+            row.child($("<table>", {id: "subtable-" + request_id})).show()
+            $("#subtable-" + request_id).DataTable({ajax: {url: '/parametricjobs/' + request_id,
+                                                           type: "GET",
+                                                           cache: true,
+                                                           dataSrc: function(json) {
+							       var return_data = new Array();
+							       var data = json.data
+							       for(var i=0;i< data.length; i++){
+								   return_data.push({
+								       'macro': data[i].macro,
+								       'njobs': data[i].njobs,
+								       'nevents': data[i].nevents,
+								       'seed': data[i].seed,
+								       'output': formatfunc(data[i]),
+								       'status': data[i].reschedule? 'Rescheduled': data[i].status,
+								       'progress': formatprogress(data[i]),
+								       'reschedule': data[i].status == 'Failed'? $('<span>', {class: 'glyphicon glyphicon-repeat text-primary reschedule',
+			style: "cursor:pointer",
+			macroid: data[i].id,
+			requestid: data[i].request_id}): '',
+								   })
+							       }
+							       return return_data;
+							   }},
+                                                    autoWidth: true,
+                                                    paging: false,
+                                                    searching: false,
+                                                    info: false,
+                                                    //columnDefs: [ { defaultContent: "-", data: null, targets: "_all" } ],
+                                                    columns: [
+							{ data: 'macro' },
+							{ data: 'njobs' },
+							{ data: 'nevents' },
+							{ data: 'seed' },
+							{ data: 'output' },
+							{ data: 'status' },
+							{ data: 'progress' },
+							{ data: 'reschedule' }
+                                                    ]
+                                                   });
 	}
 	$(this).toggleClass("glyphicon-plus-sign")
 	$(this).toggleClass("glyphicon-minus-sign")

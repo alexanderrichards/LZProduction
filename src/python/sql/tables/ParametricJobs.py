@@ -65,6 +65,7 @@ class ParametricJobs(SQLTableBase):
 
     @hybrid_property
     def num_other(self):
+        """Return the number of jobs in states other than the known ones."""
         return self.njobs - (self.num_submitted + self.num_running + self.num_failed + self.num_completed)
 
     def submit(self):

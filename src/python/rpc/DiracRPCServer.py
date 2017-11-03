@@ -50,6 +50,18 @@ class FixedDirac(Dirac):
             jobid = list(jobid)
         return super(FixedDirac, self).status(jobid)
 
+    def reschedule(self, jobid):
+        """
+        Reschedule the given jobs.
+
+        This method does not have an encoder setup for type set
+        let alone rpc type type <netref set>. we intercept the arg here and
+        cast to a list.
+        """
+        if isinstance(jobid, (list, set)):
+            jobid = list(jobid)
+        return super(FixedDirac, self).reschedule(jobid)
+
 
 class DiracService(rpyc.Service):
     """DIRAC RPyC Service."""

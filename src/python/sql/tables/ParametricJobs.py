@@ -135,7 +135,7 @@ class ParametricJobs(SQLTableBase):
 
         with db_session() as session:
             session.bulk_insert_mappings(DiracJobs, [{'id': i, 'parametricjob_id': self.id}
-                                                     for i in parametric_job.subjob_ids])
+                                                     for i in dirac_ids])
 
     def reset(self):
         """Reset parametric job."""
@@ -165,10 +165,10 @@ class ParametricJobs(SQLTableBase):
         with db_session() as session:
             this = session.merge(self)
             this.status = status
-            this.num_completed = local_statuses['Completed']
-            this.num_failed = local_statuses['Failed']
-            this.num_submitted = local_statuses['Submitted']
-            this.num_running = local_statuses['Running']
+            this.num_completed = local_statuses[LOCALSTATUS.Completed]
+            this.num_failed = local_statuses[LOCALSTATUS.Failed]
+            this.num_submitted = local_statuses[LOCALSTATUS.Submitted]
+            this.num_running = local_statuses[LOCALSTATUS.Running]
             this.reschedule = False
         return status
 

@@ -62,13 +62,13 @@ class DiracJobs(SQLTableBase):
         # Reschedule jobs
         if reschedule_jobs:
             with dirac_api_client() as dirac:
-                result = dirac.reschedule(reschedule_jobs)
+                result = deepcopy(dirac.reschedule(reschedule_jobs))
             if result['OK']:
                 logger.info("Rescheduled jobs: %s", result['Value'])
                 monitor_jobs.update(result['Value'])
                 with db_session(reraise=False) as session:
                     session.query(DiracJobs)\
-                           .filter(DiracJobs.id.in_(results['Value']))\
+                           .filter(DiracJobs.id.in_(result['Value']))\
                            .update({'reschedules': DiracJobs.reschedules + 1},
                                    synchronize_session=False)
 #                    rescheduled_jobs = session.query(DiracJobs.id, DiracJobs.reschedules)\
@@ -83,12 +83,11 @@ class DiracJobs(SQLTableBase):
                 logger.error("Problem rescheduling jobs: %s", result['Message'])
 
         # Update status
-        dirac_statuses = {}
         with dirac_api_client() as dirac:
-            dirac_answer = dirac.status(monitor_jobs)
-            if not dirac_answer['OK']:
-                raise DiracError(dirac_answer['Message'])
-            dirac_statuses.update(deepcopy(dirac_answer['Value']))
+            dirac_answer = deepcopy(dirac.status(monitor_jobs))
+        if not dirac_answer['OK']:
+            raise DiracError(dirac_answer['Message'])
+        dirac_statuses = dirac_answer['Value']
 
         skipped_jobs = monitor_jobs.difference(dirac_statuses)
         if skipped_jobs:
@@ -109,5 +108,5 @@ class DiracJobs(SQLTableBase):
 
         if not dirac_jobs:
             logger.warning("No dirac jobs associated with parametricjob: %s. returning status unknown", parametricjob.id)
-            return Counter([DIRACSTATUS.Unknown])
+            return Counter([DIRACSTATUS.Unknown.local_status])
         return Counter(job.status.local_status for job in dirac_jobs)

@@ -193,7 +193,7 @@ class ParametricJobs(SQLTableBase):
     @staticmethod
     def PUT(jobid, reschedule=False):  # pylint: disable=invalid-name
         """REST Put method."""
-        logger.debug("In PUT: reqid = %s, reschedule = %s", reqid, reschedule)
+        logger.debug("In PUT: jobid = %s, reschedule = %s", jobid, reschedule)
         requester = cherrypy.request.verified_user
         with db_session() as session:
             query = session.query(ParametricJobs).filter_by(id=jobid)

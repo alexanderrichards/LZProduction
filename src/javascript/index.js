@@ -86,8 +86,15 @@ $(document).ready(function() {
     /////////////////////////////////////////////////////
     $("#tableBody tbody").on("click", "span.reschedule", function(){
 	var macro_id = $(this).attr('macroid');
-	var request_id = $(this).attr('requestid');
-	$.ajax({url: '/parametricjobs/' + macro_id,
+//	var request_id = $(this).attr('requestid');
+	$.ajax({url: `/parametricjobs/${macro_id}`,
+		type: "PUT",
+		data: {'reschedule': true},
+		success: function(){
+                    $(this).closest("table").ajax.reload();
+		}});
+
+/*     $.ajax({url: '/parametricjobs/' + macro_id,
 		type: "PUT",
 		data: {'reschedule': true},
 		success: function() {
@@ -102,12 +109,12 @@ $(document).ready(function() {
 				row.child(data).show();
 			    }});
 		}});
-
+*/
     });
     
     // Table row details subtable show/hide
     /////////////////////////////////////////////////////
-    function formatfunc(parametricjob){
+    function formatoutput(parametricjob){
 	var output = '';
 	if (parametricjob.sim_lfn_outputdir != null){
 	    output = output.concat(parametricjob.sim_lfn_outputdir + "<br>");
@@ -133,27 +140,32 @@ $(document).ready(function() {
 	var percent_failed = 100 * parametricjob.num_failed / parametricjob.njobs;
 	var percent_running = 100 * parametricjob.num_running / parametricjob.njobs;
 	var percent_submitted = 100 * parametricjob.num_submitted / parametricjob.njobs;
-	var percent_other = 100 * parametricjob.num_other / parametricjob.njobs;
-	return [
-	    '<div class="container" style="width:150px;border:0px;padding:0px;padding-top:15px">',
-	    '  <div class="progress" style="background:rgba(214, 214, 214, 1)">',
-	    '    <div class="progress-bar progress-bar-success ${striped}" role="progressbar" style="width:${percent_completed}%">',
-	    '      ${parametricjob.num_completed}',
-	    '    </div>',
-	    '    <div class="progress-bar progress-bar-danger ${striped}" role="progressbar" style="width:${percent_failed}%">',
-	    '      ${parametricjob.num_failed}',
-	    '    </div>',
-	    '    <div class="progress-bar progress-bar-info ${striped}" role="progressbar" style="width:${percent_running}%">',
-	    '      ${parametricjob.num_running}',
-	    '    </div>',
-	    '    <div class="progress-bar progress-bar-warning ${striped}" role="progressbar" style="width:${percent_submitted}%">',
-	    '      ${parametricjob.num_submitted}',
-	    '    </div>',
-	    '    <div class="progress-bar ${striped}" role="progressbar" style="width:${percent_other}%;background:grey">',
-	    '      ${parametricjob.num_other}',
-	    '    </div>',
-	    '  </div>',
-	    '</div>'].join("\n");
+	var num_other = parametricjob.njobs - (parametricjob.num_submitted + parametricjob.num_running + parametricjob.num_completed + parametricjob.num_failed)
+	var percent_other = 100 * num_other / parametricjob.njobs;
+	return `
+            <div class="container" style="width:150px;border:0px;padding:0px;padding-top:15px">
+              <div class="progress" style="background:rgba(214, 214, 214, 1)">
+                <div class="progress-bar progress-bar-success ${striped}" role="progressbar" style="width:${percent_completed}%">
+                  ${parametricjob.num_completed}
+                </div>
+                <div class="progress-bar progress-bar-danger ${striped}" role="progressbar" style="width:${percent_failed}%">
+                  ${parametricjob.num_failed}
+                </div>
+                <div class="progress-bar progress-bar-info ${striped}" role="progressbar" style="width:${percent_running}%">
+                  ${parametricjob.num_running}
+                </div>
+                <div class="progress-bar progress-bar-warning ${striped}" role="progressbar" style="width:${percent_submitted}%">
+                  ${parametricjob.num_submitted}
+                </div>
+                <div class="progress-bar ${striped}" role="progressbar" style="width:${percent_other}%;background:grey">
+                  ${num_other}
+                </div>
+              </div>
+            </div>`;
+    }
+
+    function formatreschedule(parametricjob){
+       return `<span class="glyphicon glyphicon-repeat text-primary reschedule" style="cursor:pointer" macroid="${parametricjob.id}" requestid="${parametricjob.request_id}"></span>`;
     }
 
     $("#tableBody tbody").on("click", "tr td span.details-control", function() {
@@ -178,13 +190,10 @@ $(document).ready(function() {
 								       'njobs': data[i].njobs,
 								       'nevents': data[i].nevents,
 								       'seed': data[i].seed,
-								       'output': formatfunc(data[i]),
+								       'output': formatoutput(data[i]),
 								       'status': data[i].reschedule? 'Rescheduled': data[i].status,
 								       'progress': formatprogress(data[i]),
-								       'reschedule': data[i].status == 'Failed'? $('<span>', {class: 'glyphicon glyphicon-repeat text-primary reschedule',
-			style: "cursor:pointer",
-			macroid: data[i].id,
-			requestid: data[i].request_id}).html(): '',
+								       'reschedule': data[i].status == 'Failed'? formatreschedule(data[i]): ''
 								   })
 							       }
 							       return return_data;

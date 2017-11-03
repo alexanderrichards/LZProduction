@@ -9,6 +9,7 @@ from datetime import datetime
 
 import cherrypy
 from sqlalchemy import Column, Integer, Boolean, String, PickleType, TIMESTAMP, ForeignKey, Enum
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 
@@ -59,7 +60,12 @@ class ParametricJobs(SQLTableBase):
     num_completed = Column(Integer, nullable=False, default=0)
     num_failed = Column(Integer, nullable=False, default=0)
     num_submitted = Column(Integer, nullable=False, default=0)
+    num_running = Column(Integer, nullable=False, default=0)
     diracjobs = relationship("DiracJobs", back_populates="parametricjob")
+
+    @hybrid_property
+    def num_other(self):
+        return self.njobs - (self.num_submitted + self.num_running + self.num_failed + self.num_completed)
 
     def submit(self):
         """Submit parametric job."""
@@ -161,6 +167,7 @@ class ParametricJobs(SQLTableBase):
             this.num_completed = local_statuses['Completed']
             this.num_failed = local_statuses['Failed']
             this.num_submitted = local_statuses['Submitted']
+            this.num_running = local_statuses['Running']
             this.reschedule = False
         return status
 

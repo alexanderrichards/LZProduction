@@ -128,7 +128,32 @@ $(document).ready(function() {
     }
 
     function formatprogress(parametricjob){
-	return 'YES'
+	var striped = parametricjob.num_running + parametricjob.num_submitted > 0? "progress-bar-striped active": "";
+	var percent_completed = 100 * parametricjob.num_completed / parametricjob.njobs;
+	var percent_failed = 100 * parametricjob.num_failed / parametricjob.njobs;
+	var percent_running = 100 * parametricjob.num_running / parametricjob.njobs;
+	var percent_submitted = 100 * parametricjob.num_submitted / parametricjob.njobs;
+	var percent_other = 100 * parametricjob.num_other / parametricjob.njobs;
+	return [
+	    '<div class="container" style="width:150px;border:0px;padding:0px;padding-top:15px">',
+	    '  <div class="progress" style="background:rgba(214, 214, 214, 1)">',
+	    '    <div class="progress-bar progress-bar-success ${striped}" role="progressbar" style="width:${percent_completed}%">',
+	    '      ${parametricjob.num_completed}',
+	    '    </div>',
+	    '    <div class="progress-bar progress-bar-danger ${striped}" role="progressbar" style="width:${percent_failed}%">',
+	    '      ${parametricjob.num_failed}',
+	    '    </div>',
+	    '    <div class="progress-bar progress-bar-info ${striped}" role="progressbar" style="width:${percent_running}%">',
+	    '      ${parametricjob.num_running}',
+	    '    </div>',
+	    '    <div class="progress-bar progress-bar-warning ${striped}" role="progressbar" style="width:${percent_submitted}%">',
+	    '      ${parametricjob.num_submitted}',
+	    '    </div>',
+	    '    <div class="progress-bar ${striped}" role="progressbar" style="width:${percent_other}%;background:grey">',
+	    '      ${parametricjob.num_other}',
+	    '    </div>',
+	    '  </div>',
+	    '</div>'].join("\n");
     }
 
     $("#tableBody tbody").on("click", "tr td span.details-control", function() {
@@ -159,7 +184,7 @@ $(document).ready(function() {
 								       'reschedule': data[i].status == 'Failed'? $('<span>', {class: 'glyphicon glyphicon-repeat text-primary reschedule',
 			style: "cursor:pointer",
 			macroid: data[i].id,
-			requestid: data[i].request_id}): '',
+			requestid: data[i].request_id}).html(): '',
 								   })
 							       }
 							       return return_data;
@@ -170,14 +195,14 @@ $(document).ready(function() {
                                                     info: false,
                                                     //columnDefs: [ { defaultContent: "-", data: null, targets: "_all" } ],
                                                     columns: [
-							{ data: 'macro' },
-							{ data: 'njobs' },
-							{ data: 'nevents' },
-							{ data: 'seed' },
-							{ data: 'output' },
-							{ data: 'status' },
-							{ data: 'progress' },
-							{ data: 'reschedule' }
+							{ data: 'macro', title: 'Macro' },
+							{ data: 'njobs', title: 'NJobs' },
+							{ data: 'nevents', title: 'NEvents' },
+							{ data: 'seed', title: 'Seed' },
+							{ data: 'output', title: 'Output' },
+							{ data: 'status', title: 'Status' },
+							{ data: 'progress', title: 'Progress' },
+							{ data: 'reschedule', orderable: false }
                                                     ]
                                                    });
 	}

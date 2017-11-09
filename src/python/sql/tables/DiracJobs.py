@@ -54,7 +54,8 @@ class DiracJobs(SQLTableBase):
                        job_types[DIRACSTATUS.Waiting] | \
                        job_types[DIRACSTATUS.Checking] | \
                        job_types[DIRACSTATUS.Matched] | \
-                       job_types[DIRACSTATUS.Unknown]
+                       job_types[DIRACSTATUS.Unknown] | \
+                       job_types[DIRACSTATUS.Completed]
 
         if parametricjob.reschedule:
             reschedule_jobs = job_types[DIRACSTATUS.Failed] | job_types[DIRACSTATUS.Stalled]

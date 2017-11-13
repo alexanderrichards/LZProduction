@@ -1,6 +1,6 @@
 """Users Table."""
 from sqlalchemy import Column, Integer, String, Boolean
-from utils.sqlalchemy_utils import SQLTableBase
+from .SQLTableBase import SQLTableBase
 
 
 class Users(SQLTableBase):
@@ -11,8 +11,8 @@ class Users(SQLTableBase):
     dn = Column(String(250), nullable=False)  # pylint: disable=invalid-name
     ca = Column(String(250), nullable=False)  # pylint: disable=invalid-name
     email = Column(String(250), nullable=False)
-    suspended = Column(Boolean(), nullable=False)
-    admin = Column(Boolean(), nullable=False)
+    suspended = Column(Boolean, nullable=False)
+    admin = Column(Boolean, nullable=False)
 
     @property
     def name(self):

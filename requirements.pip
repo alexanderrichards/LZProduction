@@ -10,3 +10,4 @@ PyMySQL==0.7.11
 requests==2.18.4
 SQLAlchemy==1.1.15
 suds==0.4
+rpyc==3.4.4

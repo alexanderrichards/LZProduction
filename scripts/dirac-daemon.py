@@ -20,7 +20,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run the DIRAC environment daemon.')
     parser.add_argument('-s', '--host', default='localhost',
                         help="The dirac environment API host [default: %(default)s]")
-    parser.add_argument('-p', '--port', default=8000, type=int,
+    parser.add_argument('-p', '--port', default=18861, type=int,
                         help="The dirac environment API port [default: %(default)s]")
     parser.add_argument('-f', '--pid-file', default=os.path.join(lzprod_root, app_name + '.pid'),
                         help="The pid file used by the daemon [default: %(default)s]")
@@ -42,7 +42,7 @@ if __name__ == '__main__':
     ###########################################################################
     # Add the python src path to the sys.path for future imports
     sys.path = [os.path.join(lzprod_root, 'src', 'python')] + sys.path
-    DiracDaemon = importlib.import_module('backend.DiracRPCServer').DiracDaemon
+    DiracDaemon = importlib.import_module('rpc.DiracRPCServer').DiracDaemon
 
 
     # Logging setup

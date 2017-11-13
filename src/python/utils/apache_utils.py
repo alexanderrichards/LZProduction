@@ -5,30 +5,10 @@ Tools for dealing with credential checking from X509 SSL certificates.
 These are useful when using Apache as a reverse proxy to check user
 credentials against a local DB.
 """
-from collections import namedtuple
 import cherrypy
-from sqlalchemy.orm.exc import MultipleResultsFound
-from utils.sqlalchemy_utils import create_db, db_session
-from tables import Users
-
-
-def name_from_dn(client_dn):
-    """
-    Get human-readable name from DN.
-
-    Attempt to determine a meaningful name from a
-    clients DN. Requires the DN to have already been
-    converted to the more usual slash delimeted style.
-
-    Args:
-        client_dn (str): The client DN
-
-    Returns:
-        str: The human-readable name
-    """
-    cns = (token.strip('CN= ') for token in client_dn.split('/')
-           if token.startswith('CN='))
-    return sorted(cns, key=len)[-1]
+from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
+from sql.utils import db_session
+from sql.tables import Users
 
 
 def apache_client_convert(client_dn, client_ca=None):
@@ -60,9 +40,8 @@ class CredentialDispatcher(object):
     then hands off to the wrapped dispatcher.
     """
 
-    def __init__(self, users_dburl, dispatcher, admin_only=False):
+    def __init__(self, dispatcher, admin_only=False):
         """Initialise."""
-        self._users_dburl = users_dburl
         self._dispatcher = dispatcher
         self._admin_only = admin_only
 
@@ -81,17 +60,16 @@ class CredentialDispatcher(object):
             raise cherrypy.HTTPError(401, 'Unauthorized: Cert not verified for user DN: %s, CA: %s.'
                                      % (client_dn, client_ca))
 
-        create_db(self._users_dburl)
-        with db_session(self._users_dburl) as session:
+        with db_session() as session:
             try:
                 user = session.query(Users)\
                               .filter_by(dn=client_dn, ca=client_ca)\
-                              .one_or_none()
+                              .one()
             except MultipleResultsFound:
                 raise cherrypy.HTTPError(500, 'Internal Server Error: Duplicate user detected. '
                                               'user: (%s, %s)'
                                          % (client_dn, client_ca))
-            if user is None:
+            except NoResultFound:
                 raise cherrypy.HTTPError(403, 'Forbidden: Unknown user. user: (%s, %s)'
                                          % (client_dn, client_ca))
             if user.suspended:
@@ -107,4 +85,4 @@ class CredentialDispatcher(object):
         return self._dispatcher(path)
 
 
-__all__ = ('name_from_dn', 'apache_client_convert', 'CredentialDispatcher')
+__all__ = ('apache_client_convert', 'CredentialDispatcher')

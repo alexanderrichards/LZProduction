@@ -67,7 +67,7 @@ if __name__ == '__main__':
     ###########################################################################
     # Add the python src path to the sys.path for future imports
     sys.path = [os.path.join(lzprod_root, 'src', 'python')] + sys.path
-    MonitoringDaemon = importlib.import_module('backend.MonitoringDaemon').MonitoringDaemon
+    MonitoringDaemon = importlib.import_module('monitoring.MonitoringDaemon').MonitoringDaemon
 
     # Logging setup
     ###########################################################################

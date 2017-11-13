@@ -56,9 +56,10 @@ if __name__ == '__main__':
     # Add the python src path to the sys.path for future imports
     sys.path = [os.path.join(lzprod_root, 'src', 'python')] + sys.path
 
-    Users = importlib.import_module('tables').Users
+    tables = importlib.import_module('sql.tables')
+    Users = tables.Users
     CertClient = importlib.import_module('utils.suds_utils').CertClient
-    sqlalchemy_utils = importlib.import_module('utils.sqlalchemy_utils')
+    sql_utils = importlib.import_module('sql.utils')
 
     # Note if clients share the same transport we get a
     # 'Duplicate domain "suds.options" found' exception.
@@ -81,8 +82,8 @@ if __name__ == '__main__':
                         suspended=user_info['DN'] not in voms_valid_users,
                         admin=False) for user_info in voms_users_info}
 
-    sqlalchemy_utils.create_db(args.dburl)
-    with sqlalchemy_utils.db_session(args.dburl) as session:
+    tables.create_all_tables(args.dburl)
+    with sql_utils.db_session() as session:
         db_users = set(session.query(Users).all())
 
         new_users = voms_users.difference(db_users)

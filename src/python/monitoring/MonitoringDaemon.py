@@ -102,6 +102,12 @@ class MonitoringDaemon(Daemonize):
                                                                      LOCALSTATUS.Submitted,
                                                                      LOCALSTATUS.Running)))\
                                         .all()
+            reschedule_requests = session.query(Requests)\
+                                         .filter_by(status=LOCALSTATUS.Failed)\
+                                         .join(Requests.parametricjobs)\
+                                         .filter_by(reschedule=True)\
+                                         .all()
+            monitored_requests.extend(reschedule_requests)
             session.expunge_all()
 
         for request in monitored_requests:

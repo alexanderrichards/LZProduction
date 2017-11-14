@@ -213,7 +213,8 @@ $(document).ready(function() {
 							{ data: 'status', title: 'Status' },
 							{ data: 'progress', title: 'Progress' },
 							{ data: 'reschedule', orderable: false }
-                                                    ]
+                                                    ],
+						    order: [[5, 'desc']]
                                                    });
 	}
 	$(this).toggleClass("glyphicon-plus-sign")

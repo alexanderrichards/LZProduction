@@ -3,8 +3,11 @@ from setuptools import setup, find_packages
 setup(
     name="lzproduction",
     version="0.1",
-    package_dir={'': 'src/python'},
-    packages=find_packages('src/python'),
+#    package_dir={'': 'src/python'},
+#    packages=find_packages('src/python'),
+    package_data={'lzproduction': ['resources/html/*',
+                                   'resources/javascript/*',
+                                   'resources/bash/*']},
     scripts=['scripts/userdb-update.py',
              'scripts/webapp-daemon.py',
              'scripts/dirac-daemon.py',

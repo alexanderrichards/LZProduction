@@ -1,3 +1,4 @@
+"""Setuptools Module."""
 from setuptools import setup, find_packages
 
 setup(
@@ -5,6 +6,7 @@ setup(
     version="0.1",
 #    package_dir={'': 'src/python'},
 #    packages=find_packages('src/python'),
+    packages=find_packages(),
     package_data={'lzproduction': ['resources/html/*',
                                    'resources/javascript/*',
                                    'resources/bash/*']},

@@ -6,10 +6,10 @@ from datetime import datetime
 import requests
 from daemonize import Daemonize
 
-from utils import logging_utils
-from sql.statuses import LOCALSTATUS, SERVICESTATUS
-from sql.utils import db_session
-from sql.tables import Requests, Services, create_all_tables
+from lzproduction.utils import logging_utils
+from lzproduction.sql.statuses import LOCALSTATUS, SERVICESTATUS
+from lzproduction.sql.utils import db_session
+from lzproduction.sql.tables import Requests, Services, create_all_tables
 MINS = 60
 
 

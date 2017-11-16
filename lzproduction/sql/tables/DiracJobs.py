@@ -6,7 +6,7 @@ from collections import Counter, defaultdict
 from sqlalchemy import Column, Integer, Enum, ForeignKey
 from sqlalchemy.orm import relationship
 
-from rpc.DiracRPCClient import dirac_api_client
+from lzproduction.rpc.DiracRPCClient import dirac_api_client
 from ..utils import db_session
 from ..statuses import DIRACSTATUS
 from .SQLTableBase import SQLTableBase

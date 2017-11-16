@@ -4,11 +4,11 @@ import pkg_resources
 import jinja2
 import cherrypy
 from daemonize import Daemonize
-from sql.tables import create_all_tables
-from utils.apache_utils import CredentialDispatcher
-import utils.jinja2_utils
+import lzproduction.utils.jinja2_utils
+from lzproduction.utils.apache_utils import CredentialDispatcher
+from lzproduction.sql.tables import create_all_tables, Requests, ParametricJobs
 from .services import HTMLPageServer, CVMFSAppVersions, GitTagMacros, Admins#, RequestsDBAPI
-from sql.tables import Requests, ParametricJobs
+
 
 class LZProductionServer(Daemonize):
     """LZ Production Web Server Daemon."""

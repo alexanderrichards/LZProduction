@@ -35,6 +35,7 @@ class ParametricJobs(SQLTableBase):
     id = Column(Integer, primary_key=True)  # pylint: disable=invalid-name
     app = Column(String(250))
     app_version = Column(String(250))
+    site = Column(String(250), nullable=False, default='ANY')
     sim_lfn_outputdir = Column(String(250))
     mctruth_lfn_outputdir = Column(String(250))
     macro = Column(String(250))
@@ -104,7 +105,7 @@ class ParametricJobs(SQLTableBase):
                                         os.path.basename(macro) + ' %(args)s',
                                         'lzproduction_output.log')
                         j.setInputSandbox([runscript, macro])
-                        j.setDestination('ANY')
+                        j.setDestination(self.site)
                         j.setParameterSequence('args', sublist, addToWorkflow=False)
                     dirac_ids.update(parametric_job.subjob_ids)
         else:
@@ -126,7 +127,7 @@ class ParametricJobs(SQLTableBase):
                                         '%(args)s',
                                         'lzanalysis_output.log')
                         j.setInputSandbox([runscript])
-                        j.setDestination('ANY')
+                        j.setDestination(self.site)
                         j.setParameterSequence('InputData', sublist, addToWorkflow='ParametricInputData')
                         j.setParameterSequence('args',
                                                [os.path.basename(l) for l in sublist],

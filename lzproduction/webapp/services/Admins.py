@@ -34,7 +34,7 @@ class Admins(object):
         """
         with db_session() as session:
             return self._template_env.get_template('html/admins.html')\
-                                     .render({'users': [session.query(Users).all()]})
+                                     .render({'users': session.query(Users).all()})
 
     def PUT(self, user_id, admin):  # pylint: disable=invalid-name
         """

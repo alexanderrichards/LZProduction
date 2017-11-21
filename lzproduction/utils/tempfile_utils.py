@@ -36,7 +36,7 @@ def temporary_macro(tag, macro, app, nevents):
         /$app/beamOn $nevents
         exit
         """))
-    lzprod_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+    lzprod_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
     git_dir = os.path.join(lzprod_root, 'git', 'TDRAnalysis')
     macro = os.path.join(git_dir, macro)
     git = Git(git_dir)

@@ -86,12 +86,13 @@ $(document).ready(function() {
     /////////////////////////////////////////////////////
     $("#tableBody tbody").on("click", "span.reschedule", function(){
 	var macro_id = $(this).attr('macroid');
+	var subtable = $(this).closest("table").DataTable();
 //	var request_id = $(this).attr('requestid');
 	$.ajax({url: `/parametricjobs/${macro_id}`,
 		type: "PUT",
 		data: {'reschedule': true},
 		success: function(){
-                    $(this).closest("table").ajax.reload();
+		    subtable.ajax.reload();
 		}});
 
 /*     $.ajax({url: '/parametricjobs/' + macro_id,
@@ -212,7 +213,8 @@ $(document).ready(function() {
 							{ data: 'status', title: 'Status' },
 							{ data: 'progress', title: 'Progress' },
 							{ data: 'reschedule', orderable: false }
-                                                    ]
+                                                    ],
+						    order: [[5, 'desc']]
                                                    });
 	}
 	$(this).toggleClass("glyphicon-plus-sign")

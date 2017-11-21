@@ -208,6 +208,16 @@ $(document).ready(function() {
 	  <fieldset>
 	    <legend>Basic Information</legend>
 	    
+	    <label for="site">Site:</label>
+	    <div class="input-group">
+	      <select id="site" name="site" class="selectpicker form-control" data-size="10" data-width="150px" data-dropup-auto="false" required>
+		<option>ANY</option>
+		<option>LCG.UKI-LT2-IC-HEP.uk</option>
+		<option>LCG.UKI-NORTHGRID-SHEF-HEP.uk</option>
+	      </select>
+	    </div>
+
+	    <br>
 	    <label for="sim_lead">Sim Lead:</label>
 	    <div class="input-group">
 	      <input class="form-control" placeholder="Sim Lead" type="text" name="sim_lead" required>

@@ -41,8 +41,8 @@ if __name__ == '__main__':
     # Dynamic imports to module level
     ###########################################################################
     # Add the python src path to the sys.path for future imports
-    sys.path = [os.path.join(lzprod_root, 'src', 'python')] + sys.path
-    DiracDaemon = importlib.import_module('rpc.DiracRPCServer').DiracDaemon
+    sys.path.append(lzprod_root)
+    DiracDaemon = importlib.import_module('lzproduction.rpc.DiracRPCServer').DiracDaemon
 
 
     # Logging setup

@@ -54,12 +54,12 @@ if __name__ == '__main__':
     logger.debug("Script called with args: %s", args)
 
     # Add the python src path to the sys.path for future imports
-    sys.path = [os.path.join(lzprod_root, 'src', 'python')] + sys.path
+    sys.path.append(lzprod_root)
 
-    tables = importlib.import_module('sql.tables')
+    tables = importlib.import_module('lzproduction.sql.tables')
     Users = tables.Users
-    CertClient = importlib.import_module('utils.suds_utils').CertClient
-    sql_utils = importlib.import_module('sql.utils')
+    CertClient = importlib.import_module('lzproduction.utils.suds_utils').CertClient
+    sql_utils = importlib.import_module('lzproduction.sql.utils')
 
     # Note if clients share the same transport we get a
     # 'Duplicate domain "suds.options" found' exception.

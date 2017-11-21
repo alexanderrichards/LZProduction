@@ -13,9 +13,9 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 
-from rpc.DiracRPCClient import dirac_api_client, ParametricDiracJobClient
-from utils.collections import list_splitter
-from utils.tempfile_utils import temporary_runscript, temporary_macro
+from lzproduction.rpc.DiracRPCClient import dirac_api_client, ParametricDiracJobClient
+from lzproduction.utils.collections import list_splitter
+from lzproduction.utils.tempfile_utils import temporary_runscript, temporary_macro
 from ..utils import db_session
 from ..statuses import LOCALSTATUS
 from .SQLTableBase import SQLTableBase

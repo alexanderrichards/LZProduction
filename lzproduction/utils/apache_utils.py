@@ -7,8 +7,8 @@ credentials against a local DB.
 """
 import cherrypy
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
-from sql.utils import db_session
-from sql.tables import Users
+from lzproduction.sql.utils import db_session
+from lzproduction.sql.tables import Users
 
 
 def apache_client_convert(client_dn, client_ca=None):

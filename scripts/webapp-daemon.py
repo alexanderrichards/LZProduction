@@ -50,8 +50,8 @@ if __name__ == '__main__':
     # Dynamic imports to module level
     ###########################################################################
     # Add the python src path to the sys.path for future imports
-    sys.path = [os.path.join(lzprod_root, 'src', 'python')] + sys.path
-    LZProductionServer = importlib.import_module('webapp.WebServer').LZProductionServer
+    sys.path.append(lzprod_root)
+    LZProductionServer = importlib.import_module('lzproduction.webapp.WebServer').LZProductionServer
 
     # Logging setup
     ###########################################################################

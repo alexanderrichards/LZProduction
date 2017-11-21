@@ -1,5 +1,6 @@
 """Functions for creating temporary job file."""
 import os
+import pkg_resources
 from textwrap import dedent
 from string import Template
 from contextlib import contextmanager
@@ -10,7 +11,9 @@ from git import Git
 @contextmanager
 def temporary_runscript(**kwargs):
     """Create temporary runscript."""
-    templates_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'bash')
+#    pkg_resources.resource_filename(__name__, 'runscript_templates')
+    templates_dir = pkg_resources.resource_filename('lzproduction', 'resources/bash')
+#    templates_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'bash')
     template_env = jinja2.Environment(loader=jinja2.FileSystemLoader(searchpath=templates_dir),
                                       trim_blocks=True,
                                       lstrip_blocks=True)
@@ -33,7 +36,7 @@ def temporary_macro(tag, macro, app, nevents):
         /$app/beamOn $nevents
         exit
         """))
-    lzprod_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+    lzprod_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
     git_dir = os.path.join(lzprod_root, 'git', 'TDRAnalysis')
     macro = os.path.join(git_dir, macro)
     git = Git(git_dir)

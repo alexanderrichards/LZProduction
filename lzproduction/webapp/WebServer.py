@@ -1,13 +1,14 @@
 """LZ Production Web Server."""
 import os
+import pkg_resources
 import jinja2
 import cherrypy
 from daemonize import Daemonize
-from sql.tables import create_all_tables
-from utils.apache_utils import CredentialDispatcher
-import utils.jinja2_utils
+import lzproduction.utils.jinja2_utils
+from lzproduction.utils.apache_utils import CredentialDispatcher
+from lzproduction.sql.tables import create_all_tables, Requests, ParametricJobs
 from .services import HTMLPageServer, CVMFSAppVersions, GitTagMacros, Admins#, RequestsDBAPI
-from sql.tables import Requests, ParametricJobs
+
 
 class LZProductionServer(Daemonize):
     """LZ Production Web Server Daemon."""
@@ -34,12 +35,15 @@ class LZProductionServer(Daemonize):
     def main(self):
         """Daemon main."""
         create_all_tables(self._dburl)
-        template_env = jinja2.Environment(loader=jinja2.FileSystemLoader(searchpath=self._src_root))
+        resource_dir = pkg_resources.resource_filename('lzproduction', 'resources')
+        html_resources =pkg_resources.resource_filename('lzproduction', 'resources/html')
+        template_env = jinja2.Environment(loader=jinja2.FileSystemLoader(searchpath=resource_dir))
+#        template_env = jinja2.Environment(loader=jinja2.FileSystemLoader(searchpath=self._src_root))
 
         config = {
             'global': {
                 'tools.gzip.on': True,
-                'tools.staticdir.root': os.path.join(self._src_root, 'html'),
+                'tools.staticdir.root': html_resources,
                 'tools.staticdir.on': True,
                 'tools.staticdir.dir': '',
                 'server.socket_host': self._socket_host,

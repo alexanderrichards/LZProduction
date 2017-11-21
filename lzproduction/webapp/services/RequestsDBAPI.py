@@ -5,8 +5,8 @@ from datetime import datetime
 from collections import Mapping
 import cherrypy
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
-from sql.utils import db_session
-from sql.tables import Requests, Users, ParametricJobs
+from lzproduction.sql.utils import db_session
+from lzproduction.sql.tables import Requests, Users, ParametricJobs
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 

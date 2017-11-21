@@ -7,7 +7,7 @@ import cherrypy
 from sqlalchemy import Column, Integer, String, TIMESTAMP, ForeignKey, Enum
 from sqlalchemy.orm import relationship
 
-from utils.collections import subdict
+from lzproduction.utils.collections import subdict
 from ..utils import db_session
 from ..statuses import LOCALSTATUS
 from .SQLTableBase import SQLTableBase

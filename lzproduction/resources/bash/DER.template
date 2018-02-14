@@ -13,7 +13,7 @@ UNIXTIME=$(({{ unixtime }}+DDT))
 
 cd $DER_DIR
 source $DER_DIR/DERenv.sh
-stop_on_error $DER_DIR/DER --UserCheck false --SkipLargeDeltaT true --FileTimeStamp ${UNIXTIME} --fileSeqNum ${i_job} --SignalChain SAMPLED --outDir ${OUTPUT_DIR}/ ${OUTPUT_DIR}/${MCTRUTH_OUTPUT_FILE} "DER step failed!"
+stop_on_error $DER_DIR/DER --UserCheck false --SkipLargeDeltaT true --FileTimeStamp ${UNIXTIME} --fileSeqNum ${i_job} --SignalChain TPC --outDir ${OUTPUT_DIR}/ ${OUTPUT_DIR}/${MCTRUTH_OUTPUT_FILE} "DER step failed!"
 
 cd $OUTPUT_DIR
 DER_OUTPUT_FILE=$(ls *_raw.root)

@@ -1,21 +1,26 @@
 ls -l *.root
 
 {% if app_version and sim_lfn_outputdir%}
-stop_on_error dirac-dms-add-file -ddd $SIM_LFN_DIR/$SIM_OUTPUT_FILE $OUTPUT_DIR/$SIM_OUTPUT_FILE $SE "Failed to upload Simulation output!"
+dirac-dms-remove-files $SIM_LFN_DIR/$SIM_OUTPUT_FILE
+stop_after_ntries 3 dirac-dms-add-file -ddd $SIM_LFN_DIR/$SIM_OUTPUT_FILE $OUTPUT_DIR/$SIM_OUTPUT_FILE $SE "Failed to upload Simulation output!"
 {% endif %}
 
 {% if app_version and mctruth_lfn_outputdir %}
-stop_on_error dirac-dms-add-file -ddd $MCTRUTH_LFN_DIR/$MCTRUTH_OUTPUT_FILE $OUTPUT_DIR/$MCTRUTH_OUTPUT_FILE $SE "Failed to upload MCTruth output!"
+dirac-dms-remove-files $MCTRUTH_LFN_DIR/$MCTRUTH_OUTPUT_FILE
+stop_after_ntries 3 dirac-dms-add-file -ddd $MCTRUTH_LFN_DIR/$MCTRUTH_OUTPUT_FILE $OUTPUT_DIR/$MCTRUTH_OUTPUT_FILE $SE "Failed to upload MCTruth output!"
 {% endif %}
 
 {% if reduction_version and reduction_lfn_outputdir %}
-stop_on_error dirac-dms-add-file -ddd $REDUCTION_LFN_DIR/$REDUCTION_OUTPUT_FILE $OUTPUT_DIR/$REDUCTION_OUTPUT_FILE $SE "Failed to upload Reduction output!"
+dirac-dms-remove-files $REDUCTION_LFN_DIR/$REDUCTION_OUTPUT_FILE
+stop_after_ntries 3 dirac-dms-add-file -ddd $REDUCTION_LFN_DIR/$REDUCTION_OUTPUT_FILE $OUTPUT_DIR/$REDUCTION_OUTPUT_FILE $SE "Failed to upload Reduction output!"
 {% endif %}
 
 {% if der_version and der_lfn_outputdir %}
-stop_on_error dirac-dms-add-file -ddd $DER_LFN_DIR/$DER_OUTPUT_FILE $OUTPUT_DIR/$DER_OUTPUT_FILE $SE "Failed to upload DER output!"
+dirac-dms-remove-files $DER_LFN_DIR/$DER_OUTPUT_FILE
+stop_after_ntries 3 dirac-dms-add-file -ddd $DER_LFN_DIR/$DER_OUTPUT_FILE $OUTPUT_DIR/$DER_OUTPUT_FILE $SE "Failed to upload DER output!"
 {% endif %}
 
 {% if lzap_version and lzap_lfn_outputdir %}
-stop_on_error dirac-dms-add-file -ddd $LZAP_LFN_DIR/$(basename ${LZAP_OUTPUT_FILE}) $LZAP_OUTPUT_FILE $SE "Failed to upload LZap output!"
+dirac-dms-remove-files $LZAP_LFN_DIR/$(basename ${LZAP_OUTPUT_FILE})
+stop_after_ntries 3 dirac-dms-add-file -ddd $LZAP_LFN_DIR/$(basename ${LZAP_OUTPUT_FILE}) $LZAP_OUTPUT_FILE $SE "Failed to upload LZap output!"
 {% endif %}

@@ -90,7 +90,7 @@ class ParametricJobs(SQLTableBase):
                 unixtime = str(int(calendar.timegm(datetime(int(year), int(month), int(day), 0, 0).utctimetuple())))
             with temporary_runscript(root_version='5.34.32',
                                      root_arch='slc6_gcc44_x86_64',
-                                     g4_version='4.9.5.p02',
+                                     g4_version='4.10.03.p02',
                                      physics_version='1.4.0',
                                      se='UKI-LT2-IC-HEP-disk',
                                      unixtime=unixtime,
@@ -111,7 +111,7 @@ class ParametricJobs(SQLTableBase):
         else:
             with temporary_runscript(root_version='5.34.32',
                                      root_arch='slc6_gcc44_x86_64',
-                                     g4_version='4.9.5.p02',
+                                     g4_version='4.10.03.p02',
                                      physics_version='1.4.0',
                                      se='UKI-LT2-IC-HEP-disk', **self) as runscript:
                 logger.info("Submitting ParametricJob %s, inputdir: %s to DIRAC", self.id, self.reduction_lfn_inputdir or self.der_lfn_inputdir or self.lzap_lfn_inputdir)

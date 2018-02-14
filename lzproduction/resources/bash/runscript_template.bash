@@ -9,6 +9,20 @@ function stop_on_error {
     fi
 }
 
+function stop_after_ntries {
+    for i in `seq 1 ${@:1:1}`;
+    do
+	${@:2:(($#-2))}
+	ret=$?
+	if [ $ret -eq 0 ]
+	then
+	    exit 0
+	fi
+    done
+    echo ${@:$#} "exit code: $ret" >&2
+    exit $ret
+}
+
 export OUTPUT_DIR=$(pwd)
 SE={{ se }}
 

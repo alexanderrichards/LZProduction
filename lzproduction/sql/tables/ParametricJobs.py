@@ -95,7 +95,7 @@ class ParametricJobs(SQLTableBase):
                                      se='UKI-LT2-IC-HEP-disk',
                                      unixtime=unixtime,
                                      livetimeperjob=livetimeperjob, **self) as runscript,\
-                 temporary_macro(self.tag, self.macro or '', self.app, self.nevents) as macro:
+                 temporary_macro(self.tag, self.macro or '', self.app, self.app_version, self.nevents) as macro:
                 logger.info("Submitting ParametricJob %s, macro: %s to DIRAC", self.id, self.macro)
                 for sublist in list_splitter(range(self.seed, self.seed + self.njobs), 1000):
                     with parametric_job as j:

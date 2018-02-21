@@ -10,7 +10,7 @@ from natsort import natsorted
 Macro = namedtuple('Macro', ('name', 'path'))
 
 macro_dir_map = {'LUXSim': ['BackgroundMacros'],
-                 'BACCARAT': ['BaccMacros', 'MDC1Macros']}
+                 'BACCARAT': ['BaccMacros', 'MDC1Macros', 'MDC2Macros']}
 
 
 @cherrypy.popargs('tagid', 'app')

@@ -27,15 +27,21 @@ def temporary_runscript(**kwargs):
 
 
 @contextmanager
-def temporary_macro(tag, macro, app, nevents):
+def temporary_macro(tag, macro, app, app_version, nevents):
     """Create temporary macro."""
     app_map = {'BACCARAT': 'Bacc'}
-    macro_extras = Template(dedent("""
-        /control/getEnv SEED
-        /$app/randomSeed {SEED}
-        /$app/beamOn $nevents
-        exit
-        """))
+    if app_version.startswith('5'):
+        macro_extras = Template(dedent("""
+            /$app/beamOn $nevents
+            exit
+            """))
+    else:
+        macro_extras = Template(dedent("""
+            /control/getEnv SEED
+            /$app/randomSeed {SEED}
+            /$app/beamOn $nevents
+            exit
+            """))
     lzprod_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
     git_dir = os.path.join(lzprod_root, 'git', 'TDRAnalysis')
     macro = os.path.join(git_dir, macro)

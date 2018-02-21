@@ -33,6 +33,12 @@ setup(
         #'webapp': [frontend stuff],
         #'monitoring': [backend stuff]
     },
+    entry_points={
+    'tables.requests': ['lz = lzproduction.plugins.lz.sql.tables.Requests:Requests'],
+    'tables.parametricjobs': ['lz = lzproduction.plugins.lz.sql.tables.ParametricJobs:ParametricJobs'],
+    'webapp.argparser': ['lz = lzproduction.plugins.lz.webapp:modify_argparser'],
+    'webapp.daemon': ['lz = lzproduction.plugins.lz.webapp.WebServer:LZProductionServer']
+    },
 
     # metadata for upload to PyPI
     author="Alexander Richards",

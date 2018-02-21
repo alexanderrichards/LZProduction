@@ -15,6 +15,8 @@ def dirac_api_client(host="localhost", port=18861):
     finally:
         conn.close()
 
+class DoNotSubmit(Exception):
+    pass
 
 class ParametricDiracJobClient(object):
     """
@@ -42,6 +44,10 @@ class ParametricDiracJobClient(object):
 
     def __exit__(self, exc_type, exc_value, traceback):
         """Exit context."""
+        if exc_type is DoNotSubmit:
+            self._conn.close()
+            return False
+
         if exc_type is not None:
             logger.error("Error setting up parametric job.")
             self._conn.close()
@@ -60,6 +66,9 @@ class ParametricDiracJobClient(object):
         finally:
             self._conn.close()
         return False
+
+    def clear(self):
+        self._dirac_job_ids.clear()
 
     @property
     def subjob_ids(self):

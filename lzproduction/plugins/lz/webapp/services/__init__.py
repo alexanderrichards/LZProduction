@@ -1,0 +1,2 @@
+from GitTagMacros import GitTagMacros
+from CVMFSAppVersions import CVMFSAppVersions

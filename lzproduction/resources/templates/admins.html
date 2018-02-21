@@ -3,17 +3,7 @@
 <head>
 <!-- TiTaToggle CSS -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/titatoggle/1.2.11/titatoggle-dist-min.css">
-
-<script type="text/javascript">
-$(document).ready(function () {
-  $(".checkbox input").change(function(){
-    var chkbox = $(this);
-    $.ajax({url: "/admins/" + chkbox.attr("id"),
-            type: "PUT",
-            data: {"admin": chkbox.prop("checked")}});
-  });
-});
-</script>
+<script type="text/javascript" src="javascript/admins.js"></script>
 
 <title>LZ Production Admins</title>
 </head>

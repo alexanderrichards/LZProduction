@@ -6,6 +6,7 @@ import sys
 import argparse
 import importlib
 import logging
+import pkg_resources
 from logging.handlers import TimedRotatingFileHandler
 
 if __name__ == '__main__':
@@ -24,11 +25,6 @@ if __name__ == '__main__':
     parser.add_argument('-l', '--log-dir', default=os.path.join(lzprod_root, 'log'),
                         help="Path to the log directory. Will be created if doesn't exist "
                              "[default: %(default)s]")
-    parser.add_argument('-r', '--git-repo', default='git@lz-git.ua.edu:sim/TDRAnalysis.git',
-                        help="Git repo url [default: %(default)s]")
-    parser.add_argument('-g', '--git-dir', default=os.path.join(lzprod_root, 'git', 'TDRAnalysis'),
-                        help="Path to the directory where to clone TDRAnalysis git repo "
-                             "[default: %(default)s]")
     parser.add_argument('-d', '--dburl',
                         default="sqlite:///" + os.path.join(lzprod_root, 'requests.db'),
                         help="URL for the requests DB. Note can use the prefix 'mysql+pymysql://' "
@@ -45,13 +41,14 @@ if __name__ == '__main__':
     parser.add_argument('--debug-mode', action='store_true', default=False,
                         help="Run the daemon in a debug interactive monitoring mode. "
                              "(debugging only)")
+    pkg_resources.load_entry_point('lzproduction', 'webapp.argparser', 'lz')(parser, lzprod_root)
     args = parser.parse_args()
 
     # Dynamic imports to module level
     ###########################################################################
     # Add the python src path to the sys.path for future imports
     sys.path.append(lzprod_root)
-    LZProductionServer = importlib.import_module('lzproduction.webapp.WebServer').LZProductionServer
+    LZProductionServer = pkg_resources.load_entry_point('lzproduction', 'webapp.daemon', 'lz')
 
     # Logging setup
     ###########################################################################

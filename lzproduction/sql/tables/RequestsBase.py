@@ -1,44 +1,40 @@
 """Requests Table."""
 import json
 import logging
+from abc import ABCMeta, abstractmethod, abstractproperty
 from datetime import datetime
 
 import cherrypy
 from sqlalchemy import Column, Integer, String, TIMESTAMP, ForeignKey, Enum
 from sqlalchemy.orm import relationship
-
+from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 from lzproduction.utils.collections import subdict
-from ..utils import db_session
-from ..statuses import LOCALSTATUS
-from .SQLTableBase import SQLTableBase
-from .JSONTableEncoder import JSONTableEncoder
-from .Users import Users
-from .ParametricJobs import ParametricJobs
+from lzproduction.sql.utils import db_session
+from lzproduction.sql.statuses import LOCALSTATUS
+from lzproduction.sql.tables import ParametricJobs
+from lzproduction.sql.tables.SQLTableBase import SQLTableBase
+from lzproduction.sql.tables.JSONTableEncoder import JSONTableEncoder
+from lzproduction.sql.tables.Users import Users
 
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
 
 @cherrypy.expose
-class Requests(SQLTableBase):
+class RequestsBase(SQLTableBase):
     """Requests SQL Table."""
 
     __tablename__ = 'requests'
     id = Column(Integer, primary_key=True)  # pylint: disable=invalid-name
     requester_id = Column(Integer, ForeignKey('users.id'), nullable=False)
     request_date = Column(String(250), nullable=False)
-    source = Column(String(250), nullable=False)
-    detector = Column(String(250), nullable=False)
-    sim_lead = Column(String(250), nullable=False)
-    status = Column(Enum(LOCALSTATUS), nullable=False, default=LOCALSTATUS.Requested)
-    description = Column(String(250), nullable=False)
     timestamp = Column(TIMESTAMP, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
     parametricjobs = relationship("ParametricJobs", back_populates="request")
 
     def submit(self):
         """Submit Request."""
         with db_session() as session:
-            parametricjobs = session.query(ParametricJobs).filter_by(request_id=self.id).all()
+            parametricjobs = session.query(tables.ParametricJobs).filter_by(request_id=self.id).all()
             session.expunge_all()
             session.merge(self).status = LOCALSTATUS.Submitting
 
@@ -50,6 +46,8 @@ class Requests(SQLTableBase):
                 job.submit()
                 submitted_jobs.append(job)
         except:
+            with db_session() as session:
+                session.merge(self).status = LOCALSTATUS.Failed
             logger.exception("Exception while submitting request %s", self.id)
             logger.info("Resetting associated ParametricJobs")
             for job in submitted_jobs:
@@ -59,7 +57,7 @@ class Requests(SQLTableBase):
     def delete_parametric_jobs(self, session):
         """Delete associated ParametricJob jobs."""
         logger.info("Deleting ParametricJobs for Request id: %s", self.id)
-        parametric_jobs = session.query(ParametricJobs)\
+        parametric_jobs = session.query(tables.ParametricJobs)\
                                  .filter_by(request_id=self.id)
         for job in parametric_jobs.all():
             job.delete_dirac_jobs(session)
@@ -69,7 +67,7 @@ class Requests(SQLTableBase):
     def update_status(self):
         """Update request status."""
         with db_session() as session:
-            parametricjobs = session.query(ParametricJobs).filter_by(request_id=self.id).all()
+            parametricjobs = session.query(tables.ParametricJobs).filter_by(request_id=self.id).all()
             session.expunge_all()
 
         statuses = []
@@ -86,18 +84,18 @@ class Requests(SQLTableBase):
             logger.info("Request %s moved to state %s", self.id, status.name)
 
 
-    @staticmethod
-    def GET(reqid=None):  # pylint: disable=invalid-name
+    @classmethod
+    def GET(cls, reqid=None):  # pylint: disable=invalid-name
         """REST Get method."""
         logger.debug("In GET: reqid = %s", reqid)
         requester = cherrypy.request.verified_user
         with db_session() as session:
-            user_requests = session.query(Requests).filter_by(requester_id=requester.id)
+            user_requests = session.query(cls).filter_by(requester_id=requester.id)
             # Get all requests.
             if reqid is None:
                 if requester.admin:
-                    all_requests = session.query(Requests, Users)\
-                                          .join(Users, Requests.requester_id == Users.id)\
+                    all_requests = session.query(cls, Users)\
+                                          .join(Users, cls.requester_id == Users.id)\
                                           .all()
                     # could make a specialised encoder for this.
                     return json.dumps({'data': [dict(request, requester=user.name, status=request.status.name)
@@ -112,15 +110,15 @@ class Requests(SQLTableBase):
             return json.dumps({'data': request}, cls=JSONTableEncoder)
 
 
-    @staticmethod
-    def DELETE(reqid):  # pylint: disable=invalid-name
+    @classmethod
+    def DELETE(cls, reqid):  # pylint: disable=invalid-name
         """REST Delete method."""
         logger.debug("In DELETE: reqid = %s", reqid)
         if cherrypy.request.verified_user.admin:
             with db_session() as session:
                 logger.info("Deleting Request id: %s", reqid)
                 try:
-                    request = session.query(Requests).filter_by(id=reqid).one()
+                    request = session.query(cls).filter_by(id=reqid).one()
                 except NoResultFound:
                     logger.warning("No Request found with id: %s", reqid)
                 except MultipleResultsFound:
@@ -128,32 +126,32 @@ class Requests(SQLTableBase):
                 else:
                     request.delete_parametric_jobs(session)
                     session.delete(request)
-        return Requests.GET()
+        return cls.GET()
 
-    @staticmethod
-    def PUT(reqid, **kwargs):  # pylint: disable=invalid-name
+    @classmethod
+    def PUT(cls, reqid, **kwargs):  # pylint: disable=invalid-name
         """REST Put method."""
         logger.debug("In PUT: reqid = %s, kwargs = %s", reqid, kwargs)
         requester = cherrypy.request.verified_user
 
         status_update = kwargs.pop('status', None)
         with db_session() as session:
-            query = session.query(Requests).filter_by(id=reqid)
+            query = session.query(cls).filter_by(id=reqid)
             if requester.admin and status_update == 'Approved':
                 query.update(subdict(kwargs, ('description',
                                               'sim_lead',
                                               'detector',
                                               'source'), status=LOCALSTATUS.Approved))
-                return Requests.GET()
+                return cls.GET()
 
             if not requester.admin:
                 query = query.filter_by(requester_id=requester.id)
             query.update(subdict(kwargs, ('description', 'sim_lead', 'detector', 'source')))
 
-        return Requests.GET()
+        return cls.GET()
 
-    @staticmethod
-    def POST(**kwargs):  # pylint: disable=invalid-name
+    @classmethod
+    def POST(cls, **kwargs):  # pylint: disable=invalid-name
         """REST Post method."""
         logger.debug("In POST: kwargs = %s", kwargs)
         selected_macros = kwargs.pop('selected_macros', [])
@@ -161,10 +159,10 @@ class Requests(SQLTableBase):
             selected_macros = [selected_macros]
 
         with db_session() as session:
-            request = Requests(**subdict(kwargs, Requests.columns,
-                                         requester_id=cherrypy.request.verified_user.id,
-                                         request_date=datetime.now().strftime('%d/%m/%Y'),
-                                         status=LOCALSTATUS.Requested))
+            request = cls(**subdict(kwargs, cls.columns,
+                                    requester_id=cherrypy.request.verified_user.id,
+                                    request_date=datetime.now().strftime('%d/%m/%Y'),
+                                    status=LOCALSTATUS.Requested))
             session.add(request)
             session.flush()
             session.refresh(request)
@@ -173,7 +171,7 @@ class Requests(SQLTableBase):
             if 'app' in kwargs:
                 for macro in selected_macros:
                     path, njobs, nevents, seed = macro.split()
-                    parametricjobs.append(subdict(kwargs, ParametricJobs.columns,
+                    parametricjobs.append(subdict(kwargs, tables.ParametricJobs.columns,
                                                   request_id=request.id,
                                                   status=LOCALSTATUS.Requested,
                                                   macro=path,
@@ -183,13 +181,13 @@ class Requests(SQLTableBase):
             elif kwargs.viewkeys() & {'reduction_lfn_inputdir',
                                       'der_lfn_inputdir',
                                       'lzap_lfn_inputdir'}:
-                parametricjobs.append(subdict(kwargs, ParametricJobs.columns,
+                parametricjobs.append(subdict(kwargs, tables.ParametricJobs.columns,
                                               request_id=request.id,
                                               status=LOCALSTATUS.Requested))
 
 
             if parametricjobs:
-                session.bulk_insert_mappings(ParametricJobs, parametricjobs)
+                session.bulk_insert_mappings(tables.ParametricJobs, parametricjobs)
             else:
                 logger.warning("No ParametricJobs added to the DB.")
-        return Requests.GET()
+        return cls.GET()

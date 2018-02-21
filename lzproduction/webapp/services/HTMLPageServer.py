@@ -1,6 +1,7 @@
 """Certificate authenticated web server."""
 import csv
 import logging
+import pkg_resources
 from datetime import datetime
 import cStringIO
 import cherrypy
@@ -49,39 +50,22 @@ class HTMLPageServer(object):
             nonmonitoringd_services = (Services(name=service.name, status=SERVICESTATUS.Unknown, timestamp=datetime.utcnow())
                                        for service in nonmonitoringd_services)
         data['services'].update({service.name: service.status for service in nonmonitoringd_services})
-        return self.template_env.get_template('html/index.html').render(data)
+        return self.template_env.get_template('index.html').render(data)
+
+    @cherrypy.expose
+    def newrequest(self):
+        """New request dialog."""
+        newrequest_filename = pkg_resources.resource_filename('lzproduction', 'plugins/lz/resources/html/newrequests.html')
+        with open(newrequest_filename, 'rb') as newrequest_file:
+            return self.template_env.get_template('newrequest.html')\
+                                    .render({'new_request_content': newrequest_file.read()})
 
     @cherrypy.expose
     def webapp_script(self):
         """Return dynamic javascript for webapp."""
-        return self.template_env.get_template('javascript/index.js')\
+        return self.template_env.get_template('index.js')\
                                 .render({'user': cherrypy.request.verified_user})
-#    @cherrypy.expose
-#    def details(self, request_id):
-#        """Return details of a request."""
-#        with db_session() as session:
-#            macros = session.query(ParametricJobs)\
-#                            .filter(ParametricJobs.request_id == request_id)\
-#                            .all()
-#            if not macros:
-#                return "Error: No macro information!"
-#            return self.template_env.get_template('html/subtables.html').render({'macros': macros})
-#
-#    @cherrypy.expose
-#    def reschedule(self, job_id):
-#        """Reschedule a given job."""
-#        with db_session() as session:
-#            macro = session.query(ParametricJobs)\
-#                           .filter(ParametricJobs.id == int(job_id))\
-#                           .one_or_none()
-#            if macro is not None:
-#                macro.reschedule = True
-#                macro.status = "Submitted"
-#                request = session.query(Requests)\
-#                                 .filter(Requests.id == macro.request_id)\
-#                                 .one_or_none()
-#                if request is not None:
-#                    request.status = "Submitted"
+
 
     @cherrypy.expose
     def csv_export(self):

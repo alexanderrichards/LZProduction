@@ -20,7 +20,7 @@ cd $APP_DIR
 {% if app == 'BACCARAT' and app_version.startswith('2') %}
 source setup.sh
 stop_on_error $APP_DIR/bin/{{ app }}Executable $OUTPUT_DIR/$MACRO_FILE "Simulation step failed!"
-{% elif app == 'BACCARAT' and app_version.startswith('5') %}
+{% elif app == 'BACCARAT' and app_version.startswith('3') %}
 source setup.sh
 stop_on_error $APP_DIR/build.x86_64-slc6-gcc48-opt/bin/{{ app }}Executable $OUTPUT_DIR/$MACRO_FILE "Simulation step failed!"
 {% else %}
@@ -36,7 +36,7 @@ stop_on_error ls *.bin "BINARY FILE DOES not EXIST"
 {% if app == 'BACCARAT' %}
 {% if app_version.startswith('2') %}
 stop_on_error $APP_DIR/bin/BaccRootConverter $OUTPUT_FILE "Failed Rootify step!"
-{% elif app_version.startswith('5') %}
+{% elif app_version.startswith('3') %}
 stop_on_error $APP_DIR/build.x86_64-slc6-gcc48-opt/bin/BaccRootConverter $OUTPUT_FILE "Failed Rootify step!"
 {% else %}
 source $ROOT_DIR/bin/thisroot.sh
@@ -51,7 +51,7 @@ stop_on_error ls $SIM_OUTPUT_FILE "OUTPUT_ROOT_FILE does not exist"
 
 {% if app == 'BACCARAT' and app_version.startswith('2') %}
 #stop_on_error `ls $APP_DIR/bin/*MCTruth` $SIM_OUTPUT_FILE "MCTruth step failed!"
-{% elif app == 'BACCARAT' and app_version.startswith('5') %}
+{% elif app == 'BACCARAT' and app_version.startswith('3') %}
 stop_on_error $APP_DIR/build.x86_64-slc6-gcc48-opt/bin/BaccMCTruth $SIM_OUTPUT_FILE "MCTruth step failed!"
 {% else %}
 #stop_on_error `ls $APP_DIR/tools/*MCTruth` $SIM_OUTPUT_FILE "MCTruth step failed!"

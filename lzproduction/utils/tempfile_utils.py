@@ -30,7 +30,7 @@ def temporary_runscript(**kwargs):
 def temporary_macro(tag, macro, app, app_version, nevents):
     """Create temporary macro."""
     app_map = {'BACCARAT': 'Bacc'}
-    if app_version.startswith('5'):
+    if app_version.startswith('3'):
         macro_extras = Template(dedent("""
             /$app/beamOn $nevents
             exit

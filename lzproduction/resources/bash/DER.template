@@ -17,3 +17,8 @@ stop_on_error $DER_DIR/DER --UserCheck false --SkipLargeDeltaT true --FileTimeSt
 
 cd $OUTPUT_DIR
 DER_OUTPUT_FILE=$(ls *_raw.root)
+
+# give the MCTruth file a name similar to DER
+MCTRUTH_FILE=$(basename ${DER_OUTPUT_FILE/"_raw.root"/"_mctruth.root"})
+mv $MCTRUTH_OUTPUT_FILE $MCTRUTH_FILE
+MCTRUTH_OUTPUT_FILE=$MCTRUTH_FILE

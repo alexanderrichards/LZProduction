@@ -16,7 +16,7 @@ function stop_after_ntries {
 	ret=$?
 	if [ $ret -eq 0 ]
 	then
-	    exit 0
+	    return 0
 	fi
     done
     echo ${@:$#} "exit code: $ret" >&2

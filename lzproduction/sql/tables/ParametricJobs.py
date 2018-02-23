@@ -8,7 +8,7 @@ import calendar
 from datetime import datetime
 
 import cherrypy
-from sqlalchemy import Column, Integer, Boolean, String, PickleType, TIMESTAMP, ForeignKey, Enum
+from sqlalchemy import Column, SmallInteger, Integer, Boolean, String, PickleType, TIMESTAMP, ForeignKey, Enum, CheckConstraint
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
@@ -33,6 +33,7 @@ class ParametricJobs(SQLTableBase):
 
     __tablename__ = 'parametricjobs'
     id = Column(Integer, primary_key=True)  # pylint: disable=invalid-name
+    priority = Column(SmallInteger, CheckConstraint('priority >= 0 and priority < 10'), nullable=False, default=3)
     app = Column(String(250))
     app_version = Column(String(250))
     site = Column(String(250), nullable=False, default='ANY')
@@ -100,6 +101,7 @@ class ParametricJobs(SQLTableBase):
                 for sublist in list_splitter(range(self.seed, self.seed + self.njobs), 1000):
                     with parametric_job as j:
                         j.setName(os.path.splitext(os.path.basename(macro))[0] + '-%(args)s')
+                        j._setParamValue('Priority', self.priority)
                         j.setPlatform('ANY')
                         j.setExecutable(os.path.basename(runscript),
                                         os.path.basename(macro) + ' %(args)s',
@@ -122,6 +124,7 @@ class ParametricJobs(SQLTableBase):
                 for sublist in list_splitter(list_lfns(input_lfn_dir), 1000):
                     with parametric_job as j:
                         j.setName("%(args)s")
+                        j._setParamValue('Priority', self.priority)
                         j.setPlatform('ANY')
                         j.setExecutable(os.path.basename(runscript),
                                         '%(args)s',

@@ -56,4 +56,4 @@ stop_on_error $APP_DIR/build.x86_64-slc6-gcc48-opt/bin/BaccMCTruth $SIM_OUTPUT_F
 {% else %}
 #stop_on_error `ls $APP_DIR/tools/*MCTruth` $SIM_OUTPUT_FILE "MCTruth step failed!"
 {% endif %}
-#MCTRUTH_OUTPUT_FILE=$(ls *_mctruth.root)
+MCTRUTH_OUTPUT_FILE=$(ls *_mctruth.root)

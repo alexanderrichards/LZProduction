@@ -25,6 +25,17 @@ class DiracJobs(SQLTableBase):
     status = Column(Enum(DIRACSTATUS), nullable=False, default=DIRACSTATUS.Unknown)
     reschedules = Column(Integer, nullable=False, default=0)
 
+
+    @staticmethod
+    def delete_all(parametricjob):
+        """
+        Bulk delete jobs.
+
+        Deletes all DIRAC jobs attached to the given parametric job."""
+        with db_session() as session:
+            session.query(DiracJobs).filter_by(parametricjob_id=parametricjob.id).delete()
+
+
     @staticmethod
     def update_status(parametricjob):
         """

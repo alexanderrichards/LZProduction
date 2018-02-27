@@ -114,3 +114,8 @@ class MonitoringDaemon(Daemonize):
             if request.status == LOCALSTATUS.Approved:
                 request.submit()
             request.update_status()
+
+
+        with db_session() as session:
+            for request in monitored_requests:
+                session.merge(request)

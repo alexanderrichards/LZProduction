@@ -63,7 +63,7 @@ class ParametricJobs(SQLTableBase):
     num_failed = Column(Integer, nullable=False, default=0)
     num_submitted = Column(Integer, nullable=False, default=0)
     num_running = Column(Integer, nullable=False, default=0)
-    diracjobs = relationship("DiracJobs", back_populates="parametricjob")
+    diracjobs = relationship("DiracJobs", back_populates="parametricjob", cascade="all, delete-orphan")
 
     @hybrid_property
     def num_other(self):
@@ -137,28 +137,19 @@ class ParametricJobs(SQLTableBase):
                                                addToWorkflow=False)
                     dirac_ids.update(parametric_job.subjob_ids)
 
-        with db_session() as session:
-            session.bulk_insert_mappings(DiracJobs, [{'id': i, 'parametricjob_id': self.id}
-                                                     for i in dirac_ids])
+        self.diracjobs = [DiracJobs(id=id_, parametricjob_id=self.id) for id_ in dirac_ids]
+
 
     def reset(self):
         """Reset parametric job."""
-        with db_session(reraise=False) as session:
-            dirac_jobs = session.query(DiracJobs).filter_by(parametricjob_id=self.id)
-            dirac_job_ids = [j.id for j in dirac_jobs.all()]
-            dirac_jobs.delete(synchronize_session=False)
+        dirac_job_ids = set(job.id for job in self.diracjobs)
+#        DiracJobs.delete_all(self)
+        self.diracjobs = []
         with dirac_api_client() as dirac:
             logger.info("Removing Dirac jobs %s from ParametricJob %s", dirac_job_ids, self.id)
             dirac.kill(dirac_job_ids)
             dirac.delete(dirac_job_ids)
 
-
-    def delete_dirac_jobs(self, session):
-        """Delete associated DIRAC jobs."""
-        logger.info("Deleting DiracJobs for ParametricJob id: %s", self.id)
-        session.query(DiracJobs)\
-               .filter_by(parametricjob_id=self.id)\
-               .delete(synchronize_session=False)
 
     def update_status(self):
         """Update the status of parametric job."""
@@ -166,14 +157,12 @@ class ParametricJobs(SQLTableBase):
         # could just have DiracJobs return this... maybe better
 #        local_statuses = Counter(status.local_status for status in dirac_statuses.elements())
         status = max(local_statuses or [self.status])
-        with db_session() as session:
-            this = session.merge(self)
-            this.status = status
-            this.num_completed = local_statuses[LOCALSTATUS.Completed]
-            this.num_failed = local_statuses[LOCALSTATUS.Failed]
-            this.num_submitted = local_statuses[LOCALSTATUS.Submitted]
-            this.num_running = local_statuses[LOCALSTATUS.Running]
-            this.reschedule = False
+        self.status = status
+        self.num_completed = local_statuses[LOCALSTATUS.Completed]
+        self.num_failed = local_statuses[LOCALSTATUS.Failed]
+        self.num_submitted = local_statuses[LOCALSTATUS.Submitted]
+        self.num_running = local_statuses[LOCALSTATUS.Running]
+        self.reschedule = False
         return status
 
 

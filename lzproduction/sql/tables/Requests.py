@@ -6,6 +6,7 @@ from datetime import datetime
 import cherrypy
 from sqlalchemy import Column, Integer, String, TIMESTAMP, ForeignKey, Enum
 from sqlalchemy.orm import relationship
+from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 
 from lzproduction.utils.collections import subdict
 from ..utils import db_session
@@ -33,20 +34,16 @@ class Requests(SQLTableBase):
     status = Column(Enum(LOCALSTATUS), nullable=False, default=LOCALSTATUS.Requested)
     description = Column(String(250), nullable=False)
     timestamp = Column(TIMESTAMP, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
-    parametricjobs = relationship("ParametricJobs", back_populates="request")
+    parametricjobs = relationship("ParametricJobs", back_populates="request", cascade="all, delete-orphan")
 
     def submit(self):
         """Submit Request."""
-        with db_session() as session:
-            parametricjobs = session.query(ParametricJobs).filter_by(request_id=self.id).all()
-            session.expunge_all()
-            session.merge(self).status = LOCALSTATUS.Submitting
-
         logger.info("Submitting request %s", self.id)
+        self.status = LOCALSTATUS.Submitting
 
         submitted_jobs = []
         try:
-            for job in parametricjobs:
+            for job in self.parametricjobs:
                 job.submit()
                 submitted_jobs.append(job)
         except:
@@ -56,24 +53,10 @@ class Requests(SQLTableBase):
                 job.reset()
 
 
-    def delete_parametric_jobs(self, session):
-        """Delete associated ParametricJob jobs."""
-        logger.info("Deleting ParametricJobs for Request id: %s", self.id)
-        parametric_jobs = session.query(ParametricJobs)\
-                                 .filter_by(request_id=self.id)
-        for job in parametric_jobs.all():
-            job.delete_dirac_jobs(session)
-        parametric_jobs.delete(synchronize_session=False)
-
-
     def update_status(self):
         """Update request status."""
-        with db_session() as session:
-            parametricjobs = session.query(ParametricJobs).filter_by(request_id=self.id).all()
-            session.expunge_all()
-
         statuses = []
-        for job in parametricjobs:
+        for job in self.parametricjobs:
             try:
                 statuses.append(job.update_status())
             except:
@@ -81,8 +64,7 @@ class Requests(SQLTableBase):
 
         status = max(statuses or [self.status])
         if status != self.status:
-            with db_session(reraise=False) as session:
-                session.merge(self).status = status
+            self.status = status
             logger.info("Request %s moved to state %s", self.id, status.name)
 
 

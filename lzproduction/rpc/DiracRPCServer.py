@@ -34,6 +34,10 @@ class FixedJob(Job):
             files = list(files)
         return super(FixedJob, self).setInputSandbox(files)
 
+    def setPriority(self, priority):
+        """Set the job Priority."""
+        super(FixedJob, self)._setParamValue("Priority", priority)
+
 
 class FixedDirac(Dirac):
     """Fixed DIRAC Dirac class."""

@@ -101,7 +101,7 @@ class ParametricJobs(SQLTableBase):
                 for sublist in list_splitter(range(self.seed, self.seed + self.njobs), 1000):
                     with parametric_job as j:
                         j.setName(os.path.splitext(os.path.basename(macro))[0] + '-%(args)s')
-                        j._setParamValue('Priority', self.priority)
+                        j.setPriority(self.priority)
                         j.setPlatform('ANY')
                         j.setExecutable(os.path.basename(runscript),
                                         os.path.basename(macro) + ' %(args)s',
@@ -124,7 +124,7 @@ class ParametricJobs(SQLTableBase):
                 for sublist in list_splitter(list_lfns(input_lfn_dir), 1000):
                     with parametric_job as j:
                         j.setName("%(args)s")
-                        j._setParamValue('Priority', self.priority)
+                        j.setPriority(self.priority)
                         j.setPlatform('ANY')
                         j.setExecutable(os.path.basename(runscript),
                                         '%(args)s',

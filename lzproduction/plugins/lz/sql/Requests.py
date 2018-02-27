@@ -9,6 +9,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 
 from lzproduction.utils.collections import subdict
+from lzproduction.sql.tables import RequestsBase
 from ..utils import db_session
 from ..statuses import LOCALSTATUS
 from .SQLTableBase import SQLTableBase
@@ -21,51 +22,13 @@ logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
 
 @cherrypy.expose
-class Requests(SQLTableBase):
+class Requests(RequestsBase):
     """Requests SQL Table."""
-
-    __tablename__ = 'requests'
-    id = Column(Integer, primary_key=True)  # pylint: disable=invalid-name
-    requester_id = Column(Integer, ForeignKey('users.id'), nullable=False)
-    request_date = Column(String(250), nullable=False)
     source = Column(String(250), nullable=False)
     detector = Column(String(250), nullable=False)
     sim_lead = Column(String(250), nullable=False)
-    status = Column(Enum(LOCALSTATUS), nullable=False, default=LOCALSTATUS.Requested)
     description = Column(String(250), nullable=False)
-    timestamp = Column(TIMESTAMP, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
-    parametricjobs = relationship("ParametricJobs", back_populates="request", cascade="all, delete-orphan")
 
-    def submit(self):
-        """Submit Request."""
-        logger.info("Submitting request %s", self.id)
-        self.status = LOCALSTATUS.Submitting
-
-        submitted_jobs = []
-        try:
-            for job in self.parametricjobs:
-                job.submit()
-                submitted_jobs.append(job)
-        except:
-            logger.exception("Exception while submitting request %s", self.id)
-            logger.info("Resetting associated ParametricJobs")
-            for job in submitted_jobs:
-                job.reset()
-
-
-    def update_status(self):
-        """Update request status."""
-        statuses = []
-        for job in self.parametricjobs:
-            try:
-                statuses.append(job.update_status())
-            except:
-                logger.exception("Exception updating ParametricJob %s", job.id)
-
-        status = max(statuses or [self.status])
-        if status != self.status:
-            self.status = status
-            logger.info("Request %s moved to state %s", self.id, status.name)
 
 
     @staticmethod

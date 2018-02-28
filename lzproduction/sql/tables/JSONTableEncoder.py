@@ -13,4 +13,4 @@ class JSONTableEncoder(json.JSONEncoder):
             return dict(obj, status=obj.status.name)
         if isinstance(obj, datetime):
             return obj.isoformat(' ')
-        return super(SQLAlchemyTableEncoder, self).default(obj)
+        return super(JSONTableEncoder, self).default(obj)

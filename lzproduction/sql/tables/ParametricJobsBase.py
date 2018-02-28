@@ -5,6 +5,7 @@ import time
 import json
 import logging
 import calendar
+from abc import abstractmethod
 from datetime import datetime
 from copy import deepcopy
 from collections import defaultdict, Counter
@@ -36,12 +37,12 @@ class ParametricJobsBase(SQLTableBase):
     id = Column(Integer, primary_key=True)  # pylint: disable=invalid-name
     priority = Column(SmallInteger, CheckConstraint('priority >= 0 and priority < 10'), nullable=False, default=3)
     site = Column(String(250), nullable=False, default='ANY')
-    num_jobs = Column(Integer)
     request_id = Column(Integer, ForeignKey('requests.id'), nullable=False)
     request = relationship("Requests", back_populates="parametricjobs")
     status = Column(Enum(LOCALSTATUS), nullable=False, default=LOCALSTATUS.Requested)
     reschedule = Column(Boolean, nullable=False, default=False)
     timestamp = Column(TIMESTAMP, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    num_jobs = Column(Integer, nullable=False)
     num_completed = Column(Integer, nullable=False, default=0)
     num_failed = Column(Integer, nullable=False, default=0)
     num_submitted = Column(Integer, nullable=False, default=0)
@@ -54,70 +55,22 @@ class ParametricJobsBase(SQLTableBase):
         """Return the number of jobs in states other than the known ones."""
         return self.num_jobs - (self.num_submitted + self.num_running + self.num_failed + self.num_completed)
 
+    @abstractmethod
+    def _create_dirac_jobs(self):
+        """Create the DIRAC jobs."""
+        parametric_job = ParametricDiracJobClient()
+        with parametric_job as job:
+            job.setName('test')
+        return parametric_job.subjob_ids
+
     def submit(self):
         """Submit parametric job."""
-        parametric_job = ParametricDiracJobClient()
-        dirac_ids = set()
-        if self.app_version is not None:
-
-            macro_name = os.path.splitext(os.path.basename(self.macro or ''))[0]
-            livetime_sec_per_beamon = 0.1132698957
-            livetimeperjob = str((self.nevents or 1) * livetime_sec_per_beamon)
-            unixtime = time.time()
-            match = UNIXDATE.search(macro_name)
-            if match is not None:
-                month, day, year = match.groups()
-                unixtime = str(int(calendar.timegm(datetime(int(year), int(month), int(day), 0, 0).utctimetuple())))
-            with temporary_runscript(root_version='5.34.32',
-                                     root_arch='slc6_gcc44_x86_64',
-                                     g4_version='4.10.03.p02',
-                                     physics_version='1.4.0',
-                                     se='UKI-LT2-IC-HEP-disk',
-                                     unixtime=unixtime,
-                                     livetimeperjob=livetimeperjob, **self) as runscript,\
-                 temporary_macro(self.tag, self.macro or '', self.app, self.app_version, self.nevents) as macro:
-                self.logger.info("Submitting ParametricJob %s, macro: %s to DIRAC", self.id, self.macro)
-                for sublist in list_splitter(range(self.seed, self.seed + self.num_jobs), 1000):
-                    with parametric_job as j:
-                        j.setName(os.path.splitext(os.path.basename(macro))[0] + '-%(args)s')
-                        j.setPriority(self.priority)
-                        j.setPlatform('ANY')
-                        j.setExecutable(os.path.basename(runscript),
-                                        os.path.basename(macro) + ' %(args)s',
-                                        'lzproduction_output.log')
-                        j.setInputSandbox([runscript, macro])
-                        j.setDestination(self.site)
-                        j.setParameterSequence('args', sublist, addToWorkflow=False)
-                    dirac_ids.update(parametric_job.subjob_ids)
-        else:
-            with temporary_runscript(root_version='5.34.32',
-                                     root_arch='slc6_gcc44_x86_64',
-                                     g4_version='4.10.03.p02',
-                                     physics_version='1.4.0',
-                                     se='UKI-LT2-IC-HEP-disk', **self) as runscript:
-                self.logger.info("Submitting ParametricJob %s, inputdir: %s to DIRAC", self.id, self.reduction_lfn_inputdir or self.der_lfn_inputdir or self.lzap_lfn_inputdir)
-
-                input_lfn_dir=self.reduction_lfn_inputdir or\
-                               self.der_lfn_inputdir or \
-                               self.lzap_lfn_inputdir
-                for sublist in list_splitter(list_lfns(input_lfn_dir), 1000):
-                    with parametric_job as j:
-                        j.setName("%(args)s")
-                        j.setPriority(self.priority)
-                        j.setPlatform('ANY')
-                        j.setExecutable(os.path.basename(runscript),
-                                        '%(args)s',
-                                        'lzanalysis_output.log')
-                        j.setInputSandbox([runscript])
-                        j.setDestination(self.site)
-                        j.setParameterSequence('InputData', sublist, addToWorkflow='ParametricInputData')
-                        j.setParameterSequence('args',
-                                               [os.path.basename(l) for l in sublist],
-                                               addToWorkflow=False)
-                    dirac_ids.update(parametric_job.subjob_ids)
-
-        self.diracjobs = [DiracJobs(id=id_, parametricjob_id=self.id) for id_ in dirac_ids]
-
+        self.status = LOCALSTATUS.Submitting
+        dirac_ids = self._create_dirac_jobs()
+#        if not isinstance(dirac_ids, Iterable):
+#            raise Exception
+        self.diracjobs = [DiracJobs(id=dirac_id, parametricjob_id=self.id)
+                          for dirac_id in dirac_ids]
 
     def reset(self):
         """Reset parametric job."""
@@ -207,8 +160,8 @@ class ParametricJobsBase(SQLTableBase):
         return self.status
 
 
-    @staticmethod
-    def GET(reqid):  # pylint: disable=invalid-name
+    @classmethod
+    def GET(cls, reqid):  # pylint: disable=invalid-name
         """
         REST Get method.
 
@@ -217,22 +170,22 @@ class ParametricJobsBase(SQLTableBase):
         cls.logger.debug("In GET: reqid = %s", reqid)
         requester = cherrypy.request.verified_user
         with db_session() as session:
-            user_requests = session.query(ParametricJobsBase)\
+            user_requests = session.query(cls)\
                                    .filter_by(request_id=reqid)
             if not requester.admin:
-                user_requests = user_requests.join(ParametricJobsBase.request)\
+                user_requests = user_requests.join(cls.request)\
                                              .filter_by(requester_id=requester.id)
             return json.dumps({'data': user_requests.all()}, cls=JSONTableEncoder)
 
-    @staticmethod
-    def PUT(jobid, reschedule=False):  # pylint: disable=invalid-name
+    @classmethod
+    def PUT(cls, jobid, reschedule=False):  # pylint: disable=invalid-name
         """REST Put method."""
         cls.logger.debug("In PUT: jobid = %s, reschedule = %s", jobid, reschedule)
         requester = cherrypy.request.verified_user
         with db_session() as session:
-            query = session.query(ParametricJobsBase).filter_by(id=jobid)
+            query = session.query(cls).filter_by(id=jobid)
             if not requester.admin:
-                query = query.join(ParametricJobsBase.request)\
+                query = query.join(cls.request)\
                              .filter_by(requester_id=requester.id)
             try:
                 job = query.one()

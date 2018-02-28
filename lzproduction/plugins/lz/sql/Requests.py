@@ -82,7 +82,7 @@ class Requests(RequestsBase):
 
 
             if parametricjobs:
-                session.bulk_insert_mappings(ParametricJobs, parametricjobs)
+                request.parametricjobs = parametricjobs
             else:
                 cls.logger.warning("No ParametricJobs added to the DB.")
         return cls.GET()

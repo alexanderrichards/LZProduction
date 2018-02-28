@@ -6,6 +6,8 @@ import json
 import logging
 import calendar
 from datetime import datetime
+from copy import deepcopy
+from collections import defaultdict, Counter
 
 import cherrypy
 from sqlalchemy import Column, SmallInteger, Integer, Boolean, String, PickleType, TIMESTAMP, ForeignKey, Enum, CheckConstraint
@@ -17,13 +19,12 @@ from lzproduction.rpc.DiracRPCClient import dirac_api_client, ParametricDiracJob
 from lzproduction.utils.collections import list_splitter
 from lzproduction.utils.tempfile_utils import temporary_runscript, temporary_macro
 from ..utils import db_session
-from ..statuses import LOCALSTATUS
+from ..statuses import LOCALSTATUS, DIRACSTATUS
 from .SQLTableBase import SQLTableBase
 from .JSONTableEncoder import JSONTableEncoder
 from .DiracJobs import DiracJobs
 
 
-logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 UNIXDATE = re.compile(r'(?P<month>[0-9]{2})-(?P<day>[0-9]{2})-(?P<year>[0-9]{4})$')
 
 
@@ -34,29 +35,11 @@ class ParametricJobsBase(SQLTableBase):
     __tablename__ = 'parametricjobs'
     id = Column(Integer, primary_key=True)  # pylint: disable=invalid-name
     priority = Column(SmallInteger, CheckConstraint('priority >= 0 and priority < 10'), nullable=False, default=3)
-    app = Column(String(250))
-    app_version = Column(String(250))
     site = Column(String(250), nullable=False, default='ANY')
-    sim_lfn_outputdir = Column(String(250))
-    mctruth_lfn_outputdir = Column(String(250))
-    macro = Column(String(250))
-    tag = Column(String(250))
-    njobs = Column(Integer)
-    nevents = Column(Integer)
-    seed = Column(Integer)
-    fastnest_version = Column(String(250))
-    reduction_version = Column(String(250))
-    reduction_lfn_inputdir = Column(String(250))
-    reduction_lfn_outputdir = Column(String(250))
-    der_version = Column(String(250))
-    der_lfn_inputdir = Column(String(250))
-    der_lfn_outputdir = Column(String(250))
-    lzap_version = Column(String(250))
-    lzap_lfn_inputdir = Column(String(250))
-    lzap_lfn_outputdir = Column(String(250))
+    num_jobs = Column(Integer)
     request_id = Column(Integer, ForeignKey('requests.id'), nullable=False)
     request = relationship("Requests", back_populates="parametricjobs")
-    status = Column(Enum(LOCALSTATUS), nullable=False)
+    status = Column(Enum(LOCALSTATUS), nullable=False, default=LOCALSTATUS.Requested)
     reschedule = Column(Boolean, nullable=False, default=False)
     timestamp = Column(TIMESTAMP, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
     num_completed = Column(Integer, nullable=False, default=0)
@@ -64,19 +47,15 @@ class ParametricJobsBase(SQLTableBase):
     num_submitted = Column(Integer, nullable=False, default=0)
     num_running = Column(Integer, nullable=False, default=0)
     diracjobs = relationship("DiracJobs", back_populates="parametricjob", cascade="all, delete-orphan")
+    logger = logging.getLogger(__name__)
 
     @hybrid_property
     def num_other(self):
         """Return the number of jobs in states other than the known ones."""
-        return self.njobs - (self.num_submitted + self.num_running + self.num_failed + self.num_completed)
+        return self.num_jobs - (self.num_submitted + self.num_running + self.num_failed + self.num_completed)
 
     def submit(self):
         """Submit parametric job."""
-        # problems here if not running simulation, there will be no macro so
-        # everything including context needs reworking.
-#        lfn_root = os.path.join('/lz/user/l/lzproduser.grid.hep.ph.ic.ac.uk', '_'.join(('-'.join((self.app, self.app_version)),
-#                                                           '-'.join(('DER', self.der_version)))))
-
         parametric_job = ParametricDiracJobClient()
         dirac_ids = set()
         if self.app_version is not None:
@@ -97,8 +76,8 @@ class ParametricJobsBase(SQLTableBase):
                                      unixtime=unixtime,
                                      livetimeperjob=livetimeperjob, **self) as runscript,\
                  temporary_macro(self.tag, self.macro or '', self.app, self.app_version, self.nevents) as macro:
-                logger.info("Submitting ParametricJob %s, macro: %s to DIRAC", self.id, self.macro)
-                for sublist in list_splitter(range(self.seed, self.seed + self.njobs), 1000):
+                self.logger.info("Submitting ParametricJob %s, macro: %s to DIRAC", self.id, self.macro)
+                for sublist in list_splitter(range(self.seed, self.seed + self.num_jobs), 1000):
                     with parametric_job as j:
                         j.setName(os.path.splitext(os.path.basename(macro))[0] + '-%(args)s')
                         j.setPriority(self.priority)
@@ -116,7 +95,7 @@ class ParametricJobsBase(SQLTableBase):
                                      g4_version='4.10.03.p02',
                                      physics_version='1.4.0',
                                      se='UKI-LT2-IC-HEP-disk', **self) as runscript:
-                logger.info("Submitting ParametricJob %s, inputdir: %s to DIRAC", self.id, self.reduction_lfn_inputdir or self.der_lfn_inputdir or self.lzap_lfn_inputdir)
+                self.logger.info("Submitting ParametricJob %s, inputdir: %s to DIRAC", self.id, self.reduction_lfn_inputdir or self.der_lfn_inputdir or self.lzap_lfn_inputdir)
 
                 input_lfn_dir=self.reduction_lfn_inputdir or\
                                self.der_lfn_inputdir or \
@@ -146,24 +125,86 @@ class ParametricJobsBase(SQLTableBase):
 #        DiracJobs.delete_all(self)
         self.diracjobs = []
         with dirac_api_client() as dirac:
-            logger.info("Removing Dirac jobs %s from ParametricJob %s", dirac_job_ids, self.id)
+            self.logger.info("Removing Dirac jobs %s from ParametricJob %s", dirac_job_ids, self.id)
             dirac.kill(dirac_job_ids)
             dirac.delete(dirac_job_ids)
 
 
     def update_status(self):
         """Update the status of parametric job."""
-        local_statuses = DiracJobs.update_status(self)
-        # could just have DiracJobs return this... maybe better
-#        local_statuses = Counter(status.local_status for status in dirac_statuses.elements())
-        status = max(local_statuses or [self.status])
-        self.status = status
+        if not self.diracjobs:
+            self.logger.warning("No dirac jobs associated with parametricjob: %s. "
+                                "returning status unknown", self.id)
+            self.status = LOCALSTATUS.Unknown
+            self.num_completed = 0
+            self.num_failed = 0
+            self.num_submitted = 0
+            self.num_running = 0
+            self.reschedule = False
+            return self.status
+
+        # Group jobs by status
+        job_types = defaultdict(set)
+        for job in self.diracjobs:
+            job_types[job.status].add(job.id)
+            # add auto-reschedule jobs
+            if job.status in (DIRACSTATUS.Failed, DIRACSTATUS.Stalled) and job.reschedules < 2:
+                job_types['Reschedule'].add(job.id)
+
+        reschedule_jobs = job_types['Reschedule'] if job_types[DIRACSTATUS.Done] else set()
+        monitor_jobs = job_types[DIRACSTATUS.Running] | \
+                       job_types[DIRACSTATUS.Received] | \
+                       job_types[DIRACSTATUS.Queued] | \
+                       job_types[DIRACSTATUS.Waiting] | \
+                       job_types[DIRACSTATUS.Checking] | \
+                       job_types[DIRACSTATUS.Matched] | \
+                       job_types[DIRACSTATUS.Unknown] | \
+                       job_types[DIRACSTATUS.Completed]
+
+        if self.reschedule:
+            reschedule_jobs = job_types[DIRACSTATUS.Failed] | job_types[DIRACSTATUS.Stalled]
+
+        # Reschedule jobs
+        rescheduled_jobs = ()
+        if reschedule_jobs:
+            with dirac_api_client() as dirac:
+                result = deepcopy(dirac.reschedule(reschedule_jobs))
+            if result['OK']:
+                rescheduled_jobs = result['Value']
+                self.logger.info("Rescheduled jobs: %s", rescheduled_jobs)
+                monitor_jobs.update(rescheduled_jobs)
+                skipped_jobs = reschedule_jobs.difference(rescheduled_jobs)
+                if skipped_jobs:
+                    self.logger.warning("Failed to reschedule jobs: %s", list(skipped_jobs))
+            else:
+                self.logger.error("Problem rescheduling jobs: %s", result['Message'])
+
+        # Monitor jobs statuses
+        with dirac_api_client() as dirac:
+            result = deepcopy(dirac.status(monitor_jobs))
+        if not result['OK']:
+            raise Exception(result['Message'])
+        monitored_jobs = result['Value']
+        skipped_jobs = monitor_jobs.difference(monitored_jobs)
+        if skipped_jobs:
+            self.logger.warning("Couldn't check the status of jobs: %s", list(skipped_jobs))
+
+        # Update database
+        local_statuses = Counter()
+        for job in self.diracjobs:
+            if job.id in rescheduled_jobs:
+                job.reschedules += 1
+            if job.id in monitored_jobs:
+                job.status = DIRACSTATUS[monitored_jobs[job.id]['Status']]
+            local_statuses.update((job.status.local_status,))
+
+        self.status = max(local_statuses or [self.status])
         self.num_completed = local_statuses[LOCALSTATUS.Completed]
         self.num_failed = local_statuses[LOCALSTATUS.Failed]
         self.num_submitted = local_statuses[LOCALSTATUS.Submitted]
         self.num_running = local_statuses[LOCALSTATUS.Running]
         self.reschedule = False
-        return status
+        return self.status
 
 
     @staticmethod
@@ -173,7 +214,7 @@ class ParametricJobsBase(SQLTableBase):
 
         Returns all ParametricJobs for a given request id.
         """
-        logger.debug("In GET: reqid = %s", reqid)
+        cls.logger.debug("In GET: reqid = %s", reqid)
         requester = cherrypy.request.verified_user
         with db_session() as session:
             user_requests = session.query(ParametricJobsBase)\
@@ -186,7 +227,7 @@ class ParametricJobsBase(SQLTableBase):
     @staticmethod
     def PUT(jobid, reschedule=False):  # pylint: disable=invalid-name
         """REST Put method."""
-        logger.debug("In PUT: jobid = %s, reschedule = %s", jobid, reschedule)
+        cls.logger.debug("In PUT: jobid = %s, reschedule = %s", jobid, reschedule)
         requester = cherrypy.request.verified_user
         with db_session() as session:
             query = session.query(ParametricJobsBase).filter_by(id=jobid)
@@ -196,9 +237,9 @@ class ParametricJobsBase(SQLTableBase):
             try:
                 job = query.one()
             except NoResultFound:
-                logger.error("No ParametricJobs found with id: %s", jobid)
+                cls.logger.error("No ParametricJobs found with id: %s", jobid)
             except MultipleResultsFound:
-                logger.error("Multiple ParametricJobs found with id: %s", jobid)
+                cls.logger.error("Multiple ParametricJobs found with id: %s", jobid)
             else:
                 if reschedule and not job.reschedule:
                     job.reschedule = True

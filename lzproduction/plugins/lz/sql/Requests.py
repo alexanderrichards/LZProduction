@@ -66,19 +66,19 @@ class Requests(RequestsBase):
             if 'app' in kwargs:
                 for macro in selected_macros:
                     path, njobs, nevents, seed = macro.split()
-                    parametricjobs.append(subdict(kwargs, ParametricJobs.columns,
+                    parametricjobs.append(ParametricJobs(**subdict(kwargs, ParametricJobs.columns,
                                                   request_id=request.id,
                                                   status=LOCALSTATUS.Requested,
                                                   macro=path,
-                                                  njobs=njobs,
+                                                  num_jobs=njobs,
                                                   nevents=nevents,
-                                                  seed=seed))
+                                                  seed=seed)))
             elif kwargs.viewkeys() & {'reduction_lfn_inputdir',
                                       'der_lfn_inputdir',
                                       'lzap_lfn_inputdir'}:
-                parametricjobs.append(subdict(kwargs, ParametricJobs.columns,
+                parametricjobs.append(ParametricJobs(**subdict(kwargs, ParametricJobs.columns,
                                               request_id=request.id,
-                                              status=LOCALSTATUS.Requested))
+                                              status=LOCALSTATUS.Requested)))
 
 
             if parametricjobs:

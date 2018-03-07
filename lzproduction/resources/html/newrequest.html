@@ -113,7 +113,7 @@ $(document).ready(function() {
       //alert("Must select a macro from the list first.");
       return false;
     }					
-    if ($("#njobs").val() == "") {
+    if ($("#num_jobs").val() == "") {
       alert("Must specify the number of jobs/files");
       return false;
     }
@@ -128,12 +128,12 @@ $(document).ready(function() {
     
     var sel_list = $("#selected_macros");
     $("#macros :selected").each(function(i, selected) {
-        var njobs = $("#njobs").val();
+        var num_jobs = $("#num_jobs").val();
         var nevents = $("#nevents").val();
         var seed = $("#seed").val();
-        sel_list.append($("<option>", { text: [selected.value, njobs, nevents, seed].join(" "),
+        sel_list.append($("<option>", { text: [selected.value, num_jobs, nevents, seed].join(" "),
                                         path: selected.getAttribute("path"),
-                                        njobs: $("#njobs").val(),
+                                        num_jobs: $("#num_jobs").val(),
                                         nevents: $("#nevents").val(),
                                         seed: $("#seed").val() }));
     });
@@ -158,7 +158,7 @@ $(document).ready(function() {
     $("#selected_macros option").prop("selected", true);
     $("#selected_macros option").each(function(i, selected) {
          selected.value = [selected.getAttribute("path"),
-                           selected.getAttribute("njobs"),
+                           selected.getAttribute("num_jobs"),
                            selected.getAttribute("nevents"),
                            selected.getAttribute("seed")].join(" ");
     });
@@ -353,9 +353,9 @@ $(document).ready(function() {
 		      <div class="col-xs-4">
 			<div class="row">
 			  <div class="col-xs-12">
-			    <label for="njobs">Number of Jobs/Files:</label>
+			    <label for="num_jobs">Number of Jobs/Files:</label>
 			    <div class="input-group">
-			      <input id="njobs" class="form-control togglable" toggle="sim_toggle" type="text">
+			      <input id="num_jobs" class="form-control togglable" toggle="sim_toggle" type="text">
 			    </div>
 			  </div>
 

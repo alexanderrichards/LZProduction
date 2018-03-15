@@ -7,40 +7,28 @@ from daemonize import Daemonize
 import lzproduction.utils.jinja2_utils
 from lzproduction.utils.apache_utils import CredentialDispatcher
 from lzproduction.sql.tables import create_all_tables, Requests, ParametricJobs
-from .services import HTMLPageServer, CVMFSAppVersions, GitTagMacros, Admins#, RequestsDBAPI
+from .services import HTMLPageServer, Admins
 
 
-class LZProductionServer(Daemonize):
+class ProductionServer(Daemonize):
     """LZ Production Web Server Daemon."""
 
     def __init__(self,
-                 production_root,
                  dburl="sqlite:///",
                  socket_host='0.0.0.0',
                  socket_port=8080,
                  thread_pool=8,
-                 git_repo='git@lz-git.ua.edu:sim/TDRAnalysis.git',
-                 git_dir=None,
                  **kwargs):
         """Initialisation."""
-        super(LZProductionServer, self).__init__(action=self.main, **kwargs)
+        super(ProductionServer, self).__init__(action=self.main, **kwargs)
         self._dburl = dburl
         self._socket_host = socket_host
         self._socket_port = socket_port
         self._thread_pool = thread_pool
-        self._git_repo = git_repo
-        self._src_root = os.path.join(production_root, 'src')
-        self._git_dir = git_dir or os.path.join(production_root, 'git', 'TDRAnalysis')
 
-    def main(self):
-        """Daemon main."""
-        create_all_tables(self._dburl)
-        resource_dir = pkg_resources.resource_filename('lzproduction', 'resources')
-        html_resources =pkg_resources.resource_filename('lzproduction', 'resources/html')
-        template_env = jinja2.Environment(loader=jinja2.FileSystemLoader(searchpath=resource_dir))
-#        template_env = jinja2.Environment(loader=jinja2.FileSystemLoader(searchpath=self._src_root))
-
-        config = {
+    def config(self):
+        html_resources = pkg_resources.resource_filename('lzproduction', 'resources/templates/html')
+        return {
             'global': {
                 'tools.gzip.on': True,
                 'tools.staticdir.root': html_resources,
@@ -55,7 +43,9 @@ class LZProductionServer(Daemonize):
             }
         }
 
-        cherrypy.config.update(config)  # global vars need updating global config
+    def mountpoints(self):
+        template_resources = pkg_resources.resource_filename('lzproduction', 'resources/templates')
+        template_env = jinja2.Environment(loader=jinja2.FileSystemLoader(searchpath=template_resources))
         cherrypy.tree.mount(HTMLPageServer(template_env),
                             '/',
                             {'/': {'request.dispatch': CredentialDispatcher(cherrypy.dispatch.Dispatcher())}})
@@ -65,16 +55,17 @@ class LZProductionServer(Daemonize):
         cherrypy.tree.mount(ParametricJobs,
                             '/parametricjobs',
                             {'/': {'request.dispatch': CredentialDispatcher(cherrypy.dispatch.MethodDispatcher())}})
-        cherrypy.tree.mount(CVMFSAppVersions('/cvmfs/lz.opensciencegrid.org',
-                                                      ['LUXSim', 'BACCARAT', 'TDRAnalysis', 'fastNEST', 'DER', 'LZap']),
-                            '/appversion',
-                            {'/': {'request.dispatch': CredentialDispatcher(cherrypy.dispatch.Dispatcher())}})
-        cherrypy.tree.mount(GitTagMacros(self._git_repo, self._git_dir, template_env),
-                            '/tags',
-                            {'/': {'request.dispatch': CredentialDispatcher(cherrypy.dispatch.Dispatcher())}})
+
         cherrypy.tree.mount(Admins(template_env),
                             '/admins',
                             {'/': {'request.dispatch': CredentialDispatcher(cherrypy.dispatch.MethodDispatcher(),
                                                                                           admin_only=True)}})
+
+
+    def main(self):
+        """Daemon main."""
+        create_all_tables(self._dburl)
+        cherrypy.config.update(self.config())  # global vars need updating global config
+        self.mountpoints()
         cherrypy.engine.start()
         cherrypy.engine.block()

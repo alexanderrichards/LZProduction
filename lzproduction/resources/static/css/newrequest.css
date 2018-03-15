@@ -1,0 +1,7 @@
+.macro-selection {width: 100%;
+                  overflow-x:auto;
+                  overflow-y:auto;
+                  overflow: -moz-scrollbars-horizontal;}
+.required { color: red;
+            font-weight: bold;
+          }

@@ -26,8 +26,90 @@
 <!-- Charts.js -->
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.1.6/Chart.min.js"></script>
 
-<script type="text/javascript" src="webapp_script"></script>
+<script type="text/javascript" src="javascript/index.js"></script>
 <link rel="stylesheet" href="css/index.css">
+<script>
+$(document).ready(function() {
+    var myChart = null;
+
+    // DataTable setup
+    /////////////////////////////////////////////////////
+    $(".display").each(function(index){
+	$(this).DataTable({ajax: {url: $(this).attr("data-source"),
+                                  type: "GET",
+                                  cache: true,
+                                  // cant use success as DataTables uses that but this lets us
+                                  // manipulate the data returned from the server prior to drawing.
+                                  dataSrc: function(json) {
+                                      // setup charts here.
+                                      var charts_data = {}
+                                      // without sort here the order of labels will be first come first serve which will mean that the pie chart will get different colours
+                                      $.each(json.data.sort(function(a,b){return a.status.localeCompare(b.status)}), function(i, row) {
+                                          if (!(row.status in charts_data)){
+                                              charts_data[row.status] = 0;
+                                          }
+                                          charts_data[row.status]++;
+
+                                      });
+
+                                      Chart.defaults.global.maintainAspectRatio = false;
+                                      var keys = $.map(charts_data, function(value, key) { return key });
+                                      var values = $.map(charts_data, function(value, key) { return value });
+                                      var colours = $.map(Object.keys(charts_data), function(key, i) {return "hsl(" + (360.*i/Object.keys(charts_data).length) + ", 100%, 50%)"});
+                                      if (myChart != null) {
+                                          myChart.destroy();
+                                      }
+                                      myChart = new Chart($("#myChart"), {type: "pie",
+                                                                          data: {labels: keys,
+                                                                                 datasets: [{data: values,
+                                                                                             backgroundColor: colours}]
+                                                                                },
+                                                                          responsive:true});
+                                      return json.data;
+                                  }
+                                 },
+                           order: {{ table_order_by }},
+                           autoWidth: false,
+                           columnDefs: [{ targets: "_all", className: "dt-body-left dt-head-left",
+                                          render: function(data, type, row){
+                                              return data.length > 40 ?
+                                                  data.substr( 0, 40 ) +'…' :
+                                                  data;
+                                          }}],
+                           columns: {{ table_columns_def }}
+                          });
+    });
+
+    $("#tableBody tbody").on("click", "tr td span.details-control", function() {
+	var datatable = $("#tableBody").DataTable();
+	var tr = $(this).closest("tr");
+	var row = datatable.row(tr);
+	var request_id = datatable.cell(row, $("td.rowid", tr)).data();
+	if (row.child.isShown()){
+            row.child.hide();
+	}
+	else{
+            row.child($("<table>", {id: "subtable-" + request_id})).show()
+            $("#subtable-" + request_id).DataTable({ajax: {url: '/parametricjobs/' + request_id,
+                                                           type: "GET",
+                                                           cache: true,
+                                                           dataSrc: {{ preprocess_parametricjobs }},
+                                                    autoWidth: true,
+                                                    paging: false,
+                                                    searching: false,
+                                                    info: false,
+                                                    //columnDefs: [ { defaultContent: "-", data: null, targets: "_all" } ],
+                                                    columns: {{parametricjobs_columns_def}},
+						                            order: {{parametricjobs_order_by}}
+                                                   });
+	}
+	$(this).toggleClass("glyphicon-plus-sign")
+	$(this).toggleClass("glyphicon-minus-sign")
+	$(this).toggleClass("text-primary")
+	$(this).toggleClass("text-danger")
+    });
+}
+</script>
 
 <head>
   <title>LZ Production Requests</title>

@@ -51,11 +51,11 @@ class HTMLPageServer(object):
         data['services'].update({service.name: service.status for service in nonmonitoringd_services})
         return self.template_env.get_template('html/index.html').render(data)
 
-    @cherrypy.expose
-    def webapp_script(self):
-        """Return dynamic javascript for webapp."""
-        return self.template_env.get_template('javascript/index.js')\
-                                .render({'user': cherrypy.request.verified_user})
+#    @cherrypy.expose
+#    def webapp_script(self):
+#        """Return dynamic javascript for webapp."""
+#        return self.template_env.get_template('javascript/index.js')\
+#                                .render({'user': cherrypy.request.verified_user})
 #    @cherrypy.expose
 #    def details(self, request_id):
 #        """Return details of a request."""

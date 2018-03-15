@@ -137,12 +137,12 @@ $(document).ready(function() {
 
     function formatprogress(parametricjob){
 	var striped = parametricjob.num_running + parametricjob.num_submitted > 0? "progress-bar-striped active": "";
-	var percent_completed = 100 * parametricjob.num_completed / parametricjob.njobs;
-	var percent_failed = 100 * parametricjob.num_failed / parametricjob.njobs;
-	var percent_running = 100 * parametricjob.num_running / parametricjob.njobs;
-	var percent_submitted = 100 * parametricjob.num_submitted / parametricjob.njobs;
-	var num_other = parametricjob.njobs - (parametricjob.num_submitted + parametricjob.num_running + parametricjob.num_completed + parametricjob.num_failed)
-	var percent_other = 100 * num_other / parametricjob.njobs;
+	var percent_completed = 100 * parametricjob.num_completed / parametricjob.num_jobs;
+	var percent_failed = 100 * parametricjob.num_failed / parametricjob.num_jobs;
+	var percent_running = 100 * parametricjob.num_running / parametricjob.num_jobs;
+	var percent_submitted = 100 * parametricjob.num_submitted / parametricjob.num_jobs;
+	var num_other = parametricjob.num_jobs - (parametricjob.num_submitted + parametricjob.num_running + parametricjob.num_completed + parametricjob.num_failed)
+	var percent_other = 100 * num_other / parametricjob.num_jobs;
 	return `
             <div class="container" style="width:150px;border:0px;padding:0px;padding-top:15px">
               <div class="progress" style="background:rgba(214, 214, 214, 1)">
@@ -188,7 +188,7 @@ $(document).ready(function() {
 							       for(var i=0;i< data.length; i++){
 								   return_data.push({
 								       'macro': data[i].macro,
-								       'njobs': data[i].njobs,
+								       'num_jobs': data[i].num_jobs,
 								       'nevents': data[i].nevents,
 								       'seed': data[i].seed,
 								       'output': formatoutput(data[i]),
@@ -206,7 +206,7 @@ $(document).ready(function() {
                                                     //columnDefs: [ { defaultContent: "-", data: null, targets: "_all" } ],
                                                     columns: [
 							{ data: 'macro', title: 'Macro' },
-							{ data: 'njobs', title: 'NJobs' },
+							{ data: 'num_jobs', title: 'NJobs' },
 							{ data: 'nevents', title: 'NEvents' },
 							{ data: 'seed', title: 'Seed' },
 							{ data: 'output', title: 'Output' },

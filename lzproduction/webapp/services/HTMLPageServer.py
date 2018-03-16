@@ -2,6 +2,7 @@
 import csv
 import logging
 from datetime import datetime
+import pkg_resources
 import cStringIO
 import cherrypy
 from cherrypy.lib.static import serve_fileobj
@@ -51,6 +52,18 @@ class HTMLPageServer(object):
         data['services'].update({service.name: service.status for service in nonmonitoringd_services})
         return self.template_env.get_template('html/index.html').render(data)
 
+    @cherrypy.expose
+    def index_includes(self):
+        return pkg_resources.load_entry_point('lzproduction', 'javascript.index_includes',
+                                                        'lz')()
+
+    @cherrypy.expose
+    def newrequest(self):
+        self.template_env.get_template('html/newrequest.html').render()
+
+    @cherrypy.expose
+    def newrequest_content(self):
+        pass
 #    @cherrypy.expose
 #    def webapp_script(self):
 #        """Return dynamic javascript for webapp."""

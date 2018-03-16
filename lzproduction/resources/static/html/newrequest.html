@@ -15,8 +15,20 @@
 	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.10.0/js/bootstrap-select.min.js"></script>
 	<!-- TiTaToggle CSS -->
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/titatoggle/1.2.11/titatoggle-dist-min.css">
-	<script type="text/javascript" src={{ new_request_script }}></script>
-    <link rel="stylesheet" href={{ new_request_css }}>
+	<script type="text/javascript" src=newrequest_script></script>
+	<script>
+    	$(document).ready(function() {
+	    	$("#form_content").load("newrequest_content");
+	    }
+	</script>
+	<style>
+		.macro-selection {width: 100%;
+                          overflow-x:auto;
+                          overflow-y:auto;
+                          overflow: -moz-scrollbars-horizontal;}
+        .required { color: red;
+                    font-weight: bold;}
+	</style>
 </head>
 
 <body>
@@ -27,7 +39,8 @@
 		</div>
 		<div class="panel-body">
 			<form action="/api" method="POST">
-                {{ new_request_form }}
+				<div id="form_content"></div>
+
 				<br>
 				<button type="submit" class="btn btn-primary">
 					<span class="glyphicon glyphicon-send"></span> Submit

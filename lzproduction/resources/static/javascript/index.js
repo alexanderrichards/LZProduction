@@ -151,7 +151,7 @@ $(document).ready(function() {
     /////////////////////////////////////////////////////
     $("#NewRequest").fancybox({
 	type: "iframe",
-	href: "/newrequest.html",
+	href: "/html/newrequest.html",
 	title: "Submit New Request"
     });
     /////////////////////////////////////////////////////

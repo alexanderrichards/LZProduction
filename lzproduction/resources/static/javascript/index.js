@@ -1,6 +1,13 @@
 $(document).ready(function() {
 $(document).ready(function() {
-    $.getScript('index_script');
+    $.ajax({
+	url: '/index_script',
+	dataType: "script",
+	cache: true,
+	success: function(){
+	    tof = table_order_func
+//    $.ajaxSetup({ cache: true });
+//    $.getScript('/index_script');
     var myChart = null;
 
     // DataTable setup
@@ -72,14 +79,16 @@ $(document).ready(function() {
                                                     //columnDefs: [ { defaultContent: "-", data: null, targets: "_all" } ],
                                                     columns: parametricjobs_columns,
 						                            order: parametricjobs_order()
-                                                   });
+                                                   }});
 	}
 	$(this).toggleClass("glyphicon-plus-sign")
 	$(this).toggleClass("glyphicon-minus-sign")
 	$(this).toggleClass("text-primary")
 	$(this).toggleClass("text-danger")
     });
-}
+
+	}
+    });
 
     // Reload table ajax every 5 mins
     /////////////////////////////////////////////////////
@@ -137,6 +146,7 @@ $(document).ready(function() {
 		success: function(){
 		    subtable.ajax.reload();
 		}});
+    });
     // New request button
     /////////////////////////////////////////////////////
     $("#NewRequest").fancybox({
@@ -328,5 +338,4 @@ $(document).ready(function() {
 	bootstrap_alert("Danger!", "hello world", "alert-warning");
     });
 });
-
-}
+});

@@ -36,9 +36,8 @@ setup(
     entry_points={
         'tables.requests': ['lz = lzproduction.plugins.lz.sql.Requests:Requests'],
         'tables.parametricjobs': ['lz = lzproduction.plugins.lz.sql.ParametricJobs:ParametricJobs'],
-        'webapp.argparser': ['lz = lzproduction.plugins.lz.webapp:modify_argparser'],
-        'webapp.daemon': ['lz = lzproduction.plugins.lz.webapp.WebServer:LZProductionServer'],
-        'javascript.index_includes': ['lz = lzproduction.plugins.lz.webapp.index_includes']
+        'daemon.productionserver': ['lz = lzproduction.plugins.lz.webapp.WebServer:LZProductionServer'],
+        'services.htmlpageserver': ['lz = lzproduction.plugins.lz.webapp.services.HTMLPageServer:HTMLPageServer']
     },
 
     # metadata for upload to PyPI

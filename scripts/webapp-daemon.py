@@ -53,7 +53,7 @@ if __name__ == '__main__':
     # Add the python src path to the sys.path for future imports
     sys.path.append(lzprod_root)
 #    LZProductionServer = importlib.import_module('lzproduction.webapp.WebServer').LZProductionServer
-    LZProductionServer = pkg_resources.load_entry_point('lzproduction', 'webapp.daemon', 'lz')
+    LZProductionServer = pkg_resources.load_entry_point('lzproduction', 'daemon.productionserver', 'lz')
 
     # Logging setup
     ###########################################################################

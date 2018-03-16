@@ -1,6 +1,6 @@
 $(document).ready(function() {
 $(document).ready(function() {
-    $.getScript('index_includes');
+    $.getScript('index_script');
     var myChart = null;
 
     // DataTable setup

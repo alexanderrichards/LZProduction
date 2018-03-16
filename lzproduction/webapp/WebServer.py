@@ -27,11 +27,11 @@ class ProductionServer(Daemonize):
         self._thread_pool = thread_pool
 
     def config(self):
-        html_resources = pkg_resources.resource_filename('lzproduction', 'resources/templates/html')
+        static_resources = pkg_resources.resource_filename('lzproduction', 'resources/static')
         return {
             'global': {
                 'tools.gzip.on': True,
-                'tools.staticdir.root': html_resources,
+                'tools.staticdir.root': static_resources,
                 'tools.staticdir.on': True,
                 'tools.staticdir.dir': '',
                 'server.socket_host': self._socket_host,

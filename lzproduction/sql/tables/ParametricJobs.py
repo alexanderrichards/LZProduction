@@ -104,7 +104,7 @@ class ParametricJobs(SQLTableBase):
                         j.setPriority(self.priority)
                         j.setPlatform('ANY')
                         j.setExecutable(os.path.basename(runscript),
-                                        os.path.basename(macro) + ' %(args)s',
+                                        os.path.basename(macro) + ' %(args)s' + ' %s' % self.nevents,
                                         'lzproduction_output.log')
                         j.setInputSandbox([runscript, macro])
                         j.setDestination(self.site)

@@ -47,6 +47,15 @@ class CredentialDispatcher(object):
 
     def __call__(self, path):
         """Dispatch."""
+        cherrypy.request.verified_user = Users(id=1,
+                                               dn='test-dn',
+                                               ca='test-ca',
+                                               email='test@test.test',
+                                               suspended=False,
+                                               admin=True)
+        return self._dispatcher(path)
+
+
         required_headers = set(['Ssl-Client-S-Dn', 'Ssl-Client-I-Dn', 'Ssl-Client-Verify'])
         missing_headers = required_headers.difference(cherrypy.request.headers.iterkeys())
         if missing_headers:

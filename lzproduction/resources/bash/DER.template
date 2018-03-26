@@ -5,14 +5,7 @@ DER_DIR=/cvmfs/lz.opensciencegrid.org/DER/release-{{ der_version }}
 DER_LFN_DIR={{ der_lfn_outputdir }}
 
 SEED0={{ seed }}
-date1=$((SEED0/100000+20190000))
-time=0000
-Unixtime=$(date -d "$date1 $time" +%s)
 i_job=$((SEED-SEED0))
-livetimeperjob={{ livetimeperjob }}
-DT=$(awk "BEGIN {print $i_job*$livetimeperjob+0.5; exit}")
-let DDT=`echo $DT | cut -d. -f 1`
-UNIXTIME=$((Unixtime+DDT))
 
 cd $DER_DIR
 source $DER_DIR/DERenv.sh

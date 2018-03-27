@@ -54,7 +54,7 @@ OUTPUT_FILE=$(awk '/^\/{{ app }}\/io\/outputName/ {print $2}' $1 | tail -1)$2.bi
 source $APP_DIR/setup.sh
 stop_on_error $APP_DIR/bin/{{ app }}Executable $OUTPUT_DIR/$MACRO_FILE "Simulation step failed!"
 {% elif app == 'BACCARAT' and app_version.startswith('3') %}
-source setup.sh
+source $APP_DIR/setup.sh
 stop_on_error $APP_DIR/build.x86_64-slc6-gcc48-opt/bin/{{ app }}Executable $OUTPUT_DIR/$MACRO_FILE "Simulation step failed!"
 {% else %}
 source $G4_DIR/etc/geant4env.sh $G4_VER

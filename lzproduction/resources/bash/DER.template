@@ -4,7 +4,6 @@ MCTRUTH_OUTPUT_FILE=$1
 DER_DIR=/cvmfs/lz.opensciencegrid.org/DER/release-{{ der_version }}
 DER_LFN_DIR={{ der_lfn_outputdir }}
 
-SEED0={{ seed }}
 i_job=$((SEED-SEED0))
 
 cd $DER_DIR

@@ -16,9 +16,9 @@ fi
 
 if [ "$NBEAMON" -eq -1 ]
 then
-INPUT_FILE=/cvmfs/lz.opensciencegrid.org/BACCARAT/MDC2BaccConfigs/TestCfg-15Mar18/job_config_${SEED0}.txt
+INPUT_FILE=/cvmfs/lz.opensciencegrid.org/BACCARAT/MDC2BaccConfigs/Cfg-29Mar18/job_config_${SEED0}.txt
 i=1
-while read -r seed time beamon activity length
+while read -r seed time beamon activityXe activityKr length
 do
  test $i -eq 1 && ((i=i+1)) && continue
 if [ "$seed" -eq "$SEED" ]
@@ -26,7 +26,8 @@ then
 
 UNIXTIME=$(echo $time)
 NBEAMON=$(echo $beamon)
-export XE131M_mBq_per_kg=$(echo $activity)
+export XE131M_mBq_per_kg=$(echo $activityXe)
+export KR83M_mBq_per_kg=$(echo $activityKr)
 DRIFT_LEN_m=$(echo $length)
 echo $seed $UNIXTIME $NBEAMON $XE131M_mBq_per_kg $DRIFT_LEN_m
 fi

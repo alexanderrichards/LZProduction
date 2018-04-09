@@ -8,7 +8,7 @@ import calendar
 from datetime import datetime
 
 import cherrypy
-from sqlalchemy import Column, SmallInteger, Integer, Boolean, String, PickleType, TIMESTAMP, ForeignKey, Enum, CheckConstraint
+from sqlalchemy import Column, SmallInteger, Integer, Boolean, TEXT, TIMESTAMP, ForeignKey, Enum, CheckConstraint
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
@@ -23,46 +23,30 @@ from .JSONTableEncoder import JSONTableEncoder
 from .DiracJobs import DiracJobs
 
 
-logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
+
 UNIXDATE = re.compile(r'(?P<month>[0-9]{2})-(?P<day>[0-9]{2})-(?P<year>[0-9]{4})$')
 
 
 @cherrypy.expose
+@cherrypy.popargs('parametricjob_id')
 class ParametricJobs(SQLTableBase):
     """Jobs SQL Table."""
 
     __tablename__ = 'parametricjobs'
+    logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
     id = Column(Integer, primary_key=True)  # pylint: disable=invalid-name
     priority = Column(SmallInteger, CheckConstraint('priority >= 0 and priority < 10'), nullable=False, default=3)
-    app = Column(String(250))
-    app_version = Column(String(250))
-    site = Column(String(250), nullable=False, default='ANY')
-    sim_lfn_outputdir = Column(String(250))
-    mctruth_lfn_outputdir = Column(String(250))
-    macro = Column(String(250))
-    tag = Column(String(250))
-    njobs = Column(Integer)
-    nevents = Column(Integer)
-    seed = Column(Integer)
-    fastnest_version = Column(String(250))
-    reduction_version = Column(String(250))
-    reduction_lfn_inputdir = Column(String(250))
-    reduction_lfn_outputdir = Column(String(250))
-    der_version = Column(String(250))
-    der_lfn_inputdir = Column(String(250))
-    der_lfn_outputdir = Column(String(250))
-    lzap_version = Column(String(250))
-    lzap_lfn_inputdir = Column(String(250))
-    lzap_lfn_outputdir = Column(String(250))
-    request_id = Column(Integer, ForeignKey('requests.id'), nullable=False)
-    request = relationship("Requests", back_populates="parametricjobs")
+    site = Column(TEXT, nullable=False, default='ANY')
     status = Column(Enum(LOCALSTATUS), nullable=False)
     reschedule = Column(Boolean, nullable=False, default=False)
     timestamp = Column(TIMESTAMP, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    num_jobs = Column(Integer, nullable=False)
     num_completed = Column(Integer, nullable=False, default=0)
     num_failed = Column(Integer, nullable=False, default=0)
     num_submitted = Column(Integer, nullable=False, default=0)
     num_running = Column(Integer, nullable=False, default=0)
+    request_id = Column(Integer, ForeignKey('requests.id'), nullable=False)
+    request = relationship("Requests", back_populates="parametric_jobs")
     diracjobs = relationship("DiracJobs", back_populates="parametricjob")
 
     @hybrid_property
@@ -177,27 +161,31 @@ class ParametricJobs(SQLTableBase):
         return status
 
 
-    @staticmethod
-    def GET(reqid):  # pylint: disable=invalid-name
+    @classmethod
+    @cherrypy.tools.accept(media='application/json')
+    @cherrypy.tools.json_out(handler=JSONTableEncoder().default)
+    def GET(cls, request_id, parametricjob_id=None):  # pylint: disable=invalid-name
         """
         REST Get method.
 
         Returns all ParametricJobs for a given request id.
         """
-        logger.debug("In GET: reqid = %s", reqid)
+        cls.logger.debug("In GET: reqid = %s", request_id)
         requester = cherrypy.request.verified_user
         with db_session() as session:
-            user_requests = session.query(ParametricJobs)\
-                                   .filter_by(request_id=reqid)
+            query = session.query(cls)\
+                           .filter_by(request_id=request_id)
+            if parametricjob_id is not None:
+                query = query.filter_by(id=parametricjob_id)
             if not requester.admin:
-                user_requests = user_requests.join(ParametricJobs.request)\
-                                             .filter_by(requester_id=requester.id)
-            return json.dumps({'data': user_requests.all()}, cls=JSONTableEncoder)
+                query = query.join(cls.request)\
+                             .filter_by(requester_id=requester.id)
+            return query.all()
 
-    @staticmethod
-    def PUT(jobid, reschedule=False):  # pylint: disable=invalid-name
+    @classmethod
+    def PUT(cls, jobid, reschedule=False):  # pylint: disable=invalid-name
         """REST Put method."""
-        logger.debug("In PUT: jobid = %s, reschedule = %s", jobid, reschedule)
+        cls.logger.debug("In PUT: jobid = %s, reschedule = %s", jobid, reschedule)
         requester = cherrypy.request.verified_user
         with db_session() as session:
             query = session.query(ParametricJobs).filter_by(id=jobid)
@@ -207,11 +195,14 @@ class ParametricJobs(SQLTableBase):
             try:
                 job = query.one()
             except NoResultFound:
-                logger.error("No ParametricJobs found with id: %s", jobid)
+                message = "No ParametricJobs found with id: %s" % jobid
+                cls.logger.error(message)
+                raise cherrypy.NotFound(message)
             except MultipleResultsFound:
-                logger.error("Multiple ParametricJobs found with id: %s", jobid)
-            else:
-                if reschedule and not job.reschedule:
-                    job.reschedule = True
-                    job.status = LOCALSTATUS.Submitting
+                message = "Multiple ParametricJobs found with id: %s" % jobid
+                cls.logger.error(message)
+                raise cherrypy.HTTPError(500, message)
+            if reschedule and not job.reschedule:
+                job.reschedule = True
+                job.status = LOCALSTATUS.Submitting
 

@@ -5,6 +5,7 @@ Tools for dealing with credential checking from X509 SSL certificates.
 These are useful when using Apache as a reverse proxy to check user
 credentials against a local DB.
 """
+from functools import wraps
 import cherrypy
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 from lzproduction.sql.utils import db_session
@@ -31,6 +32,49 @@ def apache_client_convert(client_dn, client_ca=None):
             client_ca = '/' + '/'.join(reversed(client_ca.split(',')))
     return client_dn, client_ca
 
+def admin_only(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        if not cherrypy.request.verified_user.admin:
+            raise cherrypy.HTTPError(403, 'Forbidden: Admin users only')
+        return func(*args, **kwargs)
+    return wrapper
+
+def check_credentials(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        required_headers = {'Ssl-Client-S-Dn', 'Ssl-Client-I-Dn', 'Ssl-Client-Verify'}
+        missing_headers = required_headers.difference(cherrypy.request.headers.iterkeys())
+        if missing_headers:
+            raise cherrypy.HTTPError(401, 'Unauthorized: Incomplete certificate information '
+                                          'available, required: %s' % list(missing_headers))
+
+        client_dn, client_ca = apache_client_convert(cherrypy.request.headers['Ssl-Client-S-Dn'],
+                                                     cherrypy.request.headers['Ssl-Client-I-Dn'])
+        client_verified = cherrypy.request.headers['Ssl-Client-Verify']
+        if client_verified != 'SUCCESS':
+            raise cherrypy.HTTPError(401, 'Unauthorized: Cert not verified for user DN: %s, CA: %s.'
+                                     % (client_dn, client_ca))
+
+        with db_session() as session:
+            try:
+                user = session.query(Users) \
+                    .filter_by(dn=client_dn, ca=client_ca) \
+                    .one()
+            except MultipleResultsFound:
+                raise cherrypy.HTTPError(500, 'Internal Server Error: Duplicate user detected. '
+                                              'user: (%s, %s)'
+                                         % (client_dn, client_ca))
+            except NoResultFound:
+                raise cherrypy.HTTPError(403, 'Forbidden: Unknown user. user: (%s, %s)'
+                                         % (client_dn, client_ca))
+            if user.suspended:
+                raise cherrypy.HTTPError(403, 'Forbidden: User is suspended by VO. user: (%s, %s)'
+                                         % (client_dn, client_ca))
+            session.expunge(user)
+            cherrypy.request.verified_user = user
+            return func(*args, **kwargs)
+    return wrapper
 
 class CredentialDispatcher(object):
     """

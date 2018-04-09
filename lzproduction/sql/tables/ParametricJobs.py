@@ -107,7 +107,12 @@ class ParametricJobs(SQLTableBase):
                                         os.path.basename(macro) + ' %(args)s' + ' %s' % self.nevents,
                                         'lzproduction_output.log')
                         j.setInputSandbox([runscript, macro])
-                        j.setDestination(self.site)
+                        if self.site.endswith('2Processors'):
+                            j.setDestination("LCG.UKI-LT2-IC-HEP.uk")
+                            j.setTag('2Processors')
+                        else:
+                            j.setDestination(self.site)
+                        j.setBannedSites(['LCG.UKI-LT2-Brunel.uk', 'LCG.UKI-NORTHGRID-LANCS-HEP.uk', 'LCG.UKI-SOUTHGRID-BRIS-HEP.uk'])
                         j.setParameterSequence('args', sublist, addToWorkflow=False)
                     dirac_ids.update(parametric_job.subjob_ids)
         else:
@@ -130,7 +135,12 @@ class ParametricJobs(SQLTableBase):
                                         '%(args)s',
                                         'lzanalysis_output.log')
                         j.setInputSandbox([runscript])
-                        j.setDestination(self.site)
+                        if self.site.endswith('2Processors'):
+                            j.setDestination("LCG.UKI-LT2-IC-HEP.uk")
+                            j.setTag('2Processors')
+                        else:
+                            j.setDestination(self.site)
+                        j.setBannedSites(['LCG.UKI-LT2-Brunel.uk', 'LCG.UKI-NORTHGRID-LANCS-HEP.uk', 'LCG.UKI-SOUTHGRID-BRIS-HEP.uk')
                         j.setParameterSequence('InputData', sublist, addToWorkflow='ParametricInputData')
                         j.setParameterSequence('args',
                                                [os.path.basename(l) for l in sublist],

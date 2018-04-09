@@ -14,9 +14,12 @@ time=0000
 UNIXTIME=$(date -d "$date $time" +%s)
 fi
 
+
+INPUT_FILE_LOCATION=/cvmfs/lz.opensciencegrid.org/BACCARAT/MDC2BaccConfigs/ProdCfg-07Apr18/642869789da9a215ecd6b7f549627795/
+
 if [ "$NBEAMON" -eq -1 ]
 then
-INPUT_FILE=/cvmfs/lz.opensciencegrid.org/BACCARAT/MDC2BaccConfigs/Cfg-29Mar18/job_config_${SEED0}.txt
+INPUT_FILE=${INPUT_FILE_LOCATION}/job_config_${SEED0}.txt
 i=1
 while read -r seed time beamon activityXe activityKr length
 do

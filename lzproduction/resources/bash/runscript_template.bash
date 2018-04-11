@@ -18,6 +18,7 @@ function stop_after_ntries {
 	then
 	    return 0
 	fi
+	sleep $((RANDOM%111 + 10))
     done
     echo ${@:$#} "exit code: $ret" >&2
     exit $ret

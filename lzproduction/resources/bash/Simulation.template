@@ -12,6 +12,7 @@ DRIFT_LEN_m=1.50
 date=20170401
 time=0000
 UNIXTIME=$(date -d "$date $time" +%s)
+UNIXTIME=1491004800
 fi
 
 

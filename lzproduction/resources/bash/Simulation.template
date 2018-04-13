@@ -16,7 +16,7 @@ UNIXTIME=1491004800
 fi
 
 
-INPUT_FILE_LOCATION=/cvmfs/lz.opensciencegrid.org/BACCARAT/MDC2BaccConfigs/ProdCfg-07Apr18/642869789da9a215ecd6b7f549627795/
+INPUT_FILE_LOCATION=/cvmfs/lz.opensciencegrid.org/BACCARAT/MDC2BaccConfigs/ProdCfg-12Apr18
 
 if [ "$NBEAMON" -eq -1 ]
 then

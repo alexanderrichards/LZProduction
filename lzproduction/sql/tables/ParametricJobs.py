@@ -108,8 +108,11 @@ class ParametricJobs(SQLTableBase):
                                         'lzproduction_output.log')
                         j.setInputSandbox([runscript, macro])
                         if self.site.endswith('2Processors'):
-                            j.setDestination("LCG.UKI-LT2-IC-HEP.uk")
+                            j.setDestination("LCG.UKI-LT2-IC-HEP.uk")  # this should be done with site, tag = self.site.split(' ')
                             j.setTag('2Processors')
+                        elif self.site.endswith("HighMem"):
+                            j.setDestination("LCG.UKI-SOUTHGRID-RALPP.uk")
+                            j.setTag('HighMem')
                         else:
                             j.setDestination(self.site)
                         j.setBannedSites(['LCG.UKI-LT2-Brunel.uk', 'LCG.UKI-NORTHGRID-LANCS-HEP.uk', 'LCG.UKI-SOUTHGRID-BRIS-HEP.uk'])
@@ -138,6 +141,9 @@ class ParametricJobs(SQLTableBase):
                         if self.site.endswith('2Processors'):
                             j.setDestination("LCG.UKI-LT2-IC-HEP.uk")
                             j.setTag('2Processors')
+                        elif self.site.endswith("HighMem"):
+                            j.setDestination("LCG.UKI-SOUTHGRID-RALPP.uk")
+                            j.setTag('HighMem')
                         else:
                             j.setDestination(self.site)
                         j.setBannedSites(['LCG.UKI-LT2-Brunel.uk', 'LCG.UKI-NORTHGRID-LANCS-HEP.uk', 'LCG.UKI-SOUTHGRID-BRIS-HEP.uk'])

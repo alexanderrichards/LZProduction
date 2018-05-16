@@ -115,7 +115,18 @@ class ParametricJobs(SQLTableBase):
                             j.setTag('HighMem')
                         else:
                             j.setDestination(self.site)
-                        j.setBannedSites(['LCG.UKI-LT2-Brunel.uk', 'LCG.UKI-NORTHGRID-LANCS-HEP.uk', 'LCG.UKI-SOUTHGRID-BRIS-HEP.uk'])
+                        j.setBannedSites(['LCG.UKI-LT2-Brunel.uk',
+                                          'LCG.UKI-NORTHGRID-LANCS-HEP.uk',
+                                          'LCG.UKI-SOUTHGRID-BRIS-HEP.uk',
+                                          'VAC.UKI-NORTHGRID-MAN-HEP.uk',
+                                          'VAC.UKI-NORTHGRID-LANCS-HEP.uk',
+                                          'VAC.UKI-NORTHGRID-LIV-HEP.uk',
+                                          'VAC.UKI-SOUTHGRID-BHAM-HEP.uk',
+                                          'VAC.UKI-SOUTHGRID-CAM-HEP.uk',
+                                          'VAC.UKI-SOUTHGRID-OX-HEP.uk',
+                                          'VAC.UKI-SCOTGRID-GLASGOW.uk',
+                                          'VAC.UKI-LT2-RHUL.uk',
+                                          'VAC.UKI-LT2-UCL-HEP.uk'])
                         j.setParameterSequence('args', sublist, addToWorkflow=False)
                     dirac_ids.update(parametric_job.subjob_ids)
         else:
@@ -146,7 +157,18 @@ class ParametricJobs(SQLTableBase):
                             j.setTag('HighMem')
                         else:
                             j.setDestination(self.site)
-                        j.setBannedSites(['LCG.UKI-LT2-Brunel.uk', 'LCG.UKI-NORTHGRID-LANCS-HEP.uk', 'LCG.UKI-SOUTHGRID-BRIS-HEP.uk'])
+                        j.setBannedSites(['LCG.UKI-LT2-Brunel.uk',
+                                          'LCG.UKI-NORTHGRID-LANCS-HEP.uk',
+                                          'LCG.UKI-SOUTHGRID-BRIS-HEP.uk',
+                                          'VAC.UKI-NORTHGRID-MAN-HEP.uk',
+                                          'VAC.UKI-NORTHGRID-LANCS-HEP.uk',
+                                          'VAC.UKI-NORTHGRID-LIV-HEP.uk',
+                                          'VAC.UKI-SOUTHGRID-BHAM-HEP.uk',
+                                          'VAC.UKI-SOUTHGRID-CAM-HEP.uk',
+                                          'VAC.UKI-SOUTHGRID-OX-HEP.uk',
+                                          'VAC.UKI-SCOTGRID-GLASGOW.uk',
+                                          'VAC.UKI-LT2-RHUL.uk',
+                                          'VAC.UKI-LT2-UCL-HEP.uk'])
                         j.setParameterSequence('InputData', sublist, addToWorkflow='ParametricInputData')
                         j.setParameterSequence('args',
                                                [os.path.basename(l) for l in sublist],

@@ -15,7 +15,7 @@ setup(
              'scripts/dirac-daemon.py',
              'scripts/monitoring-daemon.py'],
 
-    install_requires=['CherryPy==16.0.2',
+    install_requires=['CherryPy==16.0.3',
                       'daemonize==2.4.7',
                       'enum34==1.1.6',
                       'GitPython==2.1.10',

@@ -52,6 +52,7 @@ class ParametricJobs(SQLTableBase):
     der_lfn_inputdir = Column(String(250))
     der_lfn_outputdir = Column(String(250))
     lzap_version = Column(String(250))
+    physics_version = Column(String(250))
     lzap_lfn_inputdir = Column(String(250))
     lzap_lfn_outputdir = Column(String(250))
     request_id = Column(Integer, ForeignKey('requests.id'), nullable=False)
@@ -92,7 +93,6 @@ class ParametricJobs(SQLTableBase):
             with temporary_runscript(root_version='5.34.32',
                                      root_arch='slc6_gcc44_x86_64',
                                      g4_version='4.10.03.p02',
-                                     physics_version='1.4.0',
                                      se='UKI-LT2-IC-HEP-disk',
                                      unixtime=unixtime,
                                      livetimeperjob=livetimeperjob, **self) as runscript,\
@@ -133,7 +133,6 @@ class ParametricJobs(SQLTableBase):
             with temporary_runscript(root_version='5.34.32',
                                      root_arch='slc6_gcc44_x86_64',
                                      g4_version='4.10.03.p02',
-                                     physics_version='1.4.0',
                                      se='UKI-LT2-IC-HEP-disk', **self) as runscript:
                 logger.info("Submitting ParametricJob %s, inputdir: %s to DIRAC", self.id, self.reduction_lfn_inputdir or self.der_lfn_inputdir or self.lzap_lfn_inputdir)
 

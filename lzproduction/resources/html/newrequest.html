@@ -68,7 +68,13 @@ $(document).ready(function() {
                      $("#lzap_version").selectpicker("refresh");
                    }
   });
-
+  $.ajax({url: "/appversion/Physics",
+          type: "GET",
+          success: function(result) {
+                     $("#physics_version").html(result);
+                     $("#physics_version").selectpicker("refresh");
+                   }
+  });
   $("#tags").change(function() {
     $.ajax({url: "/tags",
             type: "GET",
@@ -521,7 +527,15 @@ $(document).ready(function() {
 		      </div>
 		    </div>
 		  </div>
-
+		  <div class="row">
+		    <div class="col-xs-12">
+		      <label for="app_version">Select Physics Version:</label>
+		      <div class="input-group">
+			<select id="physics_version" name="physics_version" class="selectpicker form-control togglable" toggle="lzap_toggle" data-live-search="true" data-live-search-style="startsWith" data-size="10" data-width="150px" data-dropup-auto="false" data-live-search-placeholder="Search..." title="Version" required disabled>
+			</select>
+		      </div>
+		    </div>
+		  </div>
 		  <br>
 		  <div class="row">
 		    <div class="col-xs-6">

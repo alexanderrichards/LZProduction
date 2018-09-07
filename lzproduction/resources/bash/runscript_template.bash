@@ -48,7 +48,7 @@ SE={{ se }}
 {% if lzap_version %}
 ## LZap
 ###########################
-{% include "LZap.template" %}
+{% include "runscript_LZap_jsi.sh" %}
 {% endif %}
 
 ## Upload

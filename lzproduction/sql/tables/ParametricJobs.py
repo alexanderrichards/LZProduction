@@ -44,6 +44,7 @@ class ParametricJobs(SQLTableBase):
     njobs = Column(Integer)
     nevents = Column(Integer)
     seed = Column(Integer)
+    hour = Column(Integer)
     fastnest_version = Column(String(250))
     reduction_version = Column(String(250))
     reduction_lfn_inputdir = Column(String(250))
@@ -170,7 +171,7 @@ class ParametricJobs(SQLTableBase):
                                           'VAC.UKI-LT2-UCL-HEP.uk'])
                         j.setParameterSequence('InputData', sublist, addToWorkflow='ParametricInputData')
                         j.setParameterSequence('args',
-                                               [os.path.basename(l) for l in sublist],
+                                               [' '.join((os.path.basename(l), self.hour)) for l in sublist],
                                                addToWorkflow=False)
                     dirac_ids.update(parametric_job.subjob_ids)
 

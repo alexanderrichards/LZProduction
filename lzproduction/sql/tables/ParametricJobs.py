@@ -140,40 +140,37 @@ class ParametricJobs(SQLTableBase):
                 input_lfn_dir=self.reduction_lfn_inputdir or\
                                self.der_lfn_inputdir or \
                                self.lzap_lfn_inputdir
-                for sublist in list_splitter(list_lfns(input_lfn_dir), 1000):
-                    with parametric_job as j:
-                        j.setName("%(args)s")
-                        j.setPriority(self.priority)
-                        j.setPlatform('ANY')
-                        j.setExecutable(os.path.basename(runscript),
-                                        '%(args)s',
-                                        'lzanalysis_output.log')
-                        j.setInputSandbox([runscript])
-                        if self.site.endswith('2Processors'):
-                            j.setDestination("LCG.UKI-LT2-IC-HEP.uk")
-                            j.setTag('2Processors')
-                        elif self.site.endswith("HighMem"):
-                            j.setDestination("LCG.UKI-SOUTHGRID-RALPP.uk")
-                            j.setTag('HighMem')
-                        else:
-                            j.setDestination(self.site)
-                        j.setBannedSites(['LCG.UKI-LT2-Brunel.uk',
-                                          'LCG.UKI-NORTHGRID-LANCS-HEP.uk',
-                                          'LCG.UKI-SOUTHGRID-BRIS-HEP.uk',
-                                          'VAC.UKI-NORTHGRID-MAN-HEP.uk',
-                                          'VAC.UKI-NORTHGRID-LANCS-HEP.uk',
-                                          'VAC.UKI-NORTHGRID-LIV-HEP.uk',
-                                          'VAC.UKI-SOUTHGRID-BHAM-HEP.uk',
-                                          'VAC.UKI-SOUTHGRID-CAM-HEP.uk',
-                                          'VAC.UKI-SOUTHGRID-OX-HEP.uk',
-                                          'VAC.UKI-SCOTGRID-GLASGOW.uk',
-                                          'VAC.UKI-LT2-RHUL.uk',
-                                          'VAC.UKI-LT2-UCL-HEP.uk'])
-                        j.setParameterSequence('InputData', sublist, addToWorkflow='ParametricInputData')
-                        j.setParameterSequence('args',
-                                               [' '.join((os.path.basename(l), self.hour)) for l in sublist],
-                                               addToWorkflow=False)
-                    dirac_ids.update(parametric_job.subjob_ids)
+                with parametric_job as j:
+                    j.setName(input_lfn_dir + "_%(hour)s")
+                    j.setPriority(self.priority)
+                    j.setPlatform('ANY')
+                    j.setExecutable(os.path.basename(runscript),
+                                    input_lfn_dir + " %(hour)s",
+                                    'lzanalysis_output.log')
+                    j.setInputSandbox([runscript])
+                    if self.site.endswith('2Processors'):
+                        j.setDestination("LCG.UKI-LT2-IC-HEP.uk")
+                        j.setTag('2Processors')
+                    elif self.site.endswith("HighMem"):
+                        j.setDestination("LCG.UKI-SOUTHGRID-RALPP.uk")
+                        j.setTag('HighMem')
+                    else:
+                        j.setDestination(self.site)
+                    j.setBannedSites(['LCG.UKI-LT2-Brunel.uk',
+                                      'LCG.UKI-NORTHGRID-LANCS-HEP.uk',
+                                      'LCG.UKI-SOUTHGRID-BRIS-HEP.uk',
+                                      'VAC.UKI-NORTHGRID-MAN-HEP.uk',
+                                      'VAC.UKI-NORTHGRID-LANCS-HEP.uk',
+                                      'VAC.UKI-NORTHGRID-LIV-HEP.uk',
+                                      'VAC.UKI-SOUTHGRID-BHAM-HEP.uk',
+                                      'VAC.UKI-SOUTHGRID-CAM-HEP.uk',
+                                      'VAC.UKI-SOUTHGRID-OX-HEP.uk',
+                                      'VAC.UKI-SCOTGRID-GLASGOW.uk',
+                                      'VAC.UKI-LT2-RHUL.uk',
+                                      'VAC.UKI-LT2-UCL-HEP.uk'])
+                    j.setParameterSequence('hour', self.hour.split(','), addToWorkflow=False)
+
+                dirac_ids.update(parametric_job.subjob_ids)
 
         with db_session() as session:
             session.bulk_insert_mappings(DiracJobs, [{'id': i, 'parametricjob_id': self.id}

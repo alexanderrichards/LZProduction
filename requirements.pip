@@ -4,7 +4,7 @@ enum34==1.1.6
 GitPython==2.1.11
 html==1.16
 jinja2==2.10
-natsort==5.4.1
+natsort==5.5.0
 pylru==1.1.0
 PyMySQL==0.9.2
 requests==2.20.1

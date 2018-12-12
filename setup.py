@@ -16,7 +16,7 @@ setup(
              'scripts/monitoring-daemon.py'],
 
     install_requires=['CherryPy==18.1.0',
-                      'daemonize==2.4.7',
+                      'daemonize==2.5.0',
                       'enum34==1.1.6',
                       'GitPython==2.1.11',
                       'html==1.16',

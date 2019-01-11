@@ -44,6 +44,7 @@ class ParametricJobs(SQLTableBase):
     njobs = Column(Integer)
     nevents = Column(Integer)
     seed = Column(Integer)
+    hour = Column(Integer)
     fastnest_version = Column(String(250))
     reduction_version = Column(String(250))
     reduction_lfn_inputdir = Column(String(250))
@@ -52,6 +53,7 @@ class ParametricJobs(SQLTableBase):
     der_lfn_inputdir = Column(String(250))
     der_lfn_outputdir = Column(String(250))
     lzap_version = Column(String(250))
+    physics_version = Column(String(250))
     lzap_lfn_inputdir = Column(String(250))
     lzap_lfn_outputdir = Column(String(250))
     request_id = Column(Integer, ForeignKey('requests.id'), nullable=False)
@@ -92,7 +94,6 @@ class ParametricJobs(SQLTableBase):
             with temporary_runscript(root_version='5.34.32',
                                      root_arch='slc6_gcc44_x86_64',
                                      g4_version='4.10.03.p02',
-                                     physics_version='1.4.0',
                                      se='UKI-LT2-IC-HEP-disk',
                                      unixtime=unixtime,
                                      livetimeperjob=livetimeperjob, **self) as runscript,\
@@ -104,38 +105,72 @@ class ParametricJobs(SQLTableBase):
                         j.setPriority(self.priority)
                         j.setPlatform('ANY')
                         j.setExecutable(os.path.basename(runscript),
-                                        os.path.basename(macro) + ' %(args)s',
+                                        os.path.basename(macro) + ' %(args)s' + ' %s' % self.nevents,
                                         'lzproduction_output.log')
                         j.setInputSandbox([runscript, macro])
-                        j.setDestination(self.site)
+                        if self.site.endswith('2Processors'):
+                            j.setDestination("LCG.UKI-LT2-IC-HEP.uk")  # this should be done with site, tag = self.site.split(' ')
+                            j.setTag('2Processors')
+                        elif self.site.endswith("HighMem"):
+                            j.setDestination("LCG.UKI-SOUTHGRID-RALPP.uk")
+                            j.setTag('HighMem')
+                        else:
+                            j.setDestination(self.site)
+                        j.setBannedSites(['LCG.UKI-LT2-Brunel.uk',
+                                          'LCG.UKI-NORTHGRID-LANCS-HEP.uk',
+                                          'LCG.UKI-SOUTHGRID-BRIS-HEP.uk',
+                                          'VAC.UKI-NORTHGRID-MAN-HEP.uk',
+                                          'VAC.UKI-NORTHGRID-LANCS-HEP.uk',
+                                          'VAC.UKI-NORTHGRID-LIV-HEP.uk',
+                                          'VAC.UKI-SOUTHGRID-BHAM-HEP.uk',
+                                          'VAC.UKI-SOUTHGRID-CAM-HEP.uk',
+                                          'VAC.UKI-SOUTHGRID-OX-HEP.uk',
+                                          'VAC.UKI-SCOTGRID-GLASGOW.uk',
+                                          'VAC.UKI-LT2-RHUL.uk',
+                                          'VAC.UKI-LT2-UCL-HEP.uk'])
                         j.setParameterSequence('args', sublist, addToWorkflow=False)
                     dirac_ids.update(parametric_job.subjob_ids)
         else:
             with temporary_runscript(root_version='5.34.32',
                                      root_arch='slc6_gcc44_x86_64',
                                      g4_version='4.10.03.p02',
-                                     physics_version='1.4.0',
                                      se='UKI-LT2-IC-HEP-disk', **self) as runscript:
                 logger.info("Submitting ParametricJob %s, inputdir: %s to DIRAC", self.id, self.reduction_lfn_inputdir or self.der_lfn_inputdir or self.lzap_lfn_inputdir)
 
                 input_lfn_dir=self.reduction_lfn_inputdir or\
                                self.der_lfn_inputdir or \
                                self.lzap_lfn_inputdir
-                for sublist in list_splitter(list_lfns(input_lfn_dir), 1000):
-                    with parametric_job as j:
-                        j.setName("%(args)s")
-                        j.setPriority(self.priority)
-                        j.setPlatform('ANY')
-                        j.setExecutable(os.path.basename(runscript),
-                                        '%(args)s',
-                                        'lzanalysis_output.log')
-                        j.setInputSandbox([runscript])
+                with parametric_job as j:
+                    j.setName(input_lfn_dir + "_%(hour)s")
+                    j.setPriority(self.priority)
+                    j.setPlatform('ANY')
+                    j.setExecutable(os.path.basename(runscript),
+                                    input_lfn_dir + " %(hour)s",
+                                    'lzanalysis_output.log')
+                    j.setInputSandbox([runscript])
+                    if self.site.endswith('2Processors'):
+                        j.setDestination("LCG.UKI-LT2-IC-HEP.uk")
+                        j.setTag('2Processors')
+                    elif self.site.endswith("HighMem"):
+                        j.setDestination("LCG.UKI-SOUTHGRID-RALPP.uk")
+                        j.setTag('HighMem')
+                    else:
                         j.setDestination(self.site)
-                        j.setParameterSequence('InputData', sublist, addToWorkflow='ParametricInputData')
-                        j.setParameterSequence('args',
-                                               [os.path.basename(l) for l in sublist],
-                                               addToWorkflow=False)
-                    dirac_ids.update(parametric_job.subjob_ids)
+                    j.setBannedSites(['LCG.UKI-LT2-Brunel.uk',
+                                      'LCG.UKI-NORTHGRID-LANCS-HEP.uk',
+                                      'LCG.UKI-SOUTHGRID-BRIS-HEP.uk',
+                                      'VAC.UKI-NORTHGRID-MAN-HEP.uk',
+                                      'VAC.UKI-NORTHGRID-LANCS-HEP.uk',
+                                      'VAC.UKI-NORTHGRID-LIV-HEP.uk',
+                                      'VAC.UKI-SOUTHGRID-BHAM-HEP.uk',
+                                      'VAC.UKI-SOUTHGRID-CAM-HEP.uk',
+                                      'VAC.UKI-SOUTHGRID-OX-HEP.uk',
+                                      'VAC.UKI-SCOTGRID-GLASGOW.uk',
+                                      'VAC.UKI-LT2-RHUL.uk',
+                                      'VAC.UKI-LT2-UCL-HEP.uk'])
+                    j.setParameterSequence('hour', self.hour.split(','), addToWorkflow=False)
+
+                dirac_ids.update(parametric_job.subjob_ids)
 
         with db_session() as session:
             session.bulk_insert_mappings(DiracJobs, [{'id': i, 'parametricjob_id': self.id}

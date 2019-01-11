@@ -66,7 +66,7 @@ class LZProductionServer(Daemonize):
                             '/parametricjobs',
                             {'/': {'request.dispatch': CredentialDispatcher(cherrypy.dispatch.MethodDispatcher())}})
         cherrypy.tree.mount(CVMFSAppVersions('/cvmfs/lz.opensciencegrid.org',
-                                                      ['LUXSim', 'BACCARAT', 'TDRAnalysis', 'fastNEST', 'DER', 'LZap']),
+                                                      ['LUXSim', 'BACCARAT', 'TDRAnalysis', 'fastNEST', 'DER', 'LZap', 'Physics']),
                             '/appversion',
                             {'/': {'request.dispatch': CredentialDispatcher(cherrypy.dispatch.Dispatcher())}})
         cherrypy.tree.mount(GitTagMacros(self._git_repo, self._git_dir, template_env),

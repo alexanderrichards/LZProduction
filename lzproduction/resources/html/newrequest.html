@@ -68,7 +68,13 @@ $(document).ready(function() {
                      $("#lzap_version").selectpicker("refresh");
                    }
   });
-
+  $.ajax({url: "/appversion/Physics",
+          type: "GET",
+          success: function(result) {
+                     $("#physics_version").html(result);
+                     $("#physics_version").selectpicker("refresh");
+                   }
+  });
   $("#tags").change(function() {
     $.ajax({url: "/tags",
             type: "GET",
@@ -213,7 +219,10 @@ $(document).ready(function() {
 	      <select id="site" name="site" class="selectpicker form-control" data-size="10" data-width="150px" data-dropup-auto="false" required>
 		<option>ANY</option>
 		<option>LCG.UKI-LT2-IC-HEP.uk</option>
+		<option>LCG.UKI-LT2-IC-HEP.uk 2Processors</option>
+		<option>LCG.UKI-SOUTHGRID-RALPP.uk HighMem</option>
 		<option>LCG.UKI-NORTHGRID-SHEF-HEP.uk</option>
+		<option>LCG.UKI-LT2-QMUL.uk</option>
 	      </select>
 	    </div>
 
@@ -518,7 +527,24 @@ $(document).ready(function() {
 		      </div>
 		    </div>
 		  </div>
-
+		  <div class="row">
+		    <div class="col-xs-12">
+		      <label for="physics_version">Select Physics Version:</label>
+		      <div class="input-group">
+			<select id="physics_version" name="physics_version" class="selectpicker form-control togglable" toggle="lzap_toggle" data-live-search="true" data-live-search-style="startsWith" data-size="10" data-width="150px" data-dropup-auto="false" data-live-search-placeholder="Search..." title="Version" required disabled>
+			</select>
+		      </div>
+		    </div>
+		  </div>
+		  <br>
+		  <div class="row">
+		    <div class="col-xs-12">
+		      <label for="hour">Select Hour(S) (comma seperated):</label>
+		      <div class="input-group">
+			<input id="hour", name="hour", type="text" class="form-control togglable" toggle="lzap_toggle" value="01,02,03,04,05,06" required disabled>
+		      </div>
+		    </div>
+		  </div>
 		  <br>
 		  <div class="row">
 		    <div class="col-xs-6">
@@ -527,7 +553,7 @@ $(document).ready(function() {
 			<span class="input-group-addon" id="basic-addon1">
 			    <input type="checkbox" class="toggle togglable" toggle="lzap_toggle" id="lzap_lfn_inputdir_toggle" disabled>
 			</span>
-			<input id="lzap_lfn_inputdir" type="text" class="form-control togglable" toggleoff="lzap_toggle" toggle="lzap_lfn_inputdir_toggle" placeholder="LZap input LFN dir" aria-describedby="basic-addon1" name="lzap_lfn_inputdir" disabled>
+			<input id="lzap_lfn_inputdir" type="text" class="form-control togglable" toggleoff="lzap_toggle" toggle="lzap_lfn_inputdir_toggle" placeholder="LZap input LFN dir" aria-describedby="basic-addon1" name="lzap_lfn_inputdir" required disabled>
 		      </div>
 		    </div>
 		    <div class="col-xs-6">

@@ -26,11 +26,12 @@ class DIRACSTATUS(IntEnum):
     Failed = 5
     Stalled = 6
     Running = 7
-    Received = 8
-    Queued = 9
-    Waiting = 10
-    Checking = 11
-    Matched = 12
+    Submitting = 8
+    Received = 9
+    Queued = 10
+    Waiting = 11
+    Checking = 12
+    Matched = 13
 
     @property
     def local_status(self):
@@ -61,6 +62,7 @@ STATUS_MAP = {DIRACSTATUS.Unknown: LOCALSTATUS.Unknown,
               DIRACSTATUS.Failed: LOCALSTATUS.Failed,
               DIRACSTATUS.Stalled: LOCALSTATUS.Failed,
               DIRACSTATUS.Running: LOCALSTATUS.Running,
+              DIRACSTATUS.Submitting: LOCALSTATUS.Submitted,
               DIRACSTATUS.Received: LOCALSTATUS.Submitted,
               DIRACSTATUS.Queued: LOCALSTATUS.Submitted,
               DIRACSTATUS.Waiting: LOCALSTATUS.Submitted,

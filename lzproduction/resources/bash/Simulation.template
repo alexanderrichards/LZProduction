@@ -1,11 +1,50 @@
 MACRO_FILE=$1
+#SEED0=$2
 export SEED=$2 # an integer that will label the output file
+NBEAMON=$3
+
+j=$((SEED/100000))
+SEED0=$((j*100000))
+
+if [ "$NBEAMON" -gt 0 ]
+then
+DRIFT_LEN_m=1.50
+date=20170401
+time=0000
+UNIXTIME=$(date -d "$date $time" +%s)
+UNIXTIME=1491004800
+fi
+
+
+INPUT_FILE_LOCATION=/cvmfs/lz.opensciencegrid.org/BACCARAT/MDC2BaccConfigs/ProdCfg-12Apr18
+
+if [ "$NBEAMON" -eq -1 ]
+then
+INPUT_FILE=${INPUT_FILE_LOCATION}/job_config_${SEED0}.txt
+i=1
+while read -r seed time beamon activityXe activityKr length
+do
+ test $i -eq 1 && ((i=i+1)) && continue
+if [ "$seed" -eq "$SEED" ]
+then
+
+UNIXTIME=$(echo $time)
+NBEAMON=$(echo $beamon)
+export XE131M_mBq_per_kg=$(echo $activityXe)
+export KR83M_mBq_per_kg=$(echo $activityKr)
+DRIFT_LEN_m=$(echo $length)
+echo $seed $UNIXTIME $NBEAMON $XE131M_mBq_per_kg $DRIFT_LEN_m
+fi
+done <${INPUT_FILE}
+fi
+
+export NBEAMON
+export DRIFT_LEN_m
+
 APP_DIR=/cvmfs/lz.opensciencegrid.org/{{ app }}/release-{{ app_version }}
-ROOT_DIR=/cvmfs/lz.opensciencegrid.org/ROOT/v{{ root_version }}/{{ root_arch }}/root
-G4_DIR=/cvmfs/lz.opensciencegrid.org/geant4/
 G4_VER=geant{{ g4_version }}
 SIM_LFN_DIR={{ sim_lfn_outputdir }}/$(basename $MACRO_FILE .mac)
-MCTRUTH_LFN_DIR={{ mctruth_lfn_outputdir }}/$(basename $MACRO_FILE .mac)
+MCTRUTH_LFN_DIR={{ mctruth_lfn_outputdir }}
 
 #extract the name of the output file from the LUXSim macro
 {% if app == 'BACCARAT' %}
@@ -16,12 +55,11 @@ OUTPUT_FILE=$(awk '/^\/{{ app }}\/io\/outputName/ {print $2}' $1 | tail -1)$2.bi
 
 # move into the LUXSim directory, set G4 env, and run the macro
 # the executable must be run from within it's dir!
-cd $APP_DIR
 {% if app == 'BACCARAT' and app_version.startswith('2') %}
-source setup.sh
+source $APP_DIR/setup.sh
 stop_on_error $APP_DIR/bin/{{ app }}Executable $OUTPUT_DIR/$MACRO_FILE "Simulation step failed!"
 {% elif app == 'BACCARAT' and app_version.startswith('3') %}
-source setup.sh
+source $APP_DIR/setup.sh
 stop_on_error $APP_DIR/build.x86_64-slc6-gcc48-opt/bin/{{ app }}Executable $OUTPUT_DIR/$MACRO_FILE "Simulation step failed!"
 {% else %}
 source $G4_DIR/etc/geant4env.sh $G4_VER

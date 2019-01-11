@@ -50,7 +50,10 @@ class ParametricDiracJobClient(object):
         try:
             result = self._conn.root.dirac_api.submit(self._job)
             if result['OK']:
-                self._dirac_job_ids.update(result.get("Value", []))
+                ids = result.get("Value", [])
+                if not isinstance(ids, list):
+                    ids = [ids]
+                self._dirac_job_ids.update(ids)
                 logger.info("Submitted %i DIRAC jobs %s", len(self._dirac_job_ids), list(self._dirac_job_ids))
             else:
                 logger.error("Problem submitting DIRAC jobs: %s", result['Message'])

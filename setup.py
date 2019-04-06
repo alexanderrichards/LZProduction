@@ -20,7 +20,7 @@ setup(
                       'enum34==1.1.6',
                       'GitPython==2.1.11',
                       'html==1.16',
-                      'jinja2==2.10',
+                      'jinja2==2.10.1',
                       'natsort==6.0.0',
                       'pylru==1.2.0',
                       'PyMySQL==0.9.3',

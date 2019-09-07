@@ -15,7 +15,7 @@ setup(
              'scripts/dirac-daemon.py',
              'scripts/monitoring-daemon.py'],
 
-    install_requires=['CherryPy==18.1.2',
+    install_requires=['CherryPy==18.2.0',
                       'daemonize==2.5.0',
                       'enum34==1.1.6',
                       'GitPython==3.0.2',
@@ -25,7 +25,7 @@ setup(
                       'pylru==1.2.0',
                       'PyMySQL==0.9.3',
                       'requests==2.22.0',
-                      'SQLAlchemy==1.3.7',
+                      'SQLAlchemy==1.3.8',
                       'suds==0.4',
                       'rpyc==4.1.1'],
     extras_require={

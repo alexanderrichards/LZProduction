@@ -1,7 +1,7 @@
 CherryPy==18.4.0
 daemonize==2.5.0
 enum34==1.1.6
-GitPython==3.0.4
+GitPython==3.0.5
 html==1.16
 jinja2==2.10.3
 natsort==6.2.0

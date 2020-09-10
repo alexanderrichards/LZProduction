@@ -23,7 +23,7 @@ setup(
                       'jinja2==2.11.2',
                       'natsort==7.0.1',
                       'pylru==1.2.0',
-                      'PyMySQL==0.10.0',
+                      'PyMySQL==0.10.1',
                       'requests==2.24.0',
                       'SQLAlchemy==1.3.19',
                       'suds==0.4',

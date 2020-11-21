@@ -21,7 +21,7 @@ setup(
                       'GitPython==3.1.11',
                       'html==1.16',
                       'jinja2==2.11.2',
-                      'natsort==7.0.1',
+                      'natsort==7.1.0',
                       'pylru==1.2.0',
                       'PyMySQL==0.10.1',
                       'requests==2.25.0',

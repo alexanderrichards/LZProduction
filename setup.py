@@ -24,7 +24,7 @@ setup(
                       'natsort==7.1.0',
                       'pylru==1.2.0',
                       'PyMySQL==0.10.1',
-                      'requests==2.25.0',
+                      'requests==2.25.1',
                       'SQLAlchemy==1.3.20',
                       'suds==0.4',
                       'rpyc==4.1.5'],

@@ -27,7 +27,7 @@ setup(
                       'requests==2.25.1',
                       'SQLAlchemy==1.3.22',
                       'suds==0.4',
-                      'rpyc==4.1.5'],
+                      'rpyc==5.0.0'],
     extras_require={
         'development':  ["pytest", "mock"]
         #'webapp': [frontend stuff],

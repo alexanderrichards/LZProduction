@@ -25,7 +25,7 @@ setup(
                       'pylru==1.2.0',
                       'PyMySQL==1.0.2',
                       'requests==2.26.0',
-                      'SQLAlchemy==1.4.21',
+                      'SQLAlchemy==1.4.22',
                       'suds==0.4',
                       'rpyc==5.0.1'],
     extras_require={

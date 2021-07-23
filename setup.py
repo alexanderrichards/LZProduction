@@ -18,7 +18,7 @@ setup(
     install_requires=['CherryPy==18.6.1',
                       'daemonize==2.5.0',
                       'enum34==1.1.10',
-                      'GitPython==3.1.18',
+                      'GitPython==3.1.19',
                       'html==1.16',
                       'jinja2==3.0.1',
                       'natsort==7.1.1',

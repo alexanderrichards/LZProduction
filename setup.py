@@ -26,7 +26,7 @@ setup(
                       'PyMySQL==0.7.9',
                       'requests==2.13.0',
                       'SQLAlchemy==1.1.5',
-                      'suds==0.4',
+                      'suds==1.0.0',
                       'rpyc==3.4.4'],
     extras_require={
         'development':  ["pytest", "mock"]
